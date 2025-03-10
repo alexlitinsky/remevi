@@ -1,24 +1,85 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowUpTrayIcon, SparklesIcon, ClockIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { useUser } from '@clerk/nextjs';
+import { Card } from '@/components/ui/card';
+import { format } from 'date-fns';
 import { useDropzone } from 'react-dropzone';
-import { ArrowUpTrayIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import FlashcardList from '@/components/FlashcardList';
 
-interface Flashcard {
-  front: string;
-  back: string;
+interface StudyDeck {
+  id: string;
+  title: string;
+  createdAt: string;
+  flashcards: Array<{
+    front: string;
+    back: string;
+  }>;
+}
+
+function StudyDeckCard({ deck }: { deck: StudyDeck }) {
+  const router = useRouter();
+
+  return (
+    <Card 
+      className="p-6 hover:bg-gray-800/50 cursor-pointer transition-colors border-gray-800"
+      onClick={() => router.push(`/study/${deck.id}`)}
+    >
+      <div className="flex items-start gap-4">
+        <div className="p-3 bg-gray-800 rounded-lg">
+          <DocumentTextIcon className="w-6 h-6 text-blue-400" />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-semibold text-lg mb-2 text-gray-100">{deck.title}</h3>
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <ClockIcon className="w-4 h-4" />
+            <span>Created {format(new Date(deck.createdAt), 'MMM d, yyyy')}</span>
+          </div>
+          <div className="mt-2 text-sm text-gray-400">
+            {deck.flashcards.length} flashcards
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 export default function Home() {
+  const { isSignedIn, user } = useUser();
+  const [studyDecks, setStudyDecks] = useState<StudyDeck[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoadingDecks, setIsLoadingDecks] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchStudyDecks();
+    }
+  }, [isSignedIn]);
+
+  const fetchStudyDecks = async () => {
+    setIsLoadingDecks(true);
+    try {
+      const response = await fetch('/api/study-decks');
+      if (response.ok) {
+        const decks = await response.json();
+        setStudyDecks(decks);
+      }
+    } catch (error) {
+      console.error('Failed to fetch study decks:', error);
+    } finally {
+      setIsLoadingDecks(false);
+    }
+  };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (!isSignedIn) {
+      router.push('/study');
+      return;
+    }
+
     setIsProcessing(true);
-    setError(null);
-    
     try {
       const file = acceptedFiles[0];
       const formData = new FormData();
@@ -30,19 +91,19 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate flashcards');
+        throw new Error('Failed to generate study materials');
       }
 
       const data = await response.json();
-      setFlashcards(data.flashcards);
-      
+      if (data.deckId) {
+        router.push(`/study/${data.deckId}`);
+      }
     } catch (error) {
       console.error('Error processing file:', error);
-      setError('Failed to process file. Please try again.');
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  }, [isSignedIn, router]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -55,55 +116,44 @@ export default function Home() {
   });
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
-        <h1 className="text-4xl font-bold text-center mb-8">
-          Transform Your Notes into Flashcards
-        </h1>
-        
-        <div className="text-center mb-12">
-          <p className="text-xl text-gray-600">
-            Upload your study materials and let AI create effective flashcards for you
-          </p>
-        </div>
-
-        <div className="w-full max-w-2xl mx-auto">
-          <div
-            {...getRootProps()}
-            className={`p-12 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors
-              ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
-          >
-            <input {...getInputProps()} className="sr-only" />
-            <div className="space-y-4">
-              <ArrowUpTrayIcon className="h-12 w-12 mx-auto text-gray-400" />
-              {isDragActive ? (
-                <p className="text-lg">Drop your files here</p>
-              ) : (
-                <>
-                  <p className="text-lg">Drag & drop your files here, or click to select files</p>
-                  <p className="text-sm text-gray-500">Supports PDF, DOCX, and TXT files</p>
-                </>
-              )}
+    <main className="min-h-screen bg-gray-900 text-gray-100">
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h1 className="text-4xl font-bold mb-6">
+              Transform Your Notes into Interactive Study Materials
+            </h1>
+            <p className="text-xl text-gray-400 mb-8">
+              Upload your study materials and let AI create effective flashcards and mind maps
+            </p>
+            
+            <div
+              {...getRootProps()}
+              className={`p-12 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors mb-8
+                ${isDragActive ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 hover:border-gray-600'}`}
+            >
+              <input {...getInputProps()} />
+              <div className="space-y-4">
+                <ArrowUpTrayIcon className="h-12 w-12 mx-auto text-gray-400" />
+                {isDragActive ? (
+                  <p className="text-lg">Drop your files here</p>
+                ) : (
+                  <>
+                    <p className="text-lg">Drag & drop your files here, or click to select files</p>
+                    <p className="text-sm text-gray-500">Supports PDF, DOCX, and TXT files</p>
+                  </>
+                )}
+              </div>
             </div>
+
+            {isProcessing && (
+              <div className="flex items-center justify-center gap-2 text-blue-400">
+                <SparklesIcon className="h-5 w-5 animate-spin" />
+                <span>Processing your document...</span>
+              </div>
+            )}
           </div>
 
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
-
-          {isProcessing && (
-            <div className="mt-8 text-center">
-              <SparklesIcon className="h-8 w-8 mx-auto text-blue-500 animate-pulse" />
-              <p className="mt-2 text-gray-600">Generating your flashcards...</p>
-            </div>
-          )}
-
-          {flashcards.length > 0 && <FlashcardList flashcards={flashcards} />}
-        </div>
-
-        {!flashcards.length && (
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureCard
               title="AI-Powered"
@@ -118,7 +168,26 @@ export default function Home() {
               description="Edit and refine generated flashcards to match your learning style"
             />
           </div>
-        )}
+
+          {isSignedIn && (
+            <div className="mt-16">
+              <h2 className="text-2xl font-semibold mb-6">Your Study Decks</h2>
+              {isLoadingDecks ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+                </div>
+              ) : studyDecks.length > 0 ? (
+                <div className="grid gap-4">
+                  {studyDecks.map((deck) => (
+                    <StudyDeckCard key={deck.id} deck={deck} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-400">No study decks yet. Upload a document to get started!</p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
@@ -126,9 +195,9 @@ export default function Home() {
 
 function FeatureCard({ title, description }: { title: string; description: string }) {
   return (
-    <div className="p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
+    <div className="p-6 border border-gray-800 rounded-lg bg-gray-900 hover:bg-gray-800/50 transition-colors">
+      <h3 className="text-lg font-semibold mb-2 text-gray-100">{title}</h3>
+      <p className="text-gray-400">{description}</p>
     </div>
   );
 }

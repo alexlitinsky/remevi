@@ -47,3 +47,15 @@ model Flashcard {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
+
+model StudyDeck {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  flashcards Json
+  mindMap   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
