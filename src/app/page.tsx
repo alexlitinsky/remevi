@@ -1,101 +1,134 @@
-import Image from "next/image";
+'use client';
+
+import { useCallback, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { ArrowUpTrayIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import FlashcardList from '@/components/FlashcardList';
+
+interface Flashcard {
+  front: string;
+  back: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    setIsProcessing(true);
+    setError(null);
+    
+    try {
+      const file = acceptedFiles[0];
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate flashcards');
+      }
+
+      const data = await response.json();
+      setFlashcards(data.flashcards);
+      
+    } catch (error) {
+      console.error('Error processing file:', error);
+      setError('Failed to process file. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt'],
+    },
+    maxFiles: 1,
+  });
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
+        <h1 className="text-4xl font-bold text-center mb-8">
+          Transform Your Notes into Flashcards
+        </h1>
+        
+        <div className="text-center mb-12">
+          <p className="text-xl text-gray-600">
+            Upload your study materials and let AI create effective flashcards for you
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="w-full max-w-2xl mx-auto">
+          <div
+            {...getRootProps()}
+            className={`p-12 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors
+              ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
+          >
+            <input {...getInputProps()} className="sr-only" />
+            <div className="space-y-4">
+              <ArrowUpTrayIcon className="h-12 w-12 mx-auto text-gray-400" />
+              {isDragActive ? (
+                <p className="text-lg">Drop your files here</p>
+              ) : (
+                <>
+                  <p className="text-lg">Drag & drop your files here, or click to select files</p>
+                  <p className="text-sm text-gray-500">Supports PDF, DOCX, and TXT files</p>
+                </>
+              )}
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          {isProcessing && (
+            <div className="mt-8 text-center">
+              <SparklesIcon className="h-8 w-8 mx-auto text-blue-500 animate-pulse" />
+              <p className="mt-2 text-gray-600">Generating your flashcards...</p>
+            </div>
+          )}
+
+          {flashcards.length > 0 && <FlashcardList flashcards={flashcards} />}
+        </div>
+
+        {!flashcards.length && (
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard
+              title="AI-Powered"
+              description="Advanced AI analyzes your notes to create comprehensive flashcards"
+            />
+            <FeatureCard
+              title="Time-Saving"
+              description="Convert hours of manual work into minutes of automated learning"
+            />
+            <FeatureCard
+              title="Customizable"
+              description="Edit and refine generated flashcards to match your learning style"
+            />
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function FeatureCard({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-gray-600">{description}</p>
     </div>
   );
 }
