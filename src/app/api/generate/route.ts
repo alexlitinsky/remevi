@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
-import { PrismaClient } from '@prisma/client';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 
-const prisma = new PrismaClient();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
