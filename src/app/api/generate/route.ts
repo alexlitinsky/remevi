@@ -1,128 +1,175 @@
-import { NextRequest, NextResponse } from "next/server"
-import OpenAI from "openai"
-import pdfParse from "pdf-parse/lib/pdf-parse.js"
-import { db } from "@/lib/db"
-import { currentUser } from "@clerk/nextjs/server"
+import { NextRequest } from 'next/server';
+import { join } from 'path';
+import { readFile, unlink } from 'fs/promises';
+import { currentUser } from '@clerk/nextjs/server';
+import { db } from '@/lib/db';
+import OpenAI from 'openai';
+import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 
+const TEMP_DIR = join(process.cwd(), 'tmp', 'uploads');
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-})
+});
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const user = await currentUser()
-    const userId = user?.id
-    const formData = await req.formData()
-    const file = formData.get("file")
+    const user = await currentUser();
+    if (!user?.id) {
+      return new Response('Unauthorized', { status: 401 });
+    }
 
-    if (!file || !(file instanceof Blob)) {
-      return NextResponse.json(
-        { error: "No valid file provided" },
-        { status: 400 }
-      )
+    let fileBuffer: Buffer;
+    let metadata: { originalName: string; type: string; size: number };
+
+    // Handle both direct uploads and temp file processing
+    if (request.headers.get('content-type')?.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      const file = formData.get('file') as File;
+      if (!file) {
+        return new Response('No file provided', { status: 400 });
+      }
+      fileBuffer = Buffer.from(await file.arrayBuffer());
+      metadata = {
+        originalName: file.name,
+        type: file.type,
+        size: file.size,
+      };
+    } else {
+      // Handle uploaded file from temp storage
+      const { uploadId } = await request.json();
+      if (!uploadId) {
+        return new Response('No upload ID provided', { status: 400 });
+      }
+
+      const filePath = join(TEMP_DIR, uploadId);
+      try {
+        fileBuffer = await readFile(filePath);
+        metadata = JSON.parse(await readFile(`${filePath}.json`, 'utf-8'));
+        
+        // Clean up temp files
+        await Promise.all([
+          unlink(filePath),
+          unlink(`${filePath}.json`),
+        ]).catch(console.error); // Don't fail if cleanup fails
+      } catch (error) {
+        return new Response('Upload not found or expired', { status: 404 });
+      }
     }
 
     // Parse file content based on type
-    let text = ""
+    let text = '';
     try {
-      const arrayBuffer = await new Response(file).arrayBuffer()
-      const uint8Array = new Uint8Array(arrayBuffer)
-      
-      if (file.type === "application/pdf") {
-        const pdfData = await pdfParse(Buffer.from(uint8Array))
-        text = pdfData.text
-      } else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      if (metadata.type === 'application/pdf') {
+        const pdfData = await pdfParse(fileBuffer);
+        text = pdfData.text;
+      } else if (metadata.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         // For now, just try to read as text
-        text = await file.text()
+        text = fileBuffer.toString();
       } else {
         // Plain text files
-        text = await file.text()
+        text = fileBuffer.toString();
       }
 
       if (!text.trim()) {
-        return NextResponse.json(
-          { error: "No text content found in file" },
-          { status: 400 }
-        )
+        return new Response('No text content found in file', { status: 400 });
       }
     } catch (error) {
-      console.error("Error parsing file:", error)
-      return NextResponse.json(
-        { error: "Failed to parse file content" },
-        { status: 400 }
-      )
+      console.error('Error parsing file:', error);
+      return new Response('Failed to parse file content', { status: 400 });
     }
 
-    // Generate study materials using OpenAI
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are a helpful AI tutor that creates study materials from text content. Generate:
-1. A list of flashcards with clear questions/prompts on the front and concise answers/explanations on the back
-2. A mind map showing key concepts and their relationships
+    // Create initial study deck
+    const studyDeck = await db.studyDeck.create({
+      data: {
+        title: metadata.originalName,
+        userId: user.id,
+        isProcessing: true,
+        flashcards: [],
+        mindMap: { nodes: [], connections: [] },
+      },
+    });
 
-Format the response as a JSON object with:
-{
-  "flashcards": [
-    { "front": "Question/Prompt", "back": "Answer/Explanation" }
-  ],
-  "mindMap": {
-    "nodes": [
-      { "id": "unique_id", "label": "Concept Name", "x": number, "y": number }
-    ],
-    "connections": [
-      { "source": "node_id", "target": "node_id", "label": "relationship" }
-    ]
-  }
-}
+    // Process in background
+    (async () => {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful AI that creates study materials. Generate flashcards and a mind map from the provided text. Return a JSON object with flashcards array and mindMap object.',
+            },
+            {
+              role: 'user',
+              content: `Create study materials from this text: ${text.slice(0, 8000)}... 
+              Return a JSON object with this exact structure:
+              {
+                "flashcards": [
+                  { "front": "question", "back": "answer" }
+                ],
+                "mindMap": {
+                  "nodes": [
+                    { "id": "string", "label": "string" }
+                  ],
+                  "connections": [
+                    { "source": "string", "target": "string", "label": "string" }
+                  ]
+                }
+              }`,
+            },
+          ],
+          response_format: { type: "json_object" },
+        });
 
-For the mind map:
-- Place the main concept at (400, 250)
-- Space out related concepts around it in a circular pattern
-- Keep node positions between (100,100) and (700,400)
-- Use meaningful labels for connections
-- Keep it clear and readable with max 8-10 nodes`,
-        },
-        {
-          role: "user",
-          content: text,
-        },
-      ],
-      response_format: { type: "json_object" },
-    })
+        if (!completion.choices[0].message.content) {
+          throw new Error('No content in OpenAI response');
+        }
 
-    if (!completion.choices[0].message.content) {
-      throw new Error("No content in response")
-    }
+        const content = completion.choices[0].message.content;
+        const result = JSON.parse(content.replace(/^```json\n|\n```$/g, ''));
 
-    const result = JSON.parse(completion.choices[0].message.content)
+        // Add coordinates to mind map nodes
+        const centerX = 500;
+        const centerY = 300;
+        const radius = 200;
+        const nodes = result.mindMap.nodes.map((node: { id: string; label: string }, index: number) => {
+          const angle = (2 * Math.PI * index) / result.mindMap.nodes.length;
+          return {
+            ...node,
+            x: centerX + radius * Math.cos(angle),
+            y: centerY + radius * Math.sin(angle),
+          };
+        });
 
-    // Save study deck if user is authenticated
-    if (userId) {
-      const studyDeck = await db.studyDeck.create({
-        data: {
-          userId,
-          title: file instanceof File ? file.name : 'Untitled Study Deck',
-          flashcards: result.flashcards,
-          mindMap: result.mindMap,
-        },
-      })
-      
-      return NextResponse.json({
-        ...result,
-        deckId: studyDeck.id,
-        createdAt: studyDeck.createdAt,
-      })
-    }
+        // Update study deck with results
+        await db.studyDeck.update({
+          where: { id: studyDeck.id },
+          data: {
+            flashcards: result.flashcards,
+            mindMap: {
+              nodes,
+              connections: result.mindMap.connections,
+            },
+            isProcessing: false,
+          },
+        });
+      } catch (error) {
+        console.error('Error processing study materials:', error);
+        await db.studyDeck.update({
+          where: { id: studyDeck.id },
+          data: {
+            error: 'Failed to generate study materials',
+            isProcessing: false,
+          },
+        });
+      }
+    })();
 
-    return NextResponse.json(result)
+    return Response.json({
+      deckId: studyDeck.id,
+    });
   } catch (error) {
-    console.error("Error:", error)
-    return NextResponse.json(
-      { error: "Failed to process file" },
-      { status: 500 }
-    )
+    console.error('Error generating study materials:', error);
+    return new Response('Error processing file', { status: 500 });
   }
 } 

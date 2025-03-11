@@ -12,6 +12,8 @@ interface StudyDeck {
   id: string;
   title: string;
   createdAt: string;
+  isProcessing: boolean;
+  error?: string;
   flashcards: Array<{
     front: string;
     back: string;
@@ -40,22 +42,35 @@ export default function StudyDeckPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchStudyDeck();
-  }, []);
+    let mounted = true;
 
-  const fetchStudyDeck = async () => {
-    try {
-      const response = await fetch(`/api/study-decks/${params.id}`);
-      if (response.ok) {
-        const deck = await response.json();
-        setStudyDeck(deck);
+    const fetchStudyDeck = async () => {
+      try {
+        const response = await fetch(`/api/study-decks/${params.id}`);
+        if (response.ok && mounted) {
+          const deck = await response.json();
+          setStudyDeck(deck);
+          
+          // If still processing, poll every 2 seconds
+          if (deck.isProcessing) {
+            const pollTimer = setTimeout(fetchStudyDeck, 2000);
+            return () => clearTimeout(pollTimer);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch study deck:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('Failed to fetch study deck:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    fetchStudyDeck();
+    return () => {
+      mounted = false;
+    };
+  }, [params.id]);
 
   if (isLoading) {
     return (
@@ -71,6 +86,29 @@ export default function StudyDeckPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Study Deck Not Found</h1>
           <p className="text-gray-400">The study deck you're looking for doesn't exist or you don't have access to it.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (studyDeck.isProcessing) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500 mx-auto" />
+          <h2 className="text-2xl font-bold">Generating Study Materials</h2>
+          <p className="text-gray-400">Please wait while we analyze your document...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (studyDeck.error) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Error</h1>
+          <p className="text-red-400">{studyDeck.error}</p>
         </div>
       </div>
     );

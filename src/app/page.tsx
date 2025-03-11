@@ -3,7 +3,7 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowUpTrayIcon, SparklesIcon, ClockIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
-import { useUser } from '@clerk/nextjs';
+import { useUser, SignIn } from '@clerk/nextjs';
 import { Card } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { useDropzone } from 'react-dropzone';
@@ -48,13 +48,37 @@ function StudyDeckCard({ deck }: { deck: StudyDeck }) {
 export default function Home() {
   const { isSignedIn, user } = useUser();
   const [studyDecks, setStudyDecks] = useState<StudyDeck[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     if (isSignedIn) {
       fetchStudyDecks();
+      
+      const uploadId = localStorage.getItem('pendingUploadId');
+      if (uploadId) {
+        // Create study deck and redirect immediately
+        fetch('/api/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ uploadId }),
+        })
+          .then(response => {
+            if (!response.ok) throw new Error('Failed to generate study materials');
+            return response.json();
+          })
+          .then(({ deckId }) => {
+            router.push(`/study/${deckId}`);
+            localStorage.removeItem('pendingUploadId');
+          })
+          .catch(error => {
+            console.error('Error processing file:', error);
+          });
+      }
     }
   }, [isSignedIn]);
 
@@ -74,36 +98,56 @@ export default function Home() {
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (!isSignedIn) {
-      router.push('/study');
-      return;
-    }
-
-    setIsProcessing(true);
+    const file = acceptedFiles[0];
+    if (!file) return;
+    
     try {
-      const file = acceptedFiles[0];
+      setIsProcessing(true);
+      
+      // Always upload to temp storage first
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch('/api/generate', {
+      const response = await fetch('/api/temp-upload', {
         method: 'POST',
         body: formData,
       });
-
+      
       if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+      
+      const { uploadId } = await response.json();
+
+      if (!isSignedIn) {
+        // Store uploadId and show sign in
+        localStorage.setItem('pendingUploadId', uploadId);
+        setShowSignIn(true);
+        setIsProcessing(false);
+        return;
+      }
+
+      // Create study deck and redirect immediately
+      const generateResponse = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ uploadId }),
+      });
+
+      if (!generateResponse.ok) {
         throw new Error('Failed to generate study materials');
       }
 
-      const data = await response.json();
-      if (data.deckId) {
-        router.push(`/study/${data.deckId}`);
-      }
+      const { deckId } = await generateResponse.json();
+      router.push(`/study/${deckId}`);
     } catch (error) {
-      console.error('Error processing file:', error);
+      console.error('Error handling file:', error);
     } finally {
       setIsProcessing(false);
     }
-  }, [isSignedIn, router]);
+  }, [isSignedIn]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -150,6 +194,17 @@ export default function Home() {
               <div className="flex items-center justify-center gap-2 text-blue-400">
                 <SparklesIcon className="h-5 w-5 animate-spin" />
                 <span>Processing your document...</span>
+              </div>
+            )}
+
+            {showSignIn && !isSignedIn && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-background p-4 rounded-lg">
+                  <SignIn 
+                    routing="hash"
+                    forceRedirectUrl={window?.location?.href || '/'}
+                  />
+                </div>
               </div>
             )}
           </div>

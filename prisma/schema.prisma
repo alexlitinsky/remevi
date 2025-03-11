@@ -49,13 +49,15 @@ model Flashcard {
 }
 
 model StudyDeck {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  flashcards Json
-  mindMap   Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  title       String
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  flashcards  Json
+  mindMap     Json
+  isProcessing Boolean @default(false)
+  error       String?
 
   @@index([userId])
 }
