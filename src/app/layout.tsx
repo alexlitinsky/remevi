@@ -31,7 +31,7 @@ export default function RootLayout({
           <meta name="darkreader-lock" />
         </head>
         <body className={`${inter.className} h-full bg-[#0B1120] text-foreground`}>
-          <header className="flex justify-between items-center p-4 gap-4 h-16 bg-[#0B1120] backdrop-blur-sm border-b border-border/40">
+          <header className="fixed top-0 left-0 right-0 flex justify-between items-center p-4 gap-4 h-16 bg-[#0B1120]/80 backdrop-blur-md border-b border-border/40 z-50">
             <Link href="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                 <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>

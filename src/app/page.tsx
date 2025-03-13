@@ -2,56 +2,27 @@
 
 import { useCallback, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowUpTrayIcon, SparklesIcon, ClockIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { useUser, SignIn } from '@clerk/nextjs';
-import { Card } from '@/components/ui/card';
-import { format } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
-
-interface StudyDeck {
-  id: string;
-  title: string;
-  createdAt: string;
-  flashcards: Array<{
-    front: string;
-    back: string;
-  }>;
-}
-
-function StudyDeckCard({ deck }: { deck: StudyDeck }) {
-  const router = useRouter();
-
-  return (
-    <Card 
-      className="p-6 hover:bg-gray-800/50 cursor-pointer transition-colors border-gray-800"
-      onClick={() => router.push(`/study/${deck.id}`)}
-    >
-      <div className="flex items-start gap-4">
-        <div className="p-3 bg-gray-800 rounded-lg">
-          <DocumentTextIcon className="w-6 h-6 text-blue-400" />
-        </div>
-        <div className="flex-1">
-          <h3 className="font-semibold text-lg mb-2 text-gray-100">{deck.title}</h3>
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <ClockIcon className="w-4 h-4" />
-            <span>Created {format(new Date(deck.createdAt), 'MMM d, yyyy')}</span>
-          </div>
-          <div className="mt-2 text-sm text-gray-400">
-            {deck.flashcards.length} flashcards
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
+import { cn } from '@/lib/utils';
+import { SparklesIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
-  const { isSignedIn, user } = useUser();
-  const [studyDecks, setStudyDecks] = useState<StudyDeck[]>([]);
-  const [isLoadingDecks, setIsLoadingDecks] = useState(false);
+  const { isSignedIn } = useUser();
+  const [studyDecks, setStudyDecks] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingDecks, setIsLoadingDecks] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const router = useRouter();
+  const [progress, setProgress] = useState({
+    cardsReviewed: 0,
+    totalCards: 50,
+    masteryLevel: 0,
+    minutesStudied: 15,
+    studySessions: 3,
+    daysStreak: 8
+  });
 
   useEffect(() => {
     if (isSignedIn) {
@@ -160,99 +131,170 @@ export default function Home() {
   });
 
   return (
-    <main className="min-h-screen bg-gray-900 text-gray-100">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h1 className="text-4xl font-bold mb-6">
-              Transform Your Notes into Interactive Study Materials
+    <main className="min-h-screen bg-background">
+      <div className="relative container mx-auto px-6">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20"
+          >
+            <h1 className="text-6xl md:text-7xl font-bold mb-6 text-white tracking-tight leading-tight">
+              Transform Your Notes into<br />Interactive Study Materials
             </h1>
-            <p className="text-xl text-gray-400 mb-8">
+            <p className="text-xl text-zinc-300 mb-12 max-w-2xl mx-auto leading-relaxed">
               Upload your study materials and let AI create effective flashcards and mind maps
             </p>
-            
-            <div
-              {...getRootProps()}
-              className={`p-12 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors mb-8
-                ${isDragActive ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 hover:border-gray-600'}`}
-            >
-              <input {...getInputProps()} />
-              <div className="space-y-4">
-                <ArrowUpTrayIcon className="h-12 w-12 mx-auto text-gray-400" />
-                {isDragActive ? (
-                  <p className="text-lg">Drop your files here</p>
-                ) : (
-                  <>
-                    <p className="text-lg">Drag & drop your files here, or click to select files</p>
-                    <p className="text-sm text-gray-500">Supports PDF, DOCX, and TXT files</p>
-                  </>
+
+            <div {...getRootProps()} className="max-w-3xl mx-auto">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className={cn(
+                  "relative py-12 px-8 rounded-2xl cursor-pointer transition-all duration-300",
+                  isDragActive
+                    ? "border-2 border-dashed border-zinc-400/50 bg-zinc-800/40" 
+                    : "border-2 border-dashed border-zinc-500/30 hover:border-zinc-400/30 bg-zinc-800/30",
+                  "shadow-[0_8px_16px_-6px_rgba(0,0,0,0.2)]"
                 )}
-              </div>
-            </div>
-
-            {isProcessing && (
-              <div className="flex items-center justify-center gap-2 text-blue-400">
-                <SparklesIcon className="h-5 w-5 animate-spin" />
-                <span>Processing your document...</span>
-              </div>
-            )}
-
-            {showSignIn && !isSignedIn && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-background p-4 rounded-lg">
-                  <SignIn 
-                    routing="hash"
-                    forceRedirectUrl={window?.location?.href || '/'}
-                  />
+              >
+                <input {...getInputProps()} />
+                <div className="relative z-10 space-y-6 text-center">
+                  <div className="text-4xl">⬆️</div>
+                  {isDragActive ? (
+                    <p className="text-2xl font-medium text-zinc-200">Drop your files here</p>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-medium text-zinc-200">Drag & drop your files here, or click to select files</p>
+                      <p className="text-lg text-zinc-400">Supports PDF, DOCX, and TXT files</p>
+                      {isProcessing && (
+                        <div className="flex items-center justify-center gap-2 text-blue-400 mt-4">
+                          <SparklesIcon className="h-5 w-5 animate-spin" />
+                          <span>Processing your document...</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
+              </motion.div>
 
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <FeatureCard
-              title="AI-Powered"
-              description="Advanced AI analyzes your notes to create comprehensive flashcards"
-            />
-            <FeatureCard
-              title="Time-Saving"
-              description="Convert hours of manual work into minutes of automated learning"
-            />
-            <FeatureCard
-              title="Customizable"
-              description="Edit and refine generated flashcards to match your learning style"
-            />
-          </div>
+            </div>
+          </motion.div>
 
           {isSignedIn && (
-            <div className="mt-16">
-              <h2 className="text-2xl font-semibold mb-6">Your Study Decks</h2>
-              {isLoadingDecks ? (
-                <div className="flex justify-center items-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+            <>
+              {/* Study Progress Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="max-w-4xl mx-auto mb-20"
+              >
+                <div className="rounded-2xl bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 p-8">
+                  <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-2xl font-semibold text-white">Study Progress</h2>
+                    <p className="text-zinc-400">Today's Progress</p>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    {/* Cards Reviewed */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-400">Cards Reviewed</span>
+                        <span className="text-white">0/0</span>
+                      </div>
+                      <div className="h-2 bg-zinc-800/30 rounded-full overflow-hidden">
+                        <div className="h-full w-0 bg-gradient-to-r from-blue-500/80 to-purple-500/80 transition-all duration-1000"></div>
+                      </div>
+                    </div>
+
+                    {/* Mastery Level */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-400">Mastery Level</span>
+                        <span className="text-white">0%</span>
+                      </div>
+                      <div className="h-2 bg-zinc-800/30 rounded-full overflow-hidden">
+                        <div className="h-full w-0 bg-gradient-to-r from-emerald-500/80 to-blue-500/80 transition-all duration-1000"></div>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-4 pt-2">
+                      <div className="text-center p-4 rounded-xl bg-zinc-800/30 backdrop-blur-sm border border-zinc-700/30">
+                        <div className="text-2xl font-semibold text-white mb-1">{progress.minutesStudied}</div>
+                        <div className="text-sm text-zinc-400">Minutes Studied</div>
+                      </div>
+                      <div className="text-center p-4 rounded-xl bg-zinc-800/30 backdrop-blur-sm border border-zinc-700/30">
+                        <div className="text-2xl font-semibold text-white mb-1">{progress.studySessions}</div>
+                        <div className="text-sm text-zinc-400">Study Sessions</div>
+                      </div>
+                      <div className="text-center p-4 rounded-xl bg-zinc-800/30 backdrop-blur-sm border border-zinc-700/30">
+                        <div className="text-2xl font-semibold text-white mb-1">{progress.daysStreak}</div>
+                        <div className="text-sm text-zinc-400">Days Streak</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ) : studyDecks.length > 0 ? (
-                <div className="grid gap-4">
-                  {studyDecks.map((deck) => (
-                    <StudyDeckCard key={deck.id} deck={deck} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-gray-400">No study decks yet. Upload a document to get started!</p>
-              )}
-            </div>
+              </motion.div>
+
+              {/* Study Decks Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mb-24"
+              >
+                <h2 className="text-3xl font-semibold mb-8 text-white">Your Study Decks</h2>
+                {isLoadingDecks ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-300 border-t-transparent"></div>
+                  </div>
+                ) : studyDecks.length > 0 ? (
+                  <div className="grid gap-6">
+                    {studyDecks.map((deck: any) => (
+                      <div
+                        key={deck.id}
+                        className="p-6 rounded-2xl bg-zinc-800/30 border border-zinc-700/30 cursor-pointer hover:bg-zinc-800/40 transition-all"
+                        onClick={() => router.push(`/study/${deck.id}`)}
+                      >
+                        <h3 className="text-xl font-semibold text-white mb-2">{deck.title}</h3>
+                        <p className="text-zinc-400">{deck.flashcards.length} flashcards</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-zinc-300 text-lg">No study decks yet. Upload a document to get started!</p>
+                )}
+              </motion.div>
+            </>
           )}
         </div>
       </div>
-    </main>
-  );
-}
 
-function FeatureCard({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="p-6 border border-gray-800 rounded-lg bg-gray-900 hover:bg-gray-800/50 transition-colors">
-      <h3 className="text-lg font-semibold mb-2 text-gray-100">{title}</h3>
-      <p className="text-gray-400">{description}</p>
-    </div>
+      {/* Sign In Modal */}
+      <AnimatePresence>
+        {showSignIn && !isSignedIn && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-zinc-900/90 p-8 rounded-2xl border border-zinc-700"
+            >
+              <SignIn 
+                routing="hash"
+                forceRedirectUrl={window?.location?.href || '/'}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </main>
   );
 }

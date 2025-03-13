@@ -1,63 +1,89 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-
 }
 
 model User {
-  id        String      @id @default(cuid())
-  email     String      @unique
-  name      String?
-  notes     Note[]
-  flashcards Flashcard[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  cardProgress CardProgress[]
+  flashcards   Flashcard[]
+  notes        Note[]
+  progress     UserProgress?
 }
 
 model Note {
-  id        String      @id @default(cuid())
-  title     String
-  content   String
-  userId    String
-  user      User        @relation(fields: [userId], references: [id])
+  id         String      @id @default(cuid())
+  title      String
+  content    String
+  userId     String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
   flashcards Flashcard[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  user       User        @relation(fields: [userId], references: [id])
 }
 
 model Flashcard {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   front     String
   back      String
   noteId    String
-  note      Note      @relation(fields: [noteId], references: [id])
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  note      Note     @relation(fields: [noteId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model StudyDeck {
-  id          String   @id @default(cuid())
-  title       String
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  flashcards  Json
-  mindMap     Json
-  isProcessing Boolean @default(false)
-  error       String?
+  id           String         @id @default(cuid())
+  userId       String
+  title        String
+  flashcards   Json
+  mindMap      Json
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  error        String?
+  isProcessing Boolean        @default(false)
+  cardProgress CardProgress[]
 
   @@index([userId])
+}
+
+model CardProgress {
+  id           String    @id @default(cuid())
+  userId       String
+  cardId       String
+  deckId       String
+  easeFactor   Float     @default(2.5)
+  interval     Int       @default(0)
+  repetitions  Int       @default(0)
+  dueDate      DateTime  @default(now())
+  lastReviewed DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deck         StudyDeck @relation(fields: [deckId], references: [id])
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, cardId])
+  @@index([userId, dueDate])
+}
+
+model UserProgress {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  points        Int       @default(0)
+  streak        Int       @default(0)
+  lastStudyDate DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id])
 }
