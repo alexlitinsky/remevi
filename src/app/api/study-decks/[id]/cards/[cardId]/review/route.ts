@@ -3,16 +3,9 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { calculateNextReview, calculateStreak, type Difficulty } from "@/lib/srs";
 
-type RouteParams = {
-  params: {
-    id: string;
-    cardId: string;
-  }
-}
-
 export async function POST(
   req: NextRequest,
-  { params }: RouteParams
+  { params }: { params: { id: string; cardId: string } }
 ) {
   try {
     const user = await currentUser();
