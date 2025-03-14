@@ -3,13 +3,13 @@ import { join } from 'path';
 import { readFile, unlink } from 'fs/promises';
 import { currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import OpenAI from 'openai';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import { generateObject} from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
 
 const TEMP_DIR = join(process.cwd(), 'tmp', 'uploads');
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,48 +92,23 @@ export async function POST(request: NextRequest) {
     // Process in background
     (async () => {
       try {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful AI that creates study materials. Generate flashcards and a mind map from the provided text. Return a JSON object with flashcards array and mindMap object.',
-            },
-            {
-              role: 'user',
-              content: `Create study materials from this text: ${text.slice(0, 8000)}... 
-              Return a JSON object with this exact structure:
-              {
-                "flashcards": [
-                  { "front": "question", "back": "answer" }
-                ],
-                "mindMap": {
-                  "nodes": [
-                    { "id": "string", "label": "string" }
-                  ],
-                  "connections": [
-                    { "source": "string", "target": "string", "label": "string" }
-                  ]
-                }
-              }`,
-            },
-          ],
-          response_format: { type: "json_object" },
+        const result = await generateObject({
+          system: 'You are a helpful AI that creates study materials. Generate flashcards and a mind map from the provided text. Return a JSON object with flashcards array and mindMap object.',
+          prompt: `Create study materials from this text: ${text.slice(0, 8000)}...`,
+          model: openai('gpt-4o-mini'),
+          schema: z.object({
+            flashcards: z.array(z.object({ front: z.string(), back: z.string() })),
+            mindMap: z.object({ nodes: z.array(z.object({ id: z.string(), label: z.string() })), connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) }),
+          }),
         });
-
-        if (!completion.choices[0].message.content) {
-          throw new Error('No content in OpenAI response');
-        }
-
-        const content = completion.choices[0].message.content;
-        const result = JSON.parse(content.replace(/^```json\n|\n```$/g, ''));
+        const object = result.object;
 
         // Add coordinates to mind map nodes
         const centerX = 500;
         const centerY = 300;
         const radius = 200;
-        const nodes = result.mindMap.nodes.map((node: { id: string; label: string }, index: number) => {
-          const angle = (2 * Math.PI * index) / result.mindMap.nodes.length;
+        const nodes = object.mindMap.nodes.map((node: { id: string; label: string }, index: number) => {
+          const angle = (2 * Math.PI * index) / object.mindMap.nodes.length;
           return {
             ...node,
             x: centerX + radius * Math.cos(angle),
@@ -145,10 +120,10 @@ export async function POST(request: NextRequest) {
         await db.studyDeck.update({
           where: { id: studyDeck.id },
           data: {
-            flashcards: result.flashcards,
+            flashcards: object.flashcards,
             mindMap: {
               nodes,
-              connections: result.mindMap.connections,
+              connections: object.mindMap.connections,
             },
             isProcessing: false,
           },
