@@ -3,9 +3,16 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { calculateNextReview, calculateStreak, type Difficulty } from "@/lib/srs";
 
+type RouteParams = {
+  params: {
+    id: string;
+    cardId: string;
+  }
+}
+
 export async function POST(
   req: NextRequest,
-  context: { params: { id: string; cardId: string } }
+  { params }: RouteParams
 ) {
   try {
     const user = await currentUser();
@@ -25,7 +32,6 @@ export async function POST(
     });
 
     const { difficulty, responseTime } = await req.json();
-    const params = await Promise.resolve(context.params);
     const { id: deckId, cardId } = params;
 
     // Get or create card progress
