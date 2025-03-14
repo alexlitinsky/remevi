@@ -8,9 +8,22 @@ import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils';
 import { SparklesIcon } from '@heroicons/react/24/outline';
 
+interface Flashcard {
+  front: string;
+  back: string;
+}
+
+interface StudyDeck {
+  id: string;
+  title: string;
+  flashcards: Flashcard[];
+  isProcessing?: boolean;
+  error?: string;
+}
+
 export default function Home() {
   const { isSignedIn } = useUser();
-  const [studyDecks, setStudyDecks] = useState([]);
+  const [studyDecks, setStudyDecks] = useState<StudyDeck[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
@@ -193,7 +206,7 @@ export default function Home() {
                 <div className="rounded-2xl bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 p-8">
                   <div className="flex items-center justify-between mb-8">
                     <h2 className="text-2xl font-semibold text-white">Study Progress</h2>
-                    <p className="text-zinc-400">Today's Progress</p>
+                    <p className="text-zinc-400">Today&apos;s Progress</p>
                   </div>
                   
                   <div className="space-y-6">
@@ -252,7 +265,7 @@ export default function Home() {
                   </div>
                 ) : studyDecks.length > 0 ? (
                   <div className="grid gap-6">
-                    {studyDecks.map((deck: any) => (
+                    {studyDecks.map((deck: StudyDeck) => (
                       <div
                         key={deck.id}
                         className="p-6 rounded-2xl bg-zinc-800/30 border border-zinc-700/30 cursor-pointer hover:bg-zinc-800/40 transition-all"

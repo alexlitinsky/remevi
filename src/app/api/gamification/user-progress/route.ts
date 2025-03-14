@@ -3,7 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
 // Get user progress
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const user = await currentUser();
     if (!user?.id) {

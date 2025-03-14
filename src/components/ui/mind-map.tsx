@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { PlusIcon, Trash2Icon, ZoomInIcon, ZoomOutIcon, DownloadIcon } from "lucide-react";
+import { ZoomInIcon, ZoomOutIcon } from "lucide-react";
 import { Button } from "./button";
 
 export interface MindMapNode {

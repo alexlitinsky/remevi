@@ -96,18 +96,16 @@ export default function StudyDeckPage() {
 
       const { pointsEarned } = await response.json();
       setPointsEarned(pointsEarned);
-      setShowPointsAnimation(true);
-
-      // Hide points animation after 1.5s
-      setTimeout(() => {
-        setShowPointsAnimation(false);
-        setPointsEarned(null);
-      }, 1500);
+      
+      // We'll handle the animation in the Flashcard component
+      // No need for the animation logic here
 
       // Move to next card if available
       if (currentCardIndex < studyDeck.flashcards.length - 1) {
-        setCurrentCardIndex(prev => prev + 1);
-        setShowBack(false);
+        setTimeout(() => {
+          setCurrentCardIndex(prev => prev + 1);
+          setShowBack(false);
+        }, 1500); // Wait for animation to finish
       } else {
         // TODO: Handle deck completion
         console.log('Deck completed!');
@@ -130,7 +128,7 @@ export default function StudyDeckPage() {
       <div className="h-screen pt-16 bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4 text-white">Study Deck Not Found</h1>
-          <p className="text-zinc-400">The study deck you're looking for doesn't exist or you don't have access to it.</p>
+          <p className="text-zinc-400">The study deck you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.</p>
         </div>
       </div>
     );
@@ -168,25 +166,13 @@ export default function StudyDeckPage() {
         
         <div className="flex-1 flex items-center justify-center px-6">
           <div className="w-full max-w-4xl">
-            <AnimatePresence>
-              {showPointsAnimation && pointsEarned && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: -20 }}
-                  exit={{ opacity: 0, y: -40 }}
-                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-4xl font-bold text-yellow-500 z-50"
-                >
-                  +{pointsEarned} points!
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             <Flashcard
               front={studyDeck.flashcards[currentCardIndex].front}
               back={studyDeck.flashcards[currentCardIndex].back}
               showBack={showBack}
               onFlip={() => setShowBack(!showBack)}
               onRate={handleCardRate}
+              pointsEarned={pointsEarned}
               onNext={
                 currentCardIndex < studyDeck.flashcards.length - 1
                   ? () => {

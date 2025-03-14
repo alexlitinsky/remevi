@@ -5,7 +5,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { generateObject} from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { openaiProvider, fireworksProvider } from '@/lib/ai/providers';
 import { z } from 'zod';
 
 const TEMP_DIR = join(process.cwd(), 'tmp', 'uploads');
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
           unlink(`${filePath}.json`),
         ]).catch(console.error); // Don't fail if cleanup fails
       } catch (error) {
+        console.error('Error accessing temp file:', error);
         return new Response('Upload not found or expired', { status: 404 });
       }
     }
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
         const result = await generateObject({
           system: 'You are a helpful AI that creates study materials. Generate flashcards and a mind map from the provided text. Return a JSON object with flashcards array and mindMap object.',
           prompt: `Create study materials from this text: ${text.slice(0, 8000)}...`,
-          model: openai('gpt-4o-mini'),
+          model: fireworksProvider,
           schema: z.object({
             flashcards: z.array(z.object({ front: z.string(), back: z.string() })),
             mindMap: z.object({ nodes: z.array(z.object({ id: z.string(), label: z.string() })), connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) }),

@@ -3,8 +3,8 @@ declare module "pdf-parse/lib/pdf-parse.js" {
     text: string;
     numpages: number;
     numrender: number;
-    info: any;
-    metadata: any;
+    info: unknown;
+    metadata: unknown;
     version: string;
   }
 
