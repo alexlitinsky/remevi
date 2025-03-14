@@ -5,7 +5,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { generateObject} from 'ai';
-import { openaiProvider, fireworksProvider } from '@/lib/ai/providers';
+import { openaiProvider } from '@/lib/ai/providers';
 import { z } from 'zod';
 
 const TEMP_DIR = join(process.cwd(), 'tmp', 'uploads');
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         const result = await generateObject({
           system: 'You are a helpful AI that creates study materials. Generate flashcards and a mind map from the provided text. Return a JSON object with flashcards array and mindMap object.',
           prompt: `Create study materials from this text: ${text.slice(0, 8000)}...`,
-          model: fireworksProvider,
+          model: openaiProvider,
           schema: z.object({
             flashcards: z.array(z.object({ front: z.string(), back: z.string() })),
             mindMap: z.object({ nodes: z.array(z.object({ id: z.string(), label: z.string() })), connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) }),

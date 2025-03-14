@@ -29,6 +29,7 @@ const CardFront = memo(({ content, onClick }: { content: string, onClick: () => 
     </CardContent>
   </Card>
 ));
+CardFront.displayName = 'CardFront';
 
 const CardBack = memo(({ content, onClick }: { content: string, onClick: () => void }) => (
   <Card
@@ -40,6 +41,7 @@ const CardBack = memo(({ content, onClick }: { content: string, onClick: () => v
     </CardContent>
   </Card>
 ));
+CardBack.displayName = 'CardBack';
 
 // Memoize the navigation buttons
 const NavigationButtons = memo(({ onPrev, onNext }: { onPrev?: () => void, onNext?: () => void }) => (
@@ -72,6 +74,7 @@ const NavigationButtons = memo(({ onPrev, onNext }: { onPrev?: () => void, onNex
     )}
   </div>
 ));
+NavigationButtons.displayName = 'NavigationButtons';
 
 // Memoize the rating buttons
 const RatingButtons = memo(({ onRate }: { onRate: (difficulty: Difficulty) => void }) => (
@@ -99,6 +102,7 @@ const RatingButtons = memo(({ onRate }: { onRate: (difficulty: Difficulty) => vo
     </Button>
   </div>
 ));
+RatingButtons.displayName = 'RatingButtons';
 
 export function Flashcard({
   front,

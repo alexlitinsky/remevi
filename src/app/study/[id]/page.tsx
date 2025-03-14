@@ -42,7 +42,6 @@ export default function StudyDeckPage() {
   const [showMindMap, setShowMindMap] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [pointsEarned, setPointsEarned] = useState<number | null>(null);
-  const [showPointsAnimation, setShowPointsAnimation] = useState(false);
 
   useEffect(() => {
     let mounted = true;

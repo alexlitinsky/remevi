@@ -28,7 +28,7 @@ export default function Home() {
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const router = useRouter();
-  const [progress, setProgress] = useState({
+  const [progress] = useState({
     cardsReviewed: 0,
     totalCards: 50,
     masteryLevel: 0,
