@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/fireworks": "^0.1.16",
     "@ai-sdk/openai": "^1.2.5",
     "@clerk/nextjs": "^6.12.4",
     "@clerk/themes": "^2.2.20",
