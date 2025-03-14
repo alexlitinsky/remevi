@@ -68,6 +68,10 @@ model CardProgress {
   repetitions  Int       @default(0)
   dueDate      DateTime  @default(now())
   lastReviewed DateTime?
+  streak       Int       @default(0)
+  totalPoints  Int       @default(0)
+  responseTime Int?      // in milliseconds
+  difficulty   String?   // "easy", "medium", "hard"
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deck         StudyDeck @relation(fields: [deckId], references: [id])

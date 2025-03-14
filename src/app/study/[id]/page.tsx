@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { MapIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MindMap } from '@/components/ui/mind-map';
+import { type Difficulty } from '@/lib/srs';
 
 interface StudyDeck {
   id: string;
@@ -40,6 +41,8 @@ export default function StudyDeckPage() {
   const [showBack, setShowBack] = useState(false);
   const [showMindMap, setShowMindMap] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [pointsEarned, setPointsEarned] = useState<number | null>(null);
+  const [showPointsAnimation, setShowPointsAnimation] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -71,6 +74,48 @@ export default function StudyDeckPage() {
       mounted = false;
     };
   }, [params.id]);
+
+  const handleCardRate = async (difficulty: Difficulty, responseTime: number) => {
+    if (!studyDeck) return;
+
+    try {
+      const response = await fetch(
+        `/api/study-decks/${studyDeck.id}/cards/${currentCardIndex}/review`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ difficulty, responseTime }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to submit review');
+      }
+
+      const { pointsEarned } = await response.json();
+      setPointsEarned(pointsEarned);
+      setShowPointsAnimation(true);
+
+      // Hide points animation after 1.5s
+      setTimeout(() => {
+        setShowPointsAnimation(false);
+        setPointsEarned(null);
+      }, 1500);
+
+      // Move to next card if available
+      if (currentCardIndex < studyDeck.flashcards.length - 1) {
+        setCurrentCardIndex(prev => prev + 1);
+        setShowBack(false);
+      } else {
+        // TODO: Handle deck completion
+        console.log('Deck completed!');
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -123,11 +168,25 @@ export default function StudyDeckPage() {
         
         <div className="flex-1 flex items-center justify-center px-6">
           <div className="w-full max-w-4xl">
+            <AnimatePresence>
+              {showPointsAnimation && pointsEarned && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: -20 }}
+                  exit={{ opacity: 0, y: -40 }}
+                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-4xl font-bold text-yellow-500 z-50"
+                >
+                  +{pointsEarned} points!
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <Flashcard
               front={studyDeck.flashcards[currentCardIndex].front}
               back={studyDeck.flashcards[currentCardIndex].back}
               showBack={showBack}
               onFlip={() => setShowBack(!showBack)}
+              onRate={handleCardRate}
               onNext={
                 currentCardIndex < studyDeck.flashcards.length - 1
                   ? () => {
