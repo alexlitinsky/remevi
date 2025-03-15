@@ -3,22 +3,24 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { calculateNextReview, calculateStreak, type Difficulty } from "@/lib/srs";
 
-// Define the correct type for the params
-type ReviewRouteContext = {
-  params: {
-    id: string;
-    cardId: string;
-  };
-};
-
-export async function POST(
-  req: NextRequest,
-  context: ReviewRouteContext
-) {
+export async function POST(req: NextRequest) {
   try {
     const user = await currentUser();
     if (!user?.id) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // Extract parameters from the URL path
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    
+    // For a route like /api/study-decks/[id]/cards/[cardId]/review
+    // The id will be at index 3 and cardId at index 5
+    const deckId = pathParts[3];
+    const cardId = pathParts[5];
+    
+    if (!deckId || !cardId) {
+      return new NextResponse("Missing required parameters", { status: 400 });
     }
 
     // Verify user exists in our database
@@ -33,7 +35,6 @@ export async function POST(
     });
 
     const { difficulty, responseTime } = await req.json();
-    const { id: deckId, cardId } = context.params;
 
     // Get or create card progress
     let cardProgress = await db.cardProgress.findUnique({
