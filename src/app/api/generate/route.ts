@@ -3,7 +3,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { generateObject} from 'ai';
-import { openaiProvider } from '@/lib/ai/providers';
+import { openaiResponsesProvider } from '@/lib/ai/providers';
 import { z } from 'zod';
 import { getFileFromStorage } from '@/lib/storage';
 
@@ -87,15 +87,39 @@ export async function POST(request: NextRequest) {
     // Process in background
     (async () => {
       try {
+        // const result = await generateObject({
+        //   system: 'You are a helpful AI that creates study materials. Generate flashcards and a mind map from the provided text. Return a JSON object with flashcards array and mindMap object.',
+        //   prompt: `Create study materials from this text: ${text.slice(0, 8000)}...`,
+        //   model: openaiProvider,
+        //   schema: z.object({
+        //     flashcards: z.array(z.object({ front: z.string(), back: z.string() })),
+        //     mindMap: z.object({ nodes: z.array(z.object({ id: z.string(), label: z.string() })), connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) }),
+        //   }),
+        // });
         const result = await generateObject({
-          system: 'You are a helpful AI that creates study materials. Generate flashcards and a mind map from the provided text. Return a JSON object with flashcards array and mindMap object.',
-          prompt: `Create study materials from this text: ${text.slice(0, 8000)}...`,
-          model: openaiProvider,
+          model: openaiResponsesProvider,
+          messages: [
+            {
+              role: 'user',
+              content : [
+                {
+                  type: 'text',
+                  text: 'You are a helpful AI that creates study materials. Generate flashcards and a mind map from the provided file. Return a JSON object with flashcards array and mindMap object.'
+                },
+                {
+                  type: 'file',
+                  data: fileBuffer,
+                  mimeType: metadata.type
+                }
+              ]
+            }
+          ],
           schema: z.object({
             flashcards: z.array(z.object({ front: z.string(), back: z.string() })),
             mindMap: z.object({ nodes: z.array(z.object({ id: z.string(), label: z.string() })), connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) }),
           }),
         });
+
         const object = result.object;
 
         // Add coordinates to mind map nodes

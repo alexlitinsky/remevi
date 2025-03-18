@@ -72,7 +72,7 @@ export default function Home() {
         }
       }
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, router]);
 
   const fetchStudyDecks = async () => {
     setIsLoadingDecks(true);
@@ -139,7 +139,7 @@ export default function Home() {
     } finally {
       setIsProcessing(false);
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, router]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
