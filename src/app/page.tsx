@@ -41,27 +41,35 @@ export default function Home() {
     if (isSignedIn) {
       fetchStudyDecks();
       
-      const uploadId = localStorage.getItem('pendingUploadId');
-      if (uploadId) {
-        // Create study deck and redirect immediately
-        fetch('/api/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ uploadId }),
-        })
-          .then(response => {
-            if (!response.ok) throw new Error('Failed to generate study materials');
-            return response.json();
+      const pendingUploadInfo = localStorage.getItem('pendingUploadInfo');
+      if (pendingUploadInfo) {
+        try {
+          // Parse the stored upload info
+          const { uploadId, filePath, metadata } = JSON.parse(pendingUploadInfo);
+          
+          // Create study deck and redirect immediately
+          fetch('/api/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ uploadId, filePath, metadata }),
           })
-          .then(({ deckId }) => {
-            router.push(`/study/${deckId}`);
-            localStorage.removeItem('pendingUploadId');
-          })
-          .catch(error => {
-            console.error('Error processing file:', error);
-          });
+            .then(response => {
+              if (!response.ok) throw new Error('Failed to generate study materials');
+              return response.json();
+            })
+            .then(({ deckId }) => {
+              router.push(`/study/${deckId}`);
+              localStorage.removeItem('pendingUploadInfo');
+            })
+            .catch(error => {
+              console.error('Error processing file:', error);
+            });
+        } catch (error) {
+          console.error('Error parsing pending upload info:', error);
+          localStorage.removeItem('pendingUploadInfo');
+        }
       }
     }
   }, [isSignedIn]);
@@ -88,7 +96,7 @@ export default function Home() {
     try {
       setIsProcessing(true);
       
-      // Always upload to temp storage first
+      // Upload file to Supabase storage via our API
       const formData = new FormData();
       formData.append('file', file);
       
@@ -101,11 +109,11 @@ export default function Home() {
         throw new Error('Failed to upload file');
       }
       
-      const { uploadId } = await response.json();
+      const { uploadId, filePath, metadata } = await response.json();
 
       if (!isSignedIn) {
-        // Store uploadId and show sign in
-        localStorage.setItem('pendingUploadId', uploadId);
+        // Store upload info and show sign in
+        localStorage.setItem('pendingUploadInfo', JSON.stringify({ uploadId, filePath, metadata }));
         setShowSignIn(true);
         setIsProcessing(false);
         return;
@@ -117,7 +125,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ uploadId }),
+        body: JSON.stringify({ uploadId, filePath, metadata }),
       });
 
       if (!generateResponse.ok) {

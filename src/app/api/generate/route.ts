@@ -1,15 +1,11 @@
 import { NextRequest } from 'next/server';
-import { join } from 'path';
-import { readFile, unlink } from 'fs/promises';
 import { currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { generateObject} from 'ai';
 import { openaiProvider } from '@/lib/ai/providers';
 import { z } from 'zod';
-
-const TEMP_DIR = join(process.cwd(), 'tmp', 'uploads');
-
+import { getFileFromStorage } from '@/lib/storage';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +17,7 @@ export async function POST(request: NextRequest) {
     let fileBuffer: Buffer;
     let metadata: { originalName: string; type: string; size: number };
 
-    // Handle both direct uploads and temp file processing
+    // Handle both direct uploads and Supabase storage
     if (request.headers.get('content-type')?.includes('multipart/form-data')) {
       const formData = await request.formData();
       const file = formData.get('file') as File;
@@ -35,24 +31,22 @@ export async function POST(request: NextRequest) {
         size: file.size,
       };
     } else {
-      // Handle uploaded file from temp storage
-      const { uploadId } = await request.json();
-      if (!uploadId) {
-        return new Response('No upload ID provided', { status: 400 });
+      // Handle uploaded file from Supabase storage
+      const { uploadId, filePath, metadata: fileMetadata } = await request.json();
+      if (!uploadId || !filePath) {
+        return new Response('Invalid upload data provided', { status: 400 });
       }
 
-      const filePath = join(TEMP_DIR, uploadId);
       try {
-        fileBuffer = await readFile(filePath);
-        metadata = JSON.parse(await readFile(`${filePath}.json`, 'utf-8'));
-        
-        // Clean up temp files
-        await Promise.all([
-          unlink(filePath),
-          unlink(`${filePath}.json`),
-        ]).catch(console.error); // Don't fail if cleanup fails
+        // Get file from Supabase storage
+        const fileData = await getFileFromStorage(filePath);
+        // Convert Blob to Buffer
+        const arrayBuffer = await fileData.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        fileBuffer = Buffer.from(uint8Array);
+        metadata = fileMetadata;
       } catch (error) {
-        console.error('Error accessing temp file:', error);
+        console.error('Error accessing file from storage:', error);
         return new Response('Upload not found or expired', { status: 404 });
       }
     }
@@ -148,4 +142,4 @@ export async function POST(request: NextRequest) {
     console.error('Error generating study materials:', error);
     return new Response('Error processing file', { status: 500 });
   }
-} 
+}
