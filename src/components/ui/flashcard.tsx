@@ -168,7 +168,7 @@ export function Flashcard({
       
       const timer = setTimeout(() => {
         setShowPoints(false);
-      }, 1500);
+      }, 200); // Reduced to 200ms for even faster display
       
       return () => clearTimeout(timer);
     }
@@ -212,7 +212,7 @@ export function Flashcard({
             initial={{ opacity: 0, y: 0 }}
             animate={{ opacity: 1, y: -40 }}
             exit={{ opacity: 0, y: -80 }}
-            transition={{ duration: 0.3 }} // Optimize animation duration
+            transition={{ duration: 0.1 }} 
             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold text-yellow-500 z-50 pointer-events-none"
           >
             +{earnedPoints} points!
@@ -223,10 +223,11 @@ export function Flashcard({
       <div className="relative min-h-[300px] perspective-1000">
         <div 
           className={cn(
-            "relative w-full h-full transition-transform duration-600",
+            "relative w-full h-full transition-transform duration-300",
             "transform-style-3d",
             showBack ? "rotate-y-180" : ""
           )}
+          style={{ transformStyle: 'preserve-3d' }}
         >
           {/* Use memoized components */}
           <CardFront content={front} onClick={onFlip} />
