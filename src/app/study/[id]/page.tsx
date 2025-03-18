@@ -188,11 +188,12 @@ export default function StudyDeckPage() {
                     }
                   : undefined
               }
+              progress={studyDeck.flashcards.length > 1 
+                ? currentCardIndex / (studyDeck.flashcards.length - 1) 
+                : 1}
+              totalCards={studyDeck.flashcards.length}
+              currentCardIndex={currentCardIndex}
             />
-            
-            <div className="mt-4 text-center text-sm text-zinc-400">
-              Card {currentCardIndex + 1} of {studyDeck.flashcards.length}
-            </div>
           </div>
         </div>
       </div>

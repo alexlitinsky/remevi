@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, memo } from "react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "./card"
 import { Button } from "./button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { type Difficulty } from "@/lib/srs"
 
@@ -16,6 +15,9 @@ interface FlashcardProps {
   onRate?: (difficulty: Difficulty, responseTime: number) => void
   className?: string
   pointsEarned?: number | null
+  progress?: number // Add progress prop (0-1)
+  totalCards?: number
+  currentCardIndex?: number
 }
 
 // Memoize the card sides to prevent unnecessary re-renders
@@ -42,39 +44,6 @@ const CardBack = memo(({ content, onClick }: { content: string, onClick: () => v
   </Card>
 ));
 CardBack.displayName = 'CardBack';
-
-// Memoize the navigation buttons
-const NavigationButtons = memo(({ onPrev, onNext }: { onPrev?: () => void, onNext?: () => void }) => (
-  <div className="flex justify-between">
-    {onPrev && (
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={(e) => {
-          e.stopPropagation();
-          onPrev();
-        }}
-        className="hover:bg-zinc-800 hover:text-white transition-colors"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
-    )}
-    {onNext && (
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={(e) => {
-          e.stopPropagation();
-          onNext();
-        }}
-        className="ml-auto hover:bg-zinc-800 hover:text-white transition-colors"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-    )}
-  </div>
-));
-NavigationButtons.displayName = 'NavigationButtons';
 
 // Memoize the rating buttons
 const RatingButtons = memo(({ onRate }: { onRate: (difficulty: Difficulty) => void }) => (
@@ -104,6 +73,62 @@ const RatingButtons = memo(({ onRate }: { onRate: (difficulty: Difficulty) => vo
 ));
 RatingButtons.displayName = 'RatingButtons';
 
+// Progress bar component
+const ProgressBar = memo(({ 
+  progress, 
+  totalCards,
+  currentCardIndex
+}: { 
+  progress: number, 
+  totalCards: number,
+  currentCardIndex: number
+}) => (
+  <div className="w-full mt-4">
+    <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
+      <motion.div 
+        className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
+        initial={{ width: 0 }}
+        animate={{ width: `${progress * 100}%` }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      >
+        {/* Animated gradient overlay */}
+        <motion.div
+          className="absolute inset-0 w-full h-full"
+          style={{
+            background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
+            backgroundSize: "200% 100%",
+          }}
+          animate={{
+            backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
+          }}
+          transition={{
+            duration: 2,
+            ease: "linear",
+            repeat: Infinity,
+          }}
+        />
+        
+        {/* Pulsing effect */}
+        <motion.div
+          className="absolute inset-0 w-full h-full bg-blue-400 opacity-0"
+          animate={{
+            opacity: [0, 0.2, 0],
+          }}
+          transition={{
+            duration: 1.5,
+            ease: "easeInOut",
+            repeat: Infinity,
+          }}
+        />
+      </motion.div>
+    </div>
+    <div className="text-center text-xs text-zinc-400">
+      {currentCardIndex + 1} of {totalCards}
+    </div>
+  </div>
+));
+ProgressBar.displayName = 'ProgressBar';
+
 export function Flashcard({
   front,
   back,
@@ -114,6 +139,9 @@ export function Flashcard({
   onRate,
   className,
   pointsEarned = null,
+  progress = 0,
+  totalCards = 1,
+  currentCardIndex = 0,
 }: FlashcardProps) {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [showPoints, setShowPoints] = useState(false);
@@ -159,6 +187,22 @@ export function Flashcard({
     setStartTime(null);
   }, [startTime, onRate]);
 
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' && onNext) {
+        onNext();
+      } else if (e.key === 'ArrowLeft' && onPrev) {
+        onPrev();
+      } else if (e.key === ' ' || e.key === 'Enter') {
+        onFlip();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onNext, onPrev, onFlip]);
+
   return (
     <div className={cn("relative w-full max-w-2xl mx-auto", className)}>
       {/* Points animation - only render when needed */}
@@ -192,8 +236,12 @@ export function Flashcard({
 
       <div className="flex flex-col gap-4 mt-4">
         {showBack && <RatingButtons onRate={handleRate} />}
-        <NavigationButtons onPrev={onPrev} onNext={onNext} />
+        <ProgressBar 
+          progress={progress} 
+          totalCards={totalCards}
+          currentCardIndex={currentCardIndex}
+        />
       </div>
     </div>
   );
-} 
+}
