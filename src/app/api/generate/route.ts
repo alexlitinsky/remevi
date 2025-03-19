@@ -103,11 +103,17 @@ export async function POST(request: NextRequest) {
           };
         });
 
+        // Add IDs to flashcards
+        const flashcardsWithIds = object.flashcards.map((card: any) => ({
+          ...card,
+          id: `card-${Math.random().toString(36).substring(2, 9)}`
+        }));
+
         // Update study deck with results
         await db.studyDeck.update({
           where: { id: studyDeck.id },
           data: {
-            flashcards: object.flashcards,
+            flashcards: flashcardsWithIds,
             mindMap: {
               nodes,
               connections: object.mindMap.connections,

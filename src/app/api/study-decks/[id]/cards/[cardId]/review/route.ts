@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       update: {},
     });
 
-    const { difficulty, responseTime } = await req.json();
+    const { difficulty, responseTime, front, back } = await req.json();
 
     // Get or create card progress
     let cardProgress = await db.cardProgress.findUnique({
@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
     const newStreak = calculateStreak(
       cardProgress?.streak ?? 0,
       review.difficulty,
-      cardProgress?.lastReviewed ?? null
     );
 
     // Update or create card progress
@@ -76,6 +75,8 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         cardId,
         deckId,
+        front: front,
+        back: back,
         easeFactor: nextReview.easeFactor,
         interval: nextReview.interval,
         repetitions: nextReview.repetitions,
@@ -87,6 +88,8 @@ export async function POST(req: NextRequest) {
         difficulty: review.difficulty,
       },
       update: {
+        front: front,
+        back: back,
         easeFactor: nextReview.easeFactor,
         interval: nextReview.interval,
         repetitions: nextReview.repetitions,

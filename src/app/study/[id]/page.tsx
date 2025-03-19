@@ -8,7 +8,7 @@ import { MapIcon, ArrowPathIcon, ChartBarIcon } from '@heroicons/react/24/outlin
 import { motion, AnimatePresence } from 'framer-motion';
 import { MindMap } from '@/components/ui/mind-map';
 import { type Difficulty } from '@/lib/srs';
-import { isCardDue } from '@/lib/srs';
+import { StudySettings } from '@/components/study-settings'; // Fix import path
 
 interface FlashcardData {
   id: string;
@@ -18,6 +18,8 @@ interface FlashcardData {
   easeFactor?: number;
   repetitions?: number;
   interval?: number;
+  isNew?: boolean;
+  isDue?: boolean;
 }
 
 interface StudyDeck {
@@ -53,6 +55,7 @@ export default function StudyDeckPage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showBack, setShowBack] = useState(false);
   const [showMindMap, setShowMindMap] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [pointsEarned, setPointsEarned] = useState<number | null>(null);
   const [deckCompleted, setDeckCompleted] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -60,6 +63,8 @@ export default function StudyDeckPage() {
   const [orderedCards, setOrderedCards] = useState<FlashcardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCardsInDeck, setTotalCardsInDeck] = useState<number>(0);
+  const [newCardCount, setNewCardCount] = useState(0);
+  const [dueCardCount, setDueCardCount] = useState(0);
 
   // Load study progress from local storage
   useEffect(() => {
@@ -94,57 +99,56 @@ export default function StudyDeckPage() {
     }
   }, [currentCardIndex, studyDeck?.id, studyDeck, totalPoints, completedCardIds]);
 
-  // Order cards based on SRS algorithm
+  // Order cards based on SRS data
   const orderCardsBySRS = useCallback((cards: FlashcardData[]) => {
-    return [...cards].sort((a, b) => {
-      // If a card has no due date, it should be studied first
-      if (!a.dueDate) return -1;
-      if (!b.dueDate) return 1;
-      
-      // Sort by due date (oldest first)
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-    }).filter(card => {
-      // If card has a due date, only include it if it's due
-      if (!card.dueDate) return true;
-      return isCardDue(new Date(card.dueDate));
+    if (!cards || !cards.length) return [];
+    
+    // First, separate new cards from cards with progress
+    const newCards = cards.filter(card => card.isNew);
+    const dueCards = cards.filter(card => !card.isNew && card.isDue);
+    
+    // Sort due cards by due date (earliest first)
+    const sortedDueCards = dueCards.sort((a, b) => {
+      const dateA = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+      const dateB = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+      return dateA - dateB;
     });
+    
+    // Combine new cards first, then due cards
+    return [...newCards, ...sortedDueCards];
   }, []);
 
   useEffect(() => {
     let mounted = true;
 
     const fetchStudyDeck = async () => {
-      setIsLoading(true);
       try {
-        const response = await fetch(`/api/study-decks/${params.id}`);
-        if (response.ok && mounted) {
-          const data = await response.json();
-          
-          // Set the total number of cards in the deck
-          setTotalCardsInDeck(data.flashcards.length);
-          
-          // Add unique IDs to flashcards if they don't have them
-          const flashcardsWithIds = data.flashcards.map((card: FlashcardData, index: number) => ({
-            ...card,
-            id: card.id || `card-${index}`
-          }));
-          
-          const updatedDeck = {
-            ...data,
-            flashcards: flashcardsWithIds
-          };
-          
-          setStudyDeck(updatedDeck);
-          
-          // Order cards based on SRS
-          const ordered = orderCardsBySRS(flashcardsWithIds as FlashcardData[]);
-          setOrderedCards(ordered);
-          
-          // If still processing, poll every 2 seconds
-          if (data.isProcessing) {
-            const pollTimer = setTimeout(fetchStudyDeck, 2000);
-            return () => clearTimeout(pollTimer);
-          }
+        // First fetch the deck info
+        const deckResponse = await fetch(`/api/study-decks/${params.id}`);
+        if (!deckResponse.ok || !mounted) return;
+        
+        const deckData = await deckResponse.json();
+        setStudyDeck(deckData);
+        setTotalCardsInDeck(deckData.flashcards.length);
+        
+        // Then fetch the due cards
+        const dueCardsResponse = await fetch(`/api/study-decks/${params.id}/due-cards`);
+        if (!dueCardsResponse.ok || !mounted) return;
+        
+        const dueCardsData = await dueCardsResponse.json();
+        
+        // Count new and due cards
+        const newCards = dueCardsData.cards.filter((card: FlashcardData) => card.isNew);
+        const dueCards = dueCardsData.cards.filter((card: FlashcardData) => card.isDue && !card.isNew);
+        
+        setNewCardCount(newCards.length);
+        setDueCardCount(dueCards.length);
+        setOrderedCards(dueCardsData.cards);
+        
+        // If still processing, poll every 2 seconds
+        if (deckData.isProcessing) {
+          const pollTimer = setTimeout(fetchStudyDeck, 2000);
+          return () => clearTimeout(pollTimer);
         }
       } catch (error) {
         console.error('Failed to fetch study deck:', error);
@@ -159,7 +163,7 @@ export default function StudyDeckPage() {
     return () => {
       mounted = false;
     };
-  }, [params.id, orderCardsBySRS]);
+  }, [params.id]);
 
   const handleCardRate = async (difficulty: Difficulty, responseTime: number) => {
     if (!studyDeck || !orderedCards.length) return;
@@ -178,7 +182,7 @@ export default function StudyDeckPage() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ difficulty, responseTime }),
+          body: JSON.stringify({ difficulty, responseTime, front: currentCard.front, back: currentCard.back }),
         }
       );
 
@@ -222,7 +226,6 @@ export default function StudyDeckPage() {
           // Set deck completed state
           setDeckCompleted(true);
           setPointsEarned(null);
-          console.log("Deck completed, showing completion screen");
         } else {
           // Move to next card - reset to front side
           setShowBack(false);
@@ -243,7 +246,8 @@ export default function StudyDeckPage() {
     // Ensure all cards have an id
     const cardsWithIds = studyDeck.flashcards.map(card => ({
       ...card,
-      id: card.id || `card-${Math.random().toString(36).substr(2, 9)}`
+      isNew: true,
+      isDue: true
     })) as FlashcardData[];
     
     const ordered = orderCardsBySRS(cardsWithIds);
@@ -255,6 +259,7 @@ export default function StudyDeckPage() {
 
   const handleSeePerformance = () => {
     // Navigate to performance page (future enhancement)
+    // TODO just render performance in the finish screen
     router.push(`/?deck=${studyDeck?.id}`);
   };
 
@@ -264,21 +269,6 @@ export default function StudyDeckPage() {
       localStorage.removeItem(`study-progress-${studyDeck.id}`);
     }
     router.push('/');
-  };
-
-  const handleStudyAllCards = () => {
-    // Study all cards regardless of due date
-    if (!studyDeck) return;
-    
-    // Fix type error by ensuring all cards have an id
-    const allCards = studyDeck.flashcards.map(card => ({
-      ...card,
-      id: card.id || `card-${Math.random().toString(36).substr(2, 9)}`
-    })) as FlashcardData[];
-    
-    setOrderedCards(allCards);
-    setCurrentCardIndex(0);
-    setShowBack(false);
   };
 
   if (isLoading) {
@@ -315,22 +305,18 @@ export default function StudyDeckPage() {
   if (studyDeck.isProcessing) {
     return (
       <div className="h-screen pt-16 bg-background flex items-center justify-center">
-        <div className="text-center space-y-6 max-w-md mx-auto p-8 bg-zinc-900/50 rounded-xl border border-zinc-800/50">
+        <div className="text-center space-y-6">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
           <h1 className="text-2xl font-bold text-white animate-pulse">Processing Your Deck</h1>
           <p className="text-zinc-400">
             We&apos;re generating flashcards and a mind map for your study deck. This may take a minute or two.
           </p>
-          <div className="w-full bg-zinc-800 rounded-full h-2.5 mt-4">
-            <div className="bg-blue-600 h-2.5 rounded-full animate-pulse" style={{ width: '60%' }}></div>
-          </div>
         </div>
       </div>
     );
   }
 
   if (deckCompleted) {
-    console.log("Rendering deck completion screen");
     return (
       <div className="h-screen pt-16 bg-background flex items-center justify-center">
         <div className="text-center space-y-6 max-w-md mx-auto p-8 bg-zinc-900/50 rounded-xl border border-zinc-800/50">
@@ -367,39 +353,23 @@ export default function StudyDeckPage() {
     );
   }
 
-  if (!orderedCards.length) {
-    return (
-      <div className="h-screen pt-16 bg-background flex items-center justify-center">
-        <div className="text-center space-y-6 max-w-md mx-auto p-8 bg-zinc-900/50 rounded-xl border border-zinc-800/50">
-          <h1 className="text-3xl font-bold text-white">No Cards Due</h1>
-          <p className="text-zinc-400">
-            You&apos;ve studied all the cards for now. Come back later when more cards are due for review.
-          </p>
-          <div className="flex flex-col space-y-4 pt-4">
-            <Button 
-              onClick={handleStudyAllCards}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              <ArrowPathIcon className="w-5 h-5 mr-2" />
-              Study All Cards Anyway
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleReturnToDashboard}
-              className="w-full"
-            >
-              Return to Dashboard
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <main className="h-screen pt-16 bg-background overflow-hidden">
       <div className="h-full flex flex-col">
-        <h1 className="text-2xl font-bold text-center py-4 text-white">{studyDeck.title}</h1>
+        <div className="flex justify-between items-center px-6 py-4">
+          <h1 className="text-2xl font-bold text-white">{studyDeck?.title}</h1>
+          <div className="flex space-x-2 text-sm">
+            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full">
+              New: {newCardCount}
+            </span>
+            <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-full">
+              Due: {dueCardCount}
+            </span>
+            <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded-full">
+              Total: {totalCardsInDeck}
+            </span>
+          </div>
+        </div>
         
         <div className="flex-1 flex items-center justify-center px-6">
           <div className="w-full max-w-4xl">
@@ -438,10 +408,10 @@ export default function StudyDeckPage() {
                           }
                         : undefined
                     }
-                    progress={totalCardsInDeck > 1 
-                      ? currentCardIndex / (totalCardsInDeck - 1) 
+                    progress={orderedCards.length > 1 
+                      ? currentCardIndex / (orderedCards.length - 1) 
                       : 1}
-                    totalCards={totalCardsInDeck}
+                    totalCards={orderedCards.length}
                     currentCardIndex={currentCardIndex}
                   />
                 </motion.div>
@@ -453,6 +423,13 @@ export default function StudyDeckPage() {
 
       <div className="fixed bottom-8 right-8 flex flex-col space-y-4">
         <Button
+          onClick={() => setShowSettings(true)}
+          className="rounded-full w-12 h-12 p-0 bg-green-600 hover:bg-green-700 text-white shadow-lg"
+          aria-label="Study Settings"
+        >
+          <ChartBarIcon className="h-6 w-6" />
+        </Button>
+        <Button
           onClick={() => setShowMindMap(!showMindMap)}
           className="rounded-full w-12 h-12 p-0 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
           aria-label="Toggle Mind Map"
@@ -460,6 +437,46 @@ export default function StudyDeckPage() {
           <MapIcon className="h-6 w-6" />
         </Button>
       </div>
+
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-8"
+            onClick={() => setShowSettings(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md"
+            >
+              <div className="rounded-2xl bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 p-8">
+                <h2 className="text-xl font-bold text-white mb-4">Study Settings</h2>
+                <div className="space-y-4">
+                  <div>
+                    <Button 
+                      onClick={() => {
+                        setShowSettings(false);
+                        window.location.reload();
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      Refresh Cards
+                    </Button>
+                  </div>
+                  <div>
+                    <StudySettings />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showMindMap && studyDeck && studyDeck.mindMap && (

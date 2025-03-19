@@ -13,6 +13,18 @@ interface SchedulingResult {
   points: number;
 }
 
+export interface FlashcardData {
+  id: string;
+  front: string;
+  back: string;
+  dueDate?: string;
+  easeFactor?: number;
+  interval?: number;
+  repetitions?: number;
+  isNew?: boolean;
+  isDue?: boolean;
+}
+
 const DIFFICULTY_QUALITY = {
   hard: 0,
   medium: 1,
