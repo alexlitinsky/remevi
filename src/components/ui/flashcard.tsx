@@ -12,7 +12,6 @@ interface FlashcardProps {
   onFlip: () => void
   onNext?: () => void
   onPrev?: () => void
-  onRate?: (difficulty: Difficulty, responseTime: number) => void
   className?: string
   pointsEarned?: number | null
   progress?: number // Add progress prop (0-1)
@@ -45,34 +44,6 @@ const CardBack = memo(({ content, onClick }: { content: string, onClick: () => v
 ));
 CardBack.displayName = 'CardBack';
 
-// Memoize the rating buttons
-const RatingButtons = memo(({ onRate }: { onRate: (difficulty: Difficulty) => void }) => (
-  <div className="flex justify-center gap-2">
-    <Button
-      variant="destructive"
-      onClick={() => onRate('hard')}
-      className="w-24 hover:bg-red-700 transition-colors"
-    >
-      Hard
-    </Button>
-    <Button
-      variant="secondary"
-      onClick={() => onRate('medium')}
-      className="w-24 hover:bg-zinc-600 transition-colors"
-    >
-      Medium
-    </Button>
-    <Button
-      variant="default"
-      onClick={() => onRate('easy')}
-      className="w-24 hover:bg-green-700 transition-colors"
-    >
-      Easy
-    </Button>
-  </div>
-));
-RatingButtons.displayName = 'RatingButtons';
-
 // Progress bar component
 const ProgressBar = memo(({ 
   progress, 
@@ -83,47 +54,16 @@ const ProgressBar = memo(({
   totalCards: number,
   currentCardIndex: number
 }) => (
-  <div className="w-full mt-4">
-    <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
-      <motion.div 
-        className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
-        initial={{ width: 0 }}
-        animate={{ width: `${progress * 100}%` }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
-      >
-        {/* Animated gradient overlay */}
-        <motion.div
-          className="absolute inset-0 w-full h-full"
-          style={{
-            background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
-            backgroundSize: "200% 100%",
-          }}
-          animate={{
-            backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
-          }}
-          transition={{
-            duration: 2,
-            ease: "linear",
-            repeat: Infinity,
-          }}
-        />
-        
-        {/* Pulsing effect */}
-        <motion.div
-          className="absolute inset-0 w-full h-full bg-blue-400 opacity-0"
-          animate={{
-            opacity: [0, 0.2, 0],
-          }}
-          transition={{
-            duration: 1.5,
-            ease: "easeInOut",
-            repeat: Infinity,
-          }}
-        />
-      </motion.div>
+  <div className="w-full">
+    <div className="flex justify-between text-xs text-zinc-500 mb-1">
+      <span>Card {currentCardIndex + 1} of {totalCards}</span>
+      <span>{Math.round(progress * 100)}% complete</span>
     </div>
-    <div className="text-center text-xs text-zinc-400">
-      {currentCardIndex + 1} of {totalCards}
+    <div className="w-full bg-zinc-800 rounded-full h-1.5">
+      <div 
+        className="bg-blue-600 h-1.5 rounded-full transition-all duration-300 ease-out"
+        style={{ width: `${progress * 100}%` }}
+      />
     </div>
   </div>
 ));
@@ -136,28 +76,14 @@ export function Flashcard({
   onFlip,
   onNext,
   onPrev,
-  onRate,
   className,
   pointsEarned = null,
   progress = 0,
   totalCards = 1,
   currentCardIndex = 0,
 }: FlashcardProps) {
-  const [startTime, setStartTime] = useState<number | null>(null);
   const [showPoints, setShowPoints] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState(0);
-
-  // Use useEffect with a cleanup function to track when the card is flipped
-  useEffect(() => {
-    if (showBack && !startTime) {
-      setStartTime(Date.now());
-    }
-    
-    // Cleanup function to reset startTime when component unmounts
-    return () => {
-      if (startTime) setStartTime(null);
-    };
-  }, [showBack, startTime]);
 
   // Optimize points animation effect
   useEffect(() => {
@@ -173,19 +99,6 @@ export function Flashcard({
       return () => clearTimeout(timer);
     }
   }, [pointsEarned]);
-
-  // Memoize the rate handler to prevent recreation on each render
-  const handleRate = useCallback((difficulty: Difficulty) => {
-    if (!startTime || !onRate) return;
-    
-    const responseTime = Date.now() - startTime;
-    
-    // Call the parent's onRate function
-    onRate(difficulty, responseTime);
-    
-    // Reset startTime immediately to prevent multiple calls
-    setStartTime(null);
-  }, [startTime, onRate]);
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -236,7 +149,6 @@ export function Flashcard({
       </div>
 
       <div className="flex flex-col gap-4 mt-4">
-        {showBack && <RatingButtons onRate={handleRate} />}
         <ProgressBar 
           progress={progress} 
           totalCards={totalCards}

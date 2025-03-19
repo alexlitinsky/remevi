@@ -16,20 +16,8 @@ model User {
   updatedAt    DateTime       @updatedAt
   cardProgress CardProgress[]
   flashcards   Flashcard[]
-  notes        Note[]
   progress     UserProgress?
   preferences  UserPreferences?
-}
-
-model Note {
-  id         String      @id @default(cuid())
-  title      String
-  content    String
-  userId     String
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  flashcards Flashcard[]
-  user       User        @relation(fields: [userId], references: [id])
 }
 
 model Flashcard {
@@ -40,7 +28,6 @@ model Flashcard {
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  note      Note     @relation(fields: [noteId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
 }
 
