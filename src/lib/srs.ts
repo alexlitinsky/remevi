@@ -86,19 +86,14 @@ export function isCardDue(dueDate: Date): boolean {
 }
 
 export function calculateStreak(
-  previousStreak: number,
-  difficulty: Difficulty,
-  lastReviewDate: Date | null
+  currentStreak: number,
+  difficulty: Difficulty
 ): number {
-  // Break streak if it's been more than 24 hours since last review
-  if (lastReviewDate && new Date().getTime() - lastReviewDate.getTime() > 24 * 60 * 60 * 1000) {
-    return 0;
+  // Only increment streak for easy/medium responses
+  if (difficulty === "easy" || difficulty === "medium") {
+    return currentStreak + 1;
   }
-
-  // Break streak on 'hard' rating
-  if (difficulty === 'hard') {
-    return 0;
-  }
-
-  return previousStreak + 1;
-} 
+  
+  // Reset streak for hard responses
+  return 0;
+}
