@@ -20,7 +20,7 @@ export default function StudyDeckPage() {
   const deckId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   
   const {
-    studyDeck,
+    deck,
     orderedCards,
     currentCardIndex,
     showBack,
@@ -43,7 +43,7 @@ export default function StudyDeckPage() {
 
   const handleSeePerformance = () => {
     // Navigate to performance page (future enhancement)
-    router.push(`/?deck=${studyDeck?.id}`);
+    router.push(`/?deck=${deck?.id}`);
   };
 
   const handleReturnToDashboard = () => {
@@ -62,12 +62,12 @@ export default function StudyDeckPage() {
   }
 
   // Error state - no deck found
-  if (!studyDeck) {
+  if (!deck) {
     return <ErrorState onReturnToDashboard={handleReturnToDashboard} />;
   }
 
   // Processing state - deck is being generated
-  if (studyDeck.isProcessing) {
+  if (deck.isProcessing) {
     return <ProcessingState />;
   }
   
@@ -94,7 +94,7 @@ export default function StudyDeckPage() {
       <div className="h-full flex flex-col">
         {/* Header with card counts */}
         <StudyDeckHeader
-          title={studyDeck.title}
+          title={deck.title}
           newCardCount={newCardCount}
           dueCardCount={dueCardCount}
           totalCardCount={totalCardsInDeck}
@@ -129,12 +129,12 @@ export default function StudyDeckPage() {
       />
 
       {/* Mind map modal */}
-      {studyDeck.mindMap && (
+      {deck.mindMap && (
         <MindMapModal
           isVisible={showMindMap}
           onClose={() => setShowMindMap(false)}
-          nodes={studyDeck.mindMap.nodes}
-          connections={studyDeck.mindMap.connections}
+          nodes={deck.mindMap.nodes}
+          connections={deck.mindMap.connections}
         />
       )}
     </main>

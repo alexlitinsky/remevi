@@ -25,66 +25,67 @@ export async function GET(req: NextRequest) {
     const pathParts = url.pathname.split('/')
     const deckId = pathParts[pathParts.length - 2]
 
-    // Get the study deck
-    const studyDeck = await db.studyDeck.findUnique({
-      where: { id: deckId }
-    });
-    
-    if (!studyDeck) {
-      return new NextResponse("Study deck not found", { status: 404 });
-    }
-    
-    // Parse flashcards from JSON if it's a string, otherwise use as is
-    const flashcardsData = typeof studyDeck.flashcards === 'string' 
-      ? JSON.parse(studyDeck.flashcards) 
-      : studyDeck.flashcards;
-    
-    
-    const cardProgress = await db.cardProgress.findMany({
-      where: {
-        userId: user.id,
-        deckId: deckId,
+    // Get the deck
+    const deck = await db.deck.findUnique({
+      where: { id: deckId },
+      include: {
+        deckContent: {
+          include: {
+            studyContent: {
+              include: {
+                flashcardContent: true,
+                cardInteractions: {
+                  where: {
+                    userId: user.id
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     });
-
-
-    // Create a map for quick lookups
-    const progressMap = new Map();
-    cardProgress.forEach(progress => {
-      progressMap.set(progress.cardId, progress);
-    });
+    
+    if (!deck) {
+      return new NextResponse("Deck not found", { status: 404 });
+    }
     
     // Identify new and due cards
     const newCards: Card[] = [];
     const dueCards: Card[] = [];
     
-    flashcardsData.forEach((card: Card) => {
-      // Make sure card has an ID
-      const cardWithId = {
-        ...card,
-        id: card.id || `card-${Math.random().toString(36).substring(2, 9)}`
-      };
-
-      const progress = progressMap.get(cardWithId.id);
+    // Process each deck content item
+    deck.deckContent.forEach((content: any) => {
+      const studyContent = content.studyContent;
       
-      if (!progress) {
-        // New card (never seen before)
-        newCards.push({
-          ...cardWithId,
-          isNew: true,
-          isDue: true,
-        });
-      } else if (isCardDue(new Date(progress.dueDate))) {
-        // Due card
-        dueCards.push({
-          ...cardWithId,
-          isNew: false,
-          isDue: true,
-          dueDate: progress.dueDate,
-          easeFactor: progress.easeFactor,
-          interval: progress.interval,
-          repetitions: progress.repetitions
-        });
+      // Only process flashcard content for now
+      if (studyContent.type === 'flashcard' && studyContent.flashcardContent) {
+        const flashcard = studyContent.flashcardContent;
+        const interaction = studyContent.cardInteractions[0]; // Get the first interaction if it exists
+        
+        if (!interaction) {
+          // New card (never seen before)
+          newCards.push({
+            id: studyContent.id,
+            front: flashcard.front,
+            back: flashcard.back,
+            isNew: true,
+            isDue: true,
+          });
+        } else if (isCardDue(new Date(interaction.dueDate))) {
+          // Due card
+          dueCards.push({
+            id: studyContent.id,
+            front: flashcard.front,
+            back: flashcard.back,
+            isNew: false,
+            isDue: true,
+            dueDate: interaction.dueDate,
+            easeFactor: interaction.easeFactor,
+            interval: interaction.interval,
+            repetitions: interaction.repetitions
+          });
+        }
       }
     });
     
@@ -108,11 +109,10 @@ export async function GET(req: NextRequest) {
     // Combine new and due cards
     const cardsToStudy = [...limitedNewCards, ...limitedDueCards];
 
-
     return NextResponse.json({
       deckId: deckId,
-      deckTitle: studyDeck.title,
-      totalCardCount: flashcardsData.length,
+      deckTitle: deck.title,
+      totalCardCount: deck.deckContent.length,
       newCardCount: newCards.length,
       limitedNewCardCount: limitedNewCards.length,
       dueCardCount: dueCards.length,

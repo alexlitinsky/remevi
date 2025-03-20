@@ -13,17 +13,18 @@ interface Flashcard {
   back: string;
 }
 
-interface StudyDeck {
+interface Deck {
   id: string;
   title: string;
-  flashcards: Flashcard[];
+  flashcardCount: number;
+  createdAt: string;
   isProcessing?: boolean;
   error?: string;
 }
 
 export default function Home() {
   const { isSignedIn } = useUser();
-  const [studyDecks, setStudyDecks] = useState<StudyDeck[]>([]);
+  const [decks, setDecks] = useState<Deck[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
@@ -39,7 +40,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isSignedIn) {
-      fetchStudyDecks();
+      fetchDecks();
       
       const pendingUploadInfo = localStorage.getItem('pendingUploadInfo');
       if (pendingUploadInfo) {
@@ -74,16 +75,16 @@ export default function Home() {
     }
   }, [isSignedIn, router]);
 
-  const fetchStudyDecks = async () => {
+  const fetchDecks = async () => {
     setIsLoadingDecks(true);
     try {
       const response = await fetch('/api/study-decks');
       if (response.ok) {
-        const decks = await response.json();
-        setStudyDecks(decks);
+        const fetchedDecks = await response.json();
+        setDecks(fetchedDecks);
       }
     } catch (error) {
-      console.error('Failed to fetch study decks:', error);
+      console.error('Failed to fetch decks:', error);
     } finally {
       setIsLoadingDecks(false);
     }
@@ -266,27 +267,41 @@ export default function Home() {
                 transition={{ delay: 0.3 }}
                 className="mb-24"
               >
-                <h2 className="text-3xl font-semibold mb-8 text-white">Your Study Decks</h2>
-                {isLoadingDecks ? (
-                  <div className="flex justify-center items-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-300 border-t-transparent"></div>
-                  </div>
-                ) : studyDecks.length > 0 ? (
-                  <div className="grid gap-6">
-                    {studyDecks.map((deck: StudyDeck) => (
-                      <div
-                        key={deck.id}
-                        className="p-6 rounded-2xl bg-zinc-800/30 border border-zinc-700/30 cursor-pointer hover:bg-zinc-800/40 transition-all"
-                        onClick={() => router.push(`/study/${deck.id}`)}
-                      >
-                        <h3 className="text-xl font-semibold text-white mb-2">{deck.title}</h3>
-                        <p className="text-zinc-400">{deck.flashcards.length} flashcards</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-zinc-300 text-lg">No study decks yet. Upload a document to get started!</p>
-                )}
+                <div className="mt-8">
+                  <h2 className="text-2xl font-semibold mb-4 text-white">Your Study Decks</h2>
+                  
+                  {isLoadingDecks ? (
+                    <div className="flex justify-center p-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                    </div>
+                  ) : decks.length === 0 ? (
+                    <div className="text-center p-8 bg-gray-800/50 rounded-lg border border-gray-700">
+                      <p className="text-gray-400">You don't have any study decks yet. Upload a file to get started!</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {decks.map((deck) => (
+                        <div 
+                          key={deck.id}
+                          onClick={() => router.push(`/study/${deck.id}`)}
+                          className="bg-gray-800 border border-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-colors"
+                        >
+                          <h3 className="text-lg font-medium text-white mb-2">{deck.title}</h3>
+                          <div className="flex justify-between text-sm text-gray-400">
+                            <span>{deck.flashcardCount} cards</span>
+                            <span>{new Date(deck.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          {deck.isProcessing && (
+                            <div className="mt-2 flex items-center text-yellow-500 text-sm">
+                              <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-yellow-500 mr-2"></div>
+                              Processing...
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </motion.div>
             </>
           )}

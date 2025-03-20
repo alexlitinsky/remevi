@@ -13,18 +13,14 @@ export interface FlashcardData {
   isDue?: boolean;
 }
 
-export interface StudyDeck {
+export interface DeckData {
   id: string;
   title: string;
   createdAt: string;
   isProcessing: boolean;
   error?: string;
-  flashcards: Array<{
-    id?: string;
-    front: string;
-    back: string;
-  }>;
-  mindMap: {
+  description?: string;
+  mindMap?: {
     nodes: Array<{
       id: string;
       label: string;
@@ -47,7 +43,7 @@ export interface StudyProgress {
 }
 
 export function useStudyDeck(deckId: string) {
-  const [studyDeck, setStudyDeck] = useState<StudyDeck | null>(null);
+  const [deck, setDeck] = useState<DeckData | null>(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showBack, setShowBack] = useState(false);
   const [pointsEarned, setPointsEarned] = useState<number | null>(null);
@@ -82,18 +78,18 @@ export function useStudyDeck(deckId: string) {
 
   // Save progress to localStorage whenever it changes
   useEffect(() => {
-    if (!studyDeck) return;
+    if (!deck) return;
     
     // Only save if we have made some progress
     if (currentCardIndex > 0 || totalPoints > 0) {
-      localStorage.setItem(`study-progress-${studyDeck.id}`, JSON.stringify({
+      localStorage.setItem(`study-progress-${deck.id}`, JSON.stringify({
         currentIndex: currentCardIndex,
         totalPointsEarned: totalPoints,
         completedCardIds,
         lastStudied: new Date().toISOString()
       }));
     }
-  }, [currentCardIndex, studyDeck?.id, studyDeck, totalPoints, completedCardIds]);
+  }, [currentCardIndex, deck?.id, deck, totalPoints, completedCardIds]);
 
   // Order cards based on SRS data
   const orderCardsBySRS = useCallback((cards: FlashcardData[]) => {
@@ -136,6 +132,7 @@ export function useStudyDeck(deckId: string) {
       setNewCardCount(newCards.length);
       setDueCardCount(dueCards.length);
       setOrderedCards(dueCardsData.cards);
+      setTotalCardsInDeck(dueCardsData.totalCardCount);
       
       // If there are no cards to study, we consider the deck completed
       if (dueCardsData.cards.length === 0) {
@@ -151,12 +148,12 @@ export function useStudyDeck(deckId: string) {
     }
   }, [deckId]);
 
-  // Fetch study deck and due cards
+  // Fetch deck and due cards
   useEffect(() => {
     let mounted = true;
     let pollTimer: NodeJS.Timeout;
 
-    const fetchStudyDeck = async () => {
+    const fetchDeck = async () => {
       try {
         // First fetch the deck info
         const deckResponse = await fetch(`/api/study-decks/${deckId}`);
@@ -167,8 +164,7 @@ export function useStudyDeck(deckId: string) {
         // Check if deck was processing and now is not
         const finishedProcessing = wasProcessing && !deckData.isProcessing;
         
-        setStudyDeck(deckData);
-        setTotalCardsInDeck(deckData.flashcards.length);
+        setDeck(deckData);
         
         // Update processing state tracking
         setWasProcessing(deckData.isProcessing);
@@ -180,7 +176,7 @@ export function useStudyDeck(deckId: string) {
         
         // If still processing, poll every 2 seconds
         if (deckData.isProcessing) {
-          pollTimer = setTimeout(fetchStudyDeck, 2000);
+          pollTimer = setTimeout(fetchDeck, 2000);
         }
         
         // If just finished processing, fetch due cards again to ensure we have the latest data
@@ -196,7 +192,7 @@ export function useStudyDeck(deckId: string) {
           }, 500);
         }
       } catch (error) {
-        console.error('Failed to fetch study deck:', error);
+        console.error('Failed to fetch deck:', error);
       } finally {
         if (mounted && !wasProcessing) {
           setIsLoading(false);
@@ -204,7 +200,7 @@ export function useStudyDeck(deckId: string) {
       }
     };
 
-    fetchStudyDeck();
+    fetchDeck();
     
     return () => {
       mounted = false;
@@ -214,7 +210,7 @@ export function useStudyDeck(deckId: string) {
 
   // Handle card rating
   const handleCardRate = async (difficulty: Difficulty, responseTime: number) => {
-    if (!studyDeck || !orderedCards.length) return;
+    if (!deck || !orderedCards.length) return;
 
     try {
       const currentCard = orderedCards[currentCardIndex];
@@ -229,13 +225,13 @@ export function useStudyDeck(deckId: string) {
       
       // Make the API call in parallel
       const response = await fetch(
-        `/api/study-decks/${studyDeck.id}/cards/${currentCard.id}/review`,
+        `/api/study-decks/${deck.id}/cards/${currentCard.id}/review`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ difficulty, responseTime, front: currentCard.front, back: currentCard.back }),
+          body: JSON.stringify({ difficulty, responseTime }),
         }
       );
 
@@ -243,10 +239,7 @@ export function useStudyDeck(deckId: string) {
         throw new Error('Failed to submit review');
       }
 
-      const { pointsEarned, cardProgress } = await response.json();
-      
-      // Don't update points display again, just use the total
-      // setPointsEarned(pointsEarned);
+      const { pointsEarned, cardInteraction } = await response.json();
       
       // Update total points
       setTotalPoints(prev => prev + pointsEarned);
@@ -262,10 +255,10 @@ export function useStudyDeck(deckId: string) {
         card.id === currentCard.id 
           ? { 
               ...card, 
-              dueDate: cardProgress.dueDate,
-              easeFactor: cardProgress.easeFactor,
-              repetitions: cardProgress.repetitions,
-              interval: cardProgress.interval
+              dueDate: cardInteraction.dueDate,
+              easeFactor: cardInteraction.easeFactor,
+              repetitions: cardInteraction.repetitions,
+              interval: cardInteraction.interval
             } 
           : card
       );
@@ -296,18 +289,10 @@ export function useStudyDeck(deckId: string) {
   // Restart the deck
   const handleRestartDeck = () => {
     // Reset state for restart
-    if (!studyDeck) return;
+    if (!deck) return;
     
-    // Ensure all cards have an id
-    const cardsWithIds = studyDeck.flashcards.map(card => ({
-      ...card,
-      id: card.id || `temp-${Math.random().toString(36).substring(2, 9)}`,
-      isNew: true,
-      isDue: true
-    })) as FlashcardData[];
-    
-    const ordered = orderCardsBySRS(cardsWithIds);
-    setOrderedCards(ordered);
+    // Fetch all cards for the deck
+    fetchDueCards();
     setCurrentCardIndex(0);
     setShowBack(false);
     setDeckCompleted(false);
@@ -315,8 +300,8 @@ export function useStudyDeck(deckId: string) {
 
   // Clear progress
   const clearProgress = () => {
-    if (studyDeck) {
-      localStorage.removeItem(`study-progress-${studyDeck.id}`);
+    if (deck) {
+      localStorage.removeItem(`study-progress-${deck.id}`);
     }
   };
 
@@ -344,7 +329,7 @@ export function useStudyDeck(deckId: string) {
   };
 
   return {
-    studyDeck,
+    deck,
     orderedCards,
     currentCardIndex,
     showBack,

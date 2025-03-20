@@ -17,9 +17,9 @@ export async function POST(req: NextRequest) {
     // For a route like /api/study-decks/[id]/cards/[cardId]/review
     // The id will be at index 3 and cardId at index 5
     const deckId = pathParts[3];
-    const cardId = pathParts[5];
+    const studyContentId = pathParts[5]; // This is now the studyContentId
     
-    if (!deckId || !cardId) {
+    if (!deckId || !studyContentId) {
       return new NextResponse("Missing required parameters", { status: 400 });
     }
 
@@ -34,14 +34,26 @@ export async function POST(req: NextRequest) {
       update: {},
     });
 
-    const { difficulty, responseTime, front, back } = await req.json();
+    const { difficulty, responseTime } = await req.json();
 
-    // Get or create card progress
-    let cardProgress = await db.cardProgress.findUnique({
+    // Get the study content to ensure it exists
+    const studyContent = await db.studyContent.findUnique({
+      where: { id: studyContentId },
+      include: {
+        flashcardContent: true
+      }
+    });
+
+    if (!studyContent) {
+      return new NextResponse("Study content not found", { status: 404 });
+    }
+
+    // Get or create card interaction
+    let cardInteraction = await db.cardInteraction.findUnique({
       where: {
-        userId_cardId: {
+        userId_studyContentId: {
           userId: user.id,
-          cardId,
+          studyContentId,
         },
       },
     });
@@ -53,50 +65,68 @@ export async function POST(req: NextRequest) {
 
     const nextReview = calculateNextReview(
       review,
-      cardProgress?.streak ?? 0,
-      cardProgress?.easeFactor ?? 2.5,
-      cardProgress?.repetitions ?? 0
+      cardInteraction?.streak ?? 0,
+      cardInteraction?.easeFactor ?? 2.5,
+      cardInteraction?.repetitions ?? 0
     );
 
     const newStreak = calculateStreak(
-      cardProgress?.streak ?? 0,
+      cardInteraction?.streak ?? 0,
       review.difficulty,
     );
 
-    // Update or create card progress
-    cardProgress = await db.cardProgress.upsert({
+    // Create or update a study session
+    const session = await db.studySession.upsert({
       where: {
-        userId_cardId: {
+        id: cardInteraction?.sessionId || 'new-session',
+      },
+      create: {
+        userId: user.id,
+        deckId: deckId,
+        cardsStudied: 1,
+        pointsEarned: nextReview.points,
+      },
+      update: {
+        cardsStudied: {
+          increment: 1,
+        },
+        pointsEarned: {
+          increment: nextReview.points,
+        },
+      },
+    });
+
+    // Update or create card interaction
+    cardInteraction = await db.cardInteraction.upsert({
+      where: {
+        userId_studyContentId: {
           userId: user.id,
-          cardId,
+          studyContentId,
         },
       },
       create: {
         userId: user.id,
-        cardId,
-        deckId,
-        front: front,
-        back: back,
+        studyContentId,
+        sessionId: session.id,
         easeFactor: nextReview.easeFactor,
         interval: nextReview.interval,
         repetitions: nextReview.repetitions,
         dueDate: nextReview.dueDate,
         lastReviewed: new Date(),
         streak: newStreak,
-        totalPoints: nextReview.points,
+        score: nextReview.points,
         responseTime: review.responseTime,
         difficulty: review.difficulty,
       },
       update: {
-        front: front,
-        back: back,
+        sessionId: session.id,
         easeFactor: nextReview.easeFactor,
         interval: nextReview.interval,
         repetitions: nextReview.repetitions,
         dueDate: nextReview.dueDate,
         lastReviewed: new Date(),
         streak: newStreak,
-        totalPoints: {
+        score: {
           increment: nextReview.points,
         },
         responseTime: review.responseTime,
@@ -125,7 +155,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      cardProgress,
+      cardInteraction,
       pointsEarned: nextReview.points,
       nextReview: nextReview.dueDate,
     });
@@ -133,4 +163,4 @@ export async function POST(req: NextRequest) {
     console.error("Error reviewing card:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
-} 
+}

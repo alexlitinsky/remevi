@@ -18,20 +18,56 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Missing deck ID", { status: 400 })
     }
 
-    const studyDeck = await db.studyDeck.findUnique({
+    const deck = await db.deck.findUnique({
       where: {
         id,
         userId: user.id
+      },
+      include: {
+        deckContent: {
+          include: {
+            studyContent: {
+              include: {
+                flashcardContent: true
+              }
+            }
+          }
+        }
       }
     })
 
-    if (!studyDeck) {
-      return new NextResponse("Study deck not found", { status: 404 })
+    if (!deck) {
+      return new NextResponse("Deck not found", { status: 404 })
     }
 
-    return NextResponse.json(studyDeck)
+    // Transform the deck to match the expected format in the frontend
+    const mindMapData = deck.mindMap || { nodes: [], connections: [] };
+    
+    // Extract flashcards from the deck content
+    const flashcards = deck.deckContent
+      .filter((content: any) => 
+        content.studyContent.type === 'flashcard' && 
+        content.studyContent.flashcardContent
+      )
+      .map((content: any) => ({
+        id: content.studyContent.id,
+        front: content.studyContent.flashcardContent.front,
+        back: content.studyContent.flashcardContent.back
+      }));
+
+    const formattedDeck = {
+      id: deck.id,
+      title: deck.title,
+      createdAt: deck.createdAt,
+      isProcessing: deck.isProcessing,
+      error: null,
+      flashcards,
+      mindMap: mindMapData
+    };
+
+    return NextResponse.json(formattedDeck)
   } catch (error) {
-    console.error("Error fetching study deck:", error)
+    console.error("Error fetching deck:", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
-} 
+}

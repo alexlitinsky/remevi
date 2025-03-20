@@ -50,13 +50,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create initial study deck
-    const studyDeck = await db.studyDeck.create({
+    // Create initial study material
+    const studyMaterial = await db.studyMaterial.create({
+      data: {
+        title: metadata.originalName,
+        userId: user.id,
+        status: 'processing',
+        fileType: metadata.type,
+      },
+    });
+
+    // Create initial deck
+    const deck = await db.deck.create({
       data: {
         title: metadata.originalName,
         userId: user.id,
         isProcessing: true,
-        flashcards: [],
         mindMap: { nodes: [], connections: [] },
       },
     });
@@ -103,17 +112,52 @@ export async function POST(request: NextRequest) {
           };
         });
 
-        // Add IDs to flashcards
-        const flashcardsWithIds = object.flashcards.map((card: any) => ({
-          ...card,
-          id: `card-${Math.random().toString(36).substring(2, 9)}`
-        }));
+        // Create flashcard content for each flashcard
+        const flashcardPromises = object.flashcards.map(async (card: any, index: number) => {
+          // First create the study content
+          const studyContent = await db.studyContent.create({
+            data: {
+              studyMaterialId: studyMaterial.id,
+              type: 'flashcard',
+              flashcardContent: {
+                create: {
+                  front: card.front,
+                  back: card.back
+                }
+              }
+            },
+            include: {
+              flashcardContent: true
+            }
+          });
 
-        // Update study deck with results
-        await db.studyDeck.update({
-          where: { id: studyDeck.id },
+          // Then add it to the deck
+          await db.deckContent.create({
+            data: {
+              deckId: deck.id,
+              studyContentId: studyContent.id,
+              order: index
+            }
+          });
+
+          return studyContent;
+        });
+
+        // Wait for all flashcards to be created
+        await Promise.all(flashcardPromises);
+
+        // Update study material status
+        await db.studyMaterial.update({
+          where: { id: studyMaterial.id },
           data: {
-            flashcards: flashcardsWithIds,
+            status: 'completed'
+          }
+        });
+
+        // Update deck with mind map and processing status
+        await db.deck.update({
+          where: { id: deck.id },
+          data: {
             mindMap: {
               nodes,
               connections: object.mindMap.connections,
@@ -123,8 +167,19 @@ export async function POST(request: NextRequest) {
         });
       } catch (error) {
         console.error('Error processing study materials:', error);
-        await db.studyDeck.update({
-          where: { id: studyDeck.id },
+        
+        // Update study material status
+        await db.studyMaterial.update({
+          where: { id: studyMaterial.id },
+          data: {
+            status: 'error',
+            processingError: 'Failed to generate study materials'
+          }
+        });
+        
+        // Update deck with error
+        await db.deck.update({
+          where: { id: deck.id },
           data: {
             error: 'Failed to generate study materials',
             isProcessing: false,
@@ -134,7 +189,7 @@ export async function POST(request: NextRequest) {
     })();
 
     return Response.json({
-      deckId: studyDeck.id,
+      deckId: deck.id,
     });
   } catch (error) {
     console.error('Error generating study materials:', error);
