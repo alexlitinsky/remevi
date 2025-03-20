@@ -14,7 +14,7 @@ export async function GET() {
       where: { userId: user.id },
       create: {
         userId: user.id,
-        newCardsPerDay: 5,
+        newCardsPerDay: 15,
         reviewsPerDay: 20
       },
       update: {}

@@ -280,7 +280,7 @@ export function useStudyDeck(deckId: string) {
           setPointsEarned(null);
           setOrderedCards(reorderedCards);
         }
-      }, 550); // Synchronized with the animation duration in flashcard.tsx
+      }, 50); // Faster transition - reduced from 550ms
     } catch (error) {
       console.error('Error submitting review:', error);
     }

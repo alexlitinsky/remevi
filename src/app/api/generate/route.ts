@@ -6,6 +6,11 @@ import { openaiResponsesProvider } from '@/lib/ai/providers';
 import { z } from 'zod';
 import { getFileFromStorage } from '@/lib/storage';
 
+// Helper function to remove file extension
+function removeFileExtension(filename: string): string {
+  return filename.replace(/\.[^/.]+$/, '');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await currentUser();
@@ -53,7 +58,7 @@ export async function POST(request: NextRequest) {
     // Create initial study material
     const studyMaterial = await db.studyMaterial.create({
       data: {
-        title: metadata.originalName,
+        title: removeFileExtension(metadata.originalName),
         userId: user.id,
         status: 'processing',
         fileType: metadata.type,
@@ -63,7 +68,7 @@ export async function POST(request: NextRequest) {
     // Create initial deck
     const deck = await db.deck.create({
       data: {
-        title: metadata.originalName,
+        title: removeFileExtension(metadata.originalName),
         userId: user.id,
         isProcessing: true,
         mindMap: { nodes: [], connections: [] },

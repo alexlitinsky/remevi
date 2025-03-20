@@ -137,7 +137,7 @@ export function Flashcard({
       <div className="relative min-h-[300px] perspective-1000">
         <div 
           className={cn(
-            "relative w-full h-full transition-transform duration-300",
+            "relative w-full h-full transition-transform duration-200", // Faster transition
             "transform-style-3d",
             showBack ? "rotate-y-180" : ""
           )}
