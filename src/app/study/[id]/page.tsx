@@ -28,6 +28,7 @@ export default function StudyDeckPage() {
     deckCompleted,
     totalPoints,
     isLoading,
+    isLoadingCards,
     totalCardsInDeck,
     newCardCount,
     dueCardCount,
@@ -69,9 +70,14 @@ export default function StudyDeckPage() {
   if (studyDeck.isProcessing) {
     return <ProcessingState />;
   }
+  
+  // Cards loading state - transitioning from processing to ready
+  if (isLoadingCards) {
+    return <LoadingState message="Loading your cards..." />;
+  }
 
   // Completion state - all cards reviewed
-  if (deckCompleted || orderedCards.length === 0) {
+  if (deckCompleted || (orderedCards.length === 0 && !isLoadingCards)) {
     return (
       <DeckCompletionScreen
         totalPoints={totalPoints}

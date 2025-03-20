@@ -88,13 +88,14 @@ export function Flashcard({
   // Optimize points animation effect
   useEffect(() => {
     if (pointsEarned !== null) {
-      // Batch state updates to reduce renders
+      // Set points immediately
       setEarnedPoints(pointsEarned);
       setShowPoints(true);
       
+      // Hide points after animation completes
       const timer = setTimeout(() => {
         setShowPoints(false);
-      }, 200); // Reduced to 200ms for even faster display
+      }, 500); // Shorter display time for quicker transition
       
       return () => clearTimeout(timer);
     }
@@ -118,14 +119,14 @@ export function Flashcard({
 
   return (
     <div className={cn("relative w-full max-w-2xl mx-auto", className)}>
-      {/* Points animation - only render when needed */}
+      {/* Points animation with faster fade out */}
       <AnimatePresence>
         {showPoints && (
           <motion.div
             initial={{ opacity: 0, y: 0 }}
             animate={{ opacity: 1, y: -40 }}
             exit={{ opacity: 0, y: -80 }}
-            transition={{ duration: 0.1 }} 
+            transition={{ duration: 0.2 }} // Faster animation
             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold text-yellow-500 z-50 pointer-events-none"
           >
             +{earnedPoints} points!

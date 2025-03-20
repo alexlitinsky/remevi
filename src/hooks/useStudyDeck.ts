@@ -56,9 +56,11 @@ export function useStudyDeck(deckId: string) {
   const [completedCardIds, setCompletedCardIds] = useState<string[]>([]);
   const [orderedCards, setOrderedCards] = useState<FlashcardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [totalCardsInDeck, setTotalCardsInDeck] = useState<number>(0);
   const [newCardCount, setNewCardCount] = useState(0);
   const [dueCardCount, setDueCardCount] = useState(0);
+  const [wasProcessing, setWasProcessing] = useState(false);
 
   // Load study progress from local storage
   useEffect(() => {
@@ -112,9 +114,47 @@ export function useStudyDeck(deckId: string) {
     return [...newCards, ...sortedDueCards];
   }, []);
 
+  // Fetch due cards
+  const fetchDueCards = useCallback(async () => {
+    if (!deckId) return;
+    
+    try {
+      setIsLoadingCards(true);
+      
+      const dueCardsResponse = await fetch(`/api/study-decks/${deckId}/due-cards`);
+      if (!dueCardsResponse.ok) {
+        setIsLoadingCards(false);
+        return;
+      }
+      
+      const dueCardsData = await dueCardsResponse.json();
+      
+      // Count new and due cards
+      const newCards = dueCardsData.cards.filter((card: FlashcardData) => card.isNew);
+      const dueCards = dueCardsData.cards.filter((card: FlashcardData) => card.isDue && !card.isNew);
+      
+      setNewCardCount(newCards.length);
+      setDueCardCount(dueCards.length);
+      setOrderedCards(dueCardsData.cards);
+      
+      // If there are no cards to study, we consider the deck completed
+      if (dueCardsData.cards.length === 0) {
+        setDeckCompleted(true);
+      } else {
+        setDeckCompleted(false);
+      }
+      
+      setIsLoadingCards(false);
+    } catch (error) {
+      console.error('Failed to fetch due cards:', error);
+      setIsLoadingCards(false);
+    }
+  }, [deckId]);
+
   // Fetch study deck and due cards
   useEffect(() => {
     let mounted = true;
+    let pollTimer: NodeJS.Timeout;
 
     const fetchStudyDeck = async () => {
       try {
@@ -123,47 +163,54 @@ export function useStudyDeck(deckId: string) {
         if (!deckResponse.ok || !mounted) return;
         
         const deckData = await deckResponse.json();
+        
+        // Check if deck was processing and now is not
+        const finishedProcessing = wasProcessing && !deckData.isProcessing;
+        
         setStudyDeck(deckData);
         setTotalCardsInDeck(deckData.flashcards.length);
         
-        // Then fetch the due cards
-        const dueCardsResponse = await fetch(`/api/study-decks/${deckId}/due-cards`);
-        if (!dueCardsResponse.ok || !mounted) return;
+        // Update processing state tracking
+        setWasProcessing(deckData.isProcessing);
         
-        const dueCardsData = await dueCardsResponse.json();
-        
-        // Count new and due cards
-        const newCards = dueCardsData.cards.filter((card: FlashcardData) => card.isNew);
-        const dueCards = dueCardsData.cards.filter((card: FlashcardData) => card.isDue && !card.isNew);
-        
-        setNewCardCount(newCards.length);
-        setDueCardCount(dueCards.length);
-        setOrderedCards(dueCardsData.cards);
-        
-        // If there are no cards to study, we consider the deck completed
-        if (dueCardsData.cards.length === 0) {
-          setDeckCompleted(true);
+        // Only fetch due cards if not processing and not in the middle of a transition
+        if (!deckData.isProcessing && !finishedProcessing) {
+          await fetchDueCards();
         }
         
         // If still processing, poll every 2 seconds
         if (deckData.isProcessing) {
-          const pollTimer = setTimeout(fetchStudyDeck, 2000);
-          return () => clearTimeout(pollTimer);
+          pollTimer = setTimeout(fetchStudyDeck, 2000);
+        }
+        
+        // If just finished processing, fetch due cards again to ensure we have the latest data
+        if (finishedProcessing) {
+          // Keep loading state active during transition
+          setIsLoadingCards(true);
+          
+          // Add a small delay to ensure backend processing is complete
+          setTimeout(async () => {
+            if (mounted) {
+              await fetchDueCards();
+            }
+          }, 500);
         }
       } catch (error) {
         console.error('Failed to fetch study deck:', error);
       } finally {
-        if (mounted) {
+        if (mounted && !wasProcessing) {
           setIsLoading(false);
         }
       }
     };
 
     fetchStudyDeck();
+    
     return () => {
       mounted = false;
+      if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [deckId]);
+  }, [deckId, fetchDueCards, wasProcessing]);
 
   // Handle card rating
   const handleCardRate = async (difficulty: Difficulty, responseTime: number) => {
@@ -175,7 +222,12 @@ export function useStudyDeck(deckId: string) {
       // Check if this is the last card
       const isLastCard = currentCardIndex >= orderedCards.length - 1;
       
-      // First, show points animation
+      // Show estimated points immediately based on difficulty
+      // This gives instant feedback while the actual calculation happens on the server
+      const estimatedPoints = difficulty === 'easy' ? 15 : difficulty === 'medium' ? 10 : 5;
+      setPointsEarned(estimatedPoints);
+      
+      // Make the API call in parallel
       const response = await fetch(
         `/api/study-decks/${studyDeck.id}/cards/${currentCard.id}/review`,
         {
@@ -193,8 +245,8 @@ export function useStudyDeck(deckId: string) {
 
       const { pointsEarned, cardProgress } = await response.json();
       
-      // Set points earned for the current card
-      setPointsEarned(pointsEarned);
+      // Don't update points display again, just use the total
+      // setPointsEarned(pointsEarned);
       
       // Update total points
       setTotalPoints(prev => prev + pointsEarned);
@@ -222,6 +274,7 @@ export function useStudyDeck(deckId: string) {
       const reorderedCards = orderCardsBySRS(updatedCards);
       
       // Show points animation, then go directly to next card
+      // Timing synchronized with the points fade-out animation
       setTimeout(() => {
         if (isLastCard) {
           // Set deck completed state
@@ -234,7 +287,7 @@ export function useStudyDeck(deckId: string) {
           setPointsEarned(null);
           setOrderedCards(reorderedCards);
         }
-      }, 300); // Give a little time to show the points before transitioning
+      }, 550); // Synchronized with the animation duration in flashcard.tsx
     } catch (error) {
       console.error('Error submitting review:', error);
     }
@@ -299,6 +352,7 @@ export function useStudyDeck(deckId: string) {
     deckCompleted,
     totalPoints,
     isLoading,
+    isLoadingCards,
     totalCardsInDeck,
     newCardCount,
     dueCardCount,
