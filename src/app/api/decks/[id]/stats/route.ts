@@ -17,50 +17,67 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Missing deck ID", { status: 400 });
     }
     
-    // Get the study deck with flashcards
-    const studyDeck = await db.studyDeck.findUnique({
+    // Get the deck with its content and interactions
+    const deck = await db.deck.findUnique({
       where: {
         id: deckId,
         userId: user.id
       },
       include: {
-        cardProgress: true
+        deckContent: {
+          include: {
+            studyContent: {
+              include: {
+                cardInteractions: {
+                  where: {
+                    userId: user.id
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     });
     
-    if (!studyDeck) {
-      return new NextResponse("Study deck not found", { status: 404 });
+    if (!deck) {
+      return new NextResponse("Deck not found", { status: 404 });
     }
     
-    // Parse the flashcards from the JSON field
-    const flashcards = Array.isArray(studyDeck.flashcards) ? studyDeck.flashcards : [];
-    
     // Calculate statistics
-    const totalCards = flashcards.length;
-    const cardsWithProgress = studyDeck.cardProgress.length;
+    const totalCards = deck.deckContent.length;
+    const cardsWithProgress = deck.deckContent.filter(content => 
+      content.studyContent.cardInteractions.length > 0
+    ).length;
     const newCards = totalCards - cardsWithProgress;
     
     // Calculate cards due today
     const today = new Date();
     today.setHours(23, 59, 59, 999); // End of today
     
-    const dueCards = studyDeck.cardProgress.filter(progress => 
-      new Date(progress.dueDate) <= today
-    ).length;
+    const dueCards = deck.deckContent.filter(content => {
+      const interaction = content.studyContent.cardInteractions[0];
+      return interaction && new Date(interaction.dueDate) <= today;
+    }).length;
     
-    // Calculate average streak and ease factor
+    // Calculate averages and totals
     let totalStreak = 0;
     let totalEaseFactor = 0;
     let totalResponseTime = 0;
     let countWithResponseTime = 0;
+    let totalPoints = 0;
     
-    studyDeck.cardProgress.forEach(progress => {
-      totalStreak += progress.streak;
-      totalEaseFactor += progress.easeFactor;
-      
-      if (progress.responseTime) {
-        totalResponseTime += progress.responseTime;
-        countWithResponseTime++;
+    deck.deckContent.forEach(content => {
+      const interaction = content.studyContent.cardInteractions[0];
+      if (interaction) {
+        totalStreak += interaction.streak;
+        totalEaseFactor += interaction.easeFactor;
+        totalPoints += interaction.score;
+        
+        if (interaction.responseTime) {
+          totalResponseTime += interaction.responseTime;
+          countWithResponseTime++;
+        }
       }
     });
     
@@ -68,19 +85,18 @@ export async function GET(req: NextRequest) {
     const averageEaseFactor = cardsWithProgress > 0 ? totalEaseFactor / cardsWithProgress : 2.5;
     const averageResponseTime = countWithResponseTime > 0 ? totalResponseTime / countWithResponseTime : 0;
     
-    // Calculate total points earned
-    const totalPoints = studyDeck.cardProgress.reduce((sum, progress) => sum + progress.totalPoints, 0);
-    
     // Calculate review history (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    const reviewHistory = studyDeck.cardProgress
-      .filter(progress => progress.lastReviewed && new Date(progress.lastReviewed) >= thirtyDaysAgo)
-      .map(progress => ({
-        date: progress.lastReviewed,
-        difficulty: progress.difficulty
-      }));
+    const reviewHistory = deck.deckContent.flatMap(content => 
+      content.studyContent.cardInteractions
+        .filter(interaction => interaction.lastReviewed && new Date(interaction.lastReviewed) >= thirtyDaysAgo)
+        .map(interaction => ({
+          date: interaction.lastReviewed,
+          difficulty: interaction.difficulty
+        }))
+    );
     
     // Group reviews by date
     interface ReviewsByDateEntry {
@@ -110,7 +126,7 @@ export async function GET(req: NextRequest) {
     
     return NextResponse.json({
       deckId,
-      deckTitle: studyDeck.title,
+      deckTitle: deck.title,
       totalCards,
       cardsWithProgress,
       newCards,

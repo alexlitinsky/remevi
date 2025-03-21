@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const url = new URL(req.url);
     const pathParts = url.pathname.split('/');
     
-    // For a route like /api/study-decks/[id]/cards/[cardId]/review
+    // For a route like /api/decks/[id]/cards/[cardId]/review
     // The id will be at index 3 and cardId at index 5
     const deckId = pathParts[3];
     const studyContentId = pathParts[5]; // This is now the studyContentId

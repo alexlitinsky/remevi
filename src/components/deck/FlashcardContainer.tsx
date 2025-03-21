@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flashcard } from '@/components/ui/flashcard';
-import { StudyControls } from '@/components/study/StudyControls';
+import { StudyControls } from '@/components/deck/StudyControls';
 import { type Difficulty } from '@/lib/srs';
-import { FlashcardData } from '@/hooks/useStudyDeck';
+import { type FlashcardData } from '@/hooks/deck/types';
 
 interface FlashcardContainerProps {
   cards: FlashcardData[];

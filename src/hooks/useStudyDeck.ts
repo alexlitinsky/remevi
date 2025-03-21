@@ -117,7 +117,7 @@ export function useStudyDeck(deckId: string) {
     try {
       setIsLoadingCards(true);
       
-      const dueCardsResponse = await fetch(`/api/study-decks/${deckId}/due-cards`);
+      const dueCardsResponse = await fetch(`/api/decks/${deckId}/due-cards`);
       if (!dueCardsResponse.ok) {
         setIsLoadingCards(false);
         return;
@@ -156,7 +156,7 @@ export function useStudyDeck(deckId: string) {
     const fetchDeck = async () => {
       try {
         // First fetch the deck info
-        const deckResponse = await fetch(`/api/study-decks/${deckId}`);
+        const deckResponse = await fetch(`/api/decks/${deckId}`);
         if (!deckResponse.ok || !mounted) return;
         
         const deckData = await deckResponse.json();
@@ -225,7 +225,7 @@ export function useStudyDeck(deckId: string) {
       
       // Make the API call in parallel
       const response = await fetch(
-        `/api/study-decks/${deck.id}/cards/${currentCard.id}/review`,
+        `/api/decks/${deck.id}/cards/${currentCard.id}/review`,
         {
           method: 'POST',
           headers: {

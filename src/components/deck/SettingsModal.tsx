@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StudySettings } from '@/components/study-settings';
+import { StudySettings } from '@/components/StudySettings';
 import { Button } from '@/components/ui/button';
 
 interface SettingsModalProps {

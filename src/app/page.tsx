@@ -45,28 +45,8 @@ export default function Home() {
       const pendingUploadInfo = localStorage.getItem('pendingUploadInfo');
       if (pendingUploadInfo) {
         try {
-          // Parse the stored upload info
-          const { uploadId, filePath, metadata } = JSON.parse(pendingUploadInfo);
-          
-          // Create study deck and redirect immediately
-          fetch('/api/generate', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ uploadId, filePath, metadata }),
-          })
-            .then(response => {
-              if (!response.ok) throw new Error('Failed to generate study materials');
-              return response.json();
-            })
-            .then(({ deckId }) => {
-              router.push(`/study/${deckId}`);
-              localStorage.removeItem('pendingUploadInfo');
-            })
-            .catch(error => {
-              console.error('Error processing file:', error);
-            });
+          router.push("/deck/configure");
+
         } catch (error) {
           console.error('Error parsing pending upload info:', error);
           localStorage.removeItem('pendingUploadInfo');
@@ -78,7 +58,7 @@ export default function Home() {
   const fetchDecks = async () => {
     setIsLoadingDecks(true);
     try {
-      const response = await fetch('/api/study-decks');
+      const response = await fetch('/api/decks');
       if (response.ok) {
         const fetchedDecks = await response.json();
         setDecks(fetchedDecks);
@@ -111,30 +91,16 @@ export default function Home() {
       }
       
       const { uploadId, filePath, metadata } = await response.json();
+      localStorage.setItem('pendingUploadInfo', JSON.stringify({ uploadId, filePath, metadata }));
 
       if (!isSignedIn) {
-        // Store upload info and show sign in
-        localStorage.setItem('pendingUploadInfo', JSON.stringify({ uploadId, filePath, metadata }));
         setShowSignIn(true);
         setIsProcessing(false);
         return;
       }
 
-      // Create study deck and redirect immediately
-      const generateResponse = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ uploadId, filePath, metadata }),
-      });
+      router.push("/deck/configure");
 
-      if (!generateResponse.ok) {
-        throw new Error('Failed to generate study materials');
-      }
-
-      const { deckId } = await generateResponse.json();
-      router.push(`/study/${deckId}`);
     } catch (error) {
       console.error('Error handling file:', error);
     } finally {
@@ -283,7 +249,7 @@ export default function Home() {
                       {decks.map((deck) => (
                         <div 
                           key={deck.id}
-                          onClick={() => router.push(`/study/${deck.id}`)}
+                          onClick={() => router.push(`/deck/${deck.id}`)}
                           className="bg-gray-800 border border-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-colors"
                         >
                           <h3 className="text-lg font-medium text-white mb-2">{deck.title}</h3>

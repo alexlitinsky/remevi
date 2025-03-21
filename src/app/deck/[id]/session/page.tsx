@@ -2,14 +2,14 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useStudyDeck } from '@/hooks/useStudyDeck';
-import { StudyDeckHeader } from '@/components/study/StudyDeckHeader';
-import { FlashcardContainer } from '@/components/study/FlashcardContainer';
-import { DeckCompletionScreen } from '@/components/study/DeckCompletionScreen';
-import { LoadingState, ErrorState, ProcessingState } from '@/components/study/StudyDeckStates';
-import { MindMapModal } from '@/components/study/MindMapModal';
-import { SettingsModal } from '@/components/study/SettingsModal';
-import { StudyActionButtons } from '@/components/study/StudyActionButtons';
+import { useDeck } from '@/hooks/deck/useDeck';
+import { StudyDeckHeader } from '@/components/deck/StudyDeckHeader';
+import { FlashcardContainer } from '@/components/deck/FlashcardContainer';
+import { DeckCompletionScreen } from '@/components/deck/DeckCompletionScreen';
+import { LoadingState, ErrorState, ProcessingState } from '@/components/deck/StudyDeckStates';
+import { MindMapModal } from '@/components/deck/MindMapModal';
+import { SettingsModal } from '@/components/deck/SettingsModal';
+import { StudyActionButtons } from '@/components/deck/StudyActionButtons';
 
 export default function StudyDeckPage() {
   const params = useParams();
@@ -39,16 +39,16 @@ export default function StudyDeckPage() {
     moveToNextCard,
     moveToPrevCard,
     setDeckCompleted
-  } = useStudyDeck(deckId);
+  } = useDeck(deckId);
 
   const handleSeePerformance = () => {
-    // Navigate to performance page (future enhancement)
-    router.push(`/?deck=${deck?.id}`);
+    clearProgress();
+    router.push(`/deck/${deck?.id}`);
   };
 
   const handleReturnToDashboard = () => {
     clearProgress();
-    router.push('/');
+    router.push(`/deck/${deck?.id}`);
   };
 
   const handleRefreshCards = () => {
@@ -62,12 +62,12 @@ export default function StudyDeckPage() {
   }
 
   // Error state - no deck found
-  if (!deck) {
-    return <ErrorState onReturnToDashboard={handleReturnToDashboard} />;
-  }
+  // if (!deck) {
+  //   return <ErrorState onReturnToDashboard={handleReturnToDashboard} />;
+  // }
 
   // Processing state - deck is being generated
-  if (deck.isProcessing) {
+  if (!deck || deck?.isProcessing) {
     return <ProcessingState />;
   }
   
@@ -77,7 +77,7 @@ export default function StudyDeckPage() {
   }
 
   // Completion state - all cards reviewed
-  if (deckCompleted || (orderedCards.length === 0 && !isLoadingCards)) {
+  if (deckCompleted) {
     return (
       <DeckCompletionScreen
         totalPoints={totalPoints}
@@ -109,8 +109,8 @@ export default function StudyDeckPage() {
             pointsEarned={pointsEarned}
             onFlip={flipCard}
             onRate={handleCardRate}
-            onNext={currentCardIndex < orderedCards.length - 1 ? moveToNextCard : undefined}
-            onPrev={currentCardIndex > 0 ? moveToPrevCard : undefined}
+            onNext={currentCardIndex < orderedCards.length - 1 ? () => moveToNextCard(currentCardIndex + 1) : undefined}
+            onPrev={currentCardIndex > 0 ? () => moveToPrevCard(currentCardIndex - 1) : undefined}
           />
         </div>
       </div>

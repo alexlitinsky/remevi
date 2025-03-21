@@ -18,41 +18,39 @@ export async function POST(request: NextRequest) {
       return new Response('Unauthorized', { status: 401 });
     }
 
+    // Ensure user exists in our database
+    await db.user.upsert({
+      where: { id: user.id },
+      create: {
+        id: user.id,
+        email: user.emailAddresses[0]?.emailAddress || '',
+        name: user.firstName || '',
+      },
+      update: {},
+    });
+
     let fileBuffer: Buffer;
     let metadata: { originalName: string; type: string; size: number };
 
     // Handle both direct uploads and Supabase storage
-    if (request.headers.get('content-type')?.includes('multipart/form-data')) {
-      const formData = await request.formData();
-      const file = formData.get('file') as File;
-      if (!file) {
-        return new Response('No file provided', { status: 400 });
-      }
-      fileBuffer = Buffer.from(await file.arrayBuffer());
-      metadata = {
-        originalName: file.name,
-        type: file.type,
-        size: file.size,
-      };
-    } else {
-      // Handle uploaded file from Supabase storage
-      const { uploadId, filePath, metadata: fileMetadata } = await request.json();
-      if (!uploadId || !filePath) {
-        return new Response('Invalid upload data provided', { status: 400 });
-      }
+    // Handle uploaded file from Supabase storage
+    const { uploadId, filePath, metadata: fileMetadata, questionCount, pageRange } = await request.json();
 
-      try {
-        // Get file from Supabase storage
-        const fileData = await getFileFromStorage(filePath);
-        // Convert Blob to Buffer
-        const arrayBuffer = await fileData.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        fileBuffer = Buffer.from(uint8Array);
-        metadata = fileMetadata;
-      } catch (error) {
-        console.error('Error accessing file from storage:', error);
-        return new Response('Upload not found or expired', { status: 404 });
-      }
+    if (!uploadId || !filePath) {
+      return new Response('Invalid upload data provided', { status: 400 });
+    }
+
+    try {
+      // Get file from Supabase storage
+      const fileData = await getFileFromStorage(filePath);
+      // Convert Blob to Buffer
+      const arrayBuffer = await fileData.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      fileBuffer = Buffer.from(uint8Array);
+      metadata = fileMetadata;
+    } catch (error) {
+      console.error('Error accessing file from storage:', error);
+      return new Response('Upload not found or expired', { status: 404 });
     }
 
     // Create initial study material
@@ -78,15 +76,22 @@ export async function POST(request: NextRequest) {
     // Process in background
     (async () => {
       try {
+        // Build the prompt based on parameters
+        const pageRangePrompt = pageRange && metadata.type.includes('pdf')
+          ? `Focus only on pages ${pageRange.start} to ${pageRange.end} of the PDF.`
+          : '';
+        
+        const questionCountPrompt = `Generate exactly ${questionCount.min} to ${questionCount.max} flashcards.`;
+
         const result = await generateObject({
           model: openaiResponsesProvider,
           messages: [
             {
               role: 'user',
-              content : [
+              content: [
                 {
                   type: 'text',
-                  text: 'You are a helpful AI that creates study materials. Generate flashcards and a mind map from the provided file. Return a JSON object with flashcards array and mindMap object.'
+                  text: `You are a helpful AI that creates study materials. ${questionCountPrompt} ${pageRangePrompt} Generate flashcards and a mind map from the provided file. Return a JSON object with flashcards array and mindMap object.`
                 },
                 {
                   type: 'file',
@@ -98,7 +103,10 @@ export async function POST(request: NextRequest) {
           ],
           schema: z.object({
             flashcards: z.array(z.object({ front: z.string(), back: z.string() })),
-            mindMap: z.object({ nodes: z.array(z.object({ id: z.string(), label: z.string() })), connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) }),
+            mindMap: z.object({ 
+              nodes: z.array(z.object({ id: z.string(), label: z.string() })), 
+              connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) 
+            }),
           }),
         });
 

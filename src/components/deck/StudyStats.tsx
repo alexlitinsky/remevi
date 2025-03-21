@@ -37,7 +37,7 @@ export function StudyStats({ deckId }: StudyStatsProps) {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/study-decks/${deckId}/stats`);
+        const response = await fetch(`/api/decks/${deckId}/stats`);
         
         if (!response.ok) {
           throw new Error("Failed to fetch statistics");

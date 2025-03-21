@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { currentUser } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
 
-// GET /api/study-decks - Get all decks for the current user
+// GET /api/decks - Get all decks for the current user
 export async function GET() {
   try {
     const user = await currentUser()
