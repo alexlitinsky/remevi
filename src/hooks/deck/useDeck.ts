@@ -112,64 +112,79 @@ export function useDeck(deckId: string) {
     const currentCard = orderedCards[currentCardIndex];
     const isLastCard = currentCardIndex >= orderedCards.length - 1;
     
-    // Show estimated points immediately
+    // Immediately update UI
     const estimatedPoints = difficulty === 'easy' ? 15 : difficulty === 'medium' ? 10 : 5;
-    setPointsEarned(estimatedPoints);
     
-    const result = await submitCardReview(deck.id, currentCard.id, difficulty, responseTime);
-    if (!result) return;
+    // Move to next card immediately
+    if (isLastCard) {
+      setDeckCompleted(true);
+    } else {
+      setShowBack(false);
+      setCurrentCardIndex(prev => prev + 1);
+    }
 
-    const { pointsEarned: actualPoints, cardInteraction } = result;
-    
-    // Update total points
-    setTotalPoints(prev => prev + actualPoints);
-    
+    // Update counts immediately
+    setNewCardCount(prev => prev - (currentCard.isNew ? 1 : 0));
+    setDueCardCount(prev => prev - (!currentCard.isNew ? 1 : 0));
+
+    // Submit review in background
+    submitCardReview(deck.id, currentCard.id, difficulty, responseTime).then(result => {
+      if (!result) return;
+      // TODO: React strict mode calls it twice shouldnt be issue in prod
+      setPointsEarned(result.pointsEarned);
+      setTotalPoints(prev => prev + result.pointsEarned);
+
+      // Update card data
+      const updatedCards = orderedCards.map(card => 
+        card.id === currentCard.id 
+          ? { 
+              ...card, 
+              dueDate: result.cardInteraction.dueDate,
+              easeFactor: result.cardInteraction.easeFactor,
+              repetitions: result.cardInteraction.repetitions,
+              interval: result.cardInteraction.interval,
+              isNew: false
+            } 
+          : card
+      );
+
+      // Re-order cards in background
+      // const reorderedCards = orderCardsBySRS(updatedCards);
+      // setOrderedCards(reorderedCards);
+    });
+
     // Track completed card
     setCompletedCardIds(prev => {
       if (prev.includes(currentCard.id)) return prev;
       return [...prev, currentCard.id];
     });
-    
-    // Update card data
-    const updatedCards = orderedCards.map(card => 
-      card.id === currentCard.id 
-        ? { 
-            ...card, 
-            dueDate: cardInteraction.dueDate,
-            easeFactor: cardInteraction.easeFactor,
-            repetitions: cardInteraction.repetitions,
-            interval: cardInteraction.interval
-          } 
-        : card
-    );
-    
-    // Re-order cards based on updated SRS data
-    const reorderedCards = orderCardsBySRS(updatedCards);
-    
-    // Show points animation, then go directly to next card
-    setTimeout(() => {
-      if (isLastCard) {
-        setDeckCompleted(true);
-        setPointsEarned(null);
-      } else {
-        setShowBack(false);
-        setCurrentCardIndex(prev => prev + 1);
-        setPointsEarned(null);
-        setOrderedCards(reorderedCards);
-      }
-    }, 50);
   };
 
   // Restart the deck
   const handleRestartDeck = async () => {
     if (!deck) return;
     
-    const dueCardsData = await fetchDueCards();
-    if (dueCardsData) {
-      updateCardCounts(dueCardsData);
-      setCurrentCardIndex(0);
-      setShowBack(false);
-      setDeckCompleted(false);
+    try {
+      // First reset all cards to be due
+      const resetResponse = await fetch(`/api/decks/${deck.id}/reset`, {
+        method: 'POST'
+      });
+      
+      if (!resetResponse.ok) {
+        console.error('Failed to reset deck');
+        return;
+      }
+      
+      // Then fetch the newly due cards
+      const dueCardsData = await fetchDueCards();
+      if (dueCardsData) {
+        updateCardCounts(dueCardsData);
+        setCurrentCardIndex(0);
+        setShowBack(false);
+        setDeckCompleted(false);
+      }
+    } catch (error) {
+      console.error('Error restarting deck:', error);
     }
   };
 

@@ -18,22 +18,33 @@ export async function POST(req: NextRequest) {
     }
     
     // Verify the deck exists and belongs to the user
-    const studyDeck = await db.studyDeck.findUnique({
+    const deck = await db.deck.findUnique({
       where: {
         id: deckId,
         userId: user.id
       }
     });
     
-    if (!studyDeck) {
-      return new NextResponse("Study deck not found", { status: 404 });
+    if (!deck) {
+      return new NextResponse("Deck not found", { status: 404 });
     }
     
-    // Delete all card progress for this deck
-    await db.cardProgress.deleteMany({
+    // Update all card interactions for this deck to be due now
+    // but preserve SRS data (easeFactor, interval, repetitions)
+    await db.cardInteraction.updateMany({
       where: {
         userId: user.id,
-        deckId: deckId
+        studyContent: {
+          deckContent: {
+            some: {
+              deckId: deckId
+            }
+          }
+        }
+      },
+      data: {
+        dueDate: new Date(), // Mark all cards as due now
+        lastReviewed: new Date() // Update last review time
       }
     });
     

@@ -67,7 +67,7 @@ export default function StudyDeckPage() {
   // }
 
   // Processing state - deck is being generated
-  if (!deck || deck?.isProcessing) {
+  if (deck?.isProcessing) {
     return <ProcessingState />;
   }
   
@@ -94,7 +94,7 @@ export default function StudyDeckPage() {
       <div className="h-full flex flex-col">
         {/* Header with card counts */}
         <StudyDeckHeader
-          title={deck.title}
+          title={deck?.title || ''}
           newCardCount={newCardCount}
           dueCardCount={dueCardCount}
           totalCardCount={totalCardsInDeck}
@@ -129,7 +129,7 @@ export default function StudyDeckPage() {
       />
 
       {/* Mind map modal */}
-      {deck.mindMap && (
+      {deck?.mindMap && (
         <MindMapModal
           isVisible={showMindMap}
           onClose={() => setShowMindMap(false)}

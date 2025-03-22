@@ -88,14 +88,12 @@ export function Flashcard({
   // Optimize points animation effect
   useEffect(() => {
     if (pointsEarned !== null) {
-      // Set points immediately
       setEarnedPoints(pointsEarned);
       setShowPoints(true);
       
-      // Hide points after animation completes
       const timer = setTimeout(() => {
         setShowPoints(false);
-      }, 500); // Shorter display time for quicker transition
+      }, 500); // Even faster animation
       
       return () => clearTimeout(timer);
     }
@@ -124,9 +122,9 @@ export function Flashcard({
         {showPoints && (
           <motion.div
             initial={{ opacity: 0, y: 0 }}
-            animate={{ opacity: 1, y: -40 }}
-            exit={{ opacity: 0, y: -80 }}
-            transition={{ duration: 0.2 }} // Faster animation
+            animate={{ opacity: 1, y: -20 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.1 }} // Faster animation
             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold text-yellow-500 z-50 pointer-events-none"
           >
             +{earnedPoints} points!
