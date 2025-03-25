@@ -55,29 +55,33 @@ export function useDeck(deckId: string) {
       if (!result || !mounted) return;
 
       const { deckData, finishedProcessing } = result;
-      setDeck(deckData);
+      
+      // Only set deck if we're mounted and have valid data
+      if (mounted && deckData) {
+        setDeck(deckData);
 
-      // Only fetch due cards if not processing and not in the middle of a transition
-      if (!deckData.isProcessing && !finishedProcessing) {
-        const dueCardsData = await fetchDueCards();
-        if (dueCardsData && mounted) {
-          updateCardCounts(dueCardsData);
-        }
-      }
-
-      // If still processing, poll every 2 seconds
-      if (deckData.isProcessing) {
-        pollTimer = setTimeout(loadDeck, 2000);
-      }
-
-      // If just finished processing, fetch due cards again
-      if (finishedProcessing && mounted) {
-        setTimeout(async () => {
+        // Only fetch due cards if not processing and not in the middle of a transition
+        if (!deckData.isProcessing && !finishedProcessing) {
           const dueCardsData = await fetchDueCards();
           if (dueCardsData && mounted) {
             updateCardCounts(dueCardsData);
           }
-        }, 500);
+        }
+
+        // If still processing, poll every 2 seconds
+        if (deckData.isProcessing) {
+          pollTimer = setTimeout(loadDeck, 2000);
+        }
+
+        // If just finished processing, fetch due cards again
+        if (finishedProcessing && mounted) {
+          setTimeout(async () => {
+            const dueCardsData = await fetchDueCards();
+            if (dueCardsData && mounted) {
+              updateCardCounts(dueCardsData);
+            }
+          }, 500);
+        }
       }
     };
 

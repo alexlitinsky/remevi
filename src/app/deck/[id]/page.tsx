@@ -47,9 +47,7 @@ export default function DeckPage() {
             ...deckData,
             dueCards: statsData.dueCards,
             flashcardCount: statsData.totalCards,
-            totalProgress: statsData.cardsWithProgress > 0 
-              ? Math.round((statsData.cardsWithProgress / statsData.totalCards) * 100)
-              : 0,
+            totalProgress: Math.round(statsData.masteryLevel || 0),
             lastStudied: statsData.reviewsByDate 
               ? Object.keys(statsData.reviewsByDate).sort().pop()
               : undefined
@@ -146,15 +144,6 @@ export default function DeckPage() {
               </div>
             </div>
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => router.push(`/deck/${deckId}/configure`)}
-                className="gap-2"
-              >
-                <Settings className="h-4 w-4" />
-                Configure
-              </Button>
               <Button size="lg" onClick={() => router.push(`/deck/${deckId}/session`)} className="gap-2">
                 <BookOpen className="h-4 w-4" />
                 Start Studying

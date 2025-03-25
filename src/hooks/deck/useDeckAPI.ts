@@ -39,14 +39,16 @@ export function useDeckAPI(deckId: string) {
       const finishedProcessing = wasProcessing && !deckData.isProcessing;
       setWasProcessing(deckData.isProcessing);
       
+      // Only set loading to false when we have the deck data and it's not processing
+      if (!deckData.isProcessing) {
+        setIsLoading(false);
+      }
+      
       return { deckData, finishedProcessing };
     } catch (error) {
       console.error('Failed to fetch deck:', error);
+      setIsLoading(false);
       return null;
-    } finally {
-      if (!wasProcessing) {
-        setIsLoading(false);
-      }
     }
   }, [deckId, wasProcessing]);
 

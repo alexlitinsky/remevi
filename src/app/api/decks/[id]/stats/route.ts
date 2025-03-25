@@ -175,7 +175,14 @@ export async function GET(req: NextRequest) {
       totalPoints,
       reviewsByDate,
       masteryLevels,
-      studyTime: studyTimeStats
+      studyTime: studyTimeStats,
+      // Calculate weighted mastery level
+      masteryLevel: totalCards > 0 
+        ? ((masteryLevels.mastered * 100) + 
+           (masteryLevels.learning * 66) + 
+           (masteryLevels.struggling * 33) + 
+           (masteryLevels.new * 0)) / totalCards
+        : 0
     };
     
     return NextResponse.json(stats);

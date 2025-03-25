@@ -64,32 +64,30 @@ export async function GET() {
       }
     })
 
-    // Calculate mastery level based on cards that have been mastered (consistently rated as 'easy')
-    const cardMasteryMap = new Map()
+    // Calculate mastery level based on cards in each category
+    const masteryLevels = {
+      mastered: 0,
+      learning: 0,
+      struggling: 0,
+      new: 0
+    };
+
+    // Count cards in each mastery level
     cardInteractions.forEach(interaction => {
-      const current = cardMasteryMap.get(interaction.studyContentId) || {
-        totalReviews: 0,
-        easyReviews: 0,
-        lastReviewed: null
-      }
-      
-      current.totalReviews++
-      if (interaction.difficulty === 'easy') {
-        current.easyReviews++
-      }
-      if (interaction.lastReviewed && (!current.lastReviewed || interaction.lastReviewed > current.lastReviewed)) {
-        current.lastReviewed = interaction.lastReviewed
-      }
-      
-      cardMasteryMap.set(interaction.studyContentId, current)
-    })
+      masteryLevels[interaction.masteryLevel as keyof typeof masteryLevels]++;
+    });
 
-    const masteredCards = Array.from(cardMasteryMap.values()).filter(stats => 
-      stats.totalReviews >= 2 && (stats.easyReviews / stats.totalReviews) >= 0.8
-    ).length
+    // Calculate weighted progress
+    const masteryScore = (
+      (masteryLevels.mastered * 1.0) +     // Mastered cards count 100%
+      (masteryLevels.learning * 0.66) +     // Learning cards count 75%
+      (masteryLevels.struggling * 0.33) +   // Struggling cards count 33%
+      (masteryLevels.new * 0)               // New cards count 0%
+    );
 
-    const masteryLevel = Math.round((masteredCards / totalCards) * 100) || 0
-    const cardsReviewed = uniqueCards.size
+    // Calculate overall mastery percentage
+    const masteryLevel = Math.round((masteryScore / totalCards) * 100) || 0;
+    const cardsReviewed = uniqueCards.size;
 
     // Calculate streak with proper date handling
     let currentStreak = 0
@@ -141,11 +139,13 @@ export async function GET() {
       return dayActivity
     })
 
-
-    // Calculate total points (10 points per card mastered + bonus points from sessions)
-    const totalPoints = (masteredCards * 10) + studySessions.reduce((acc, session) => 
-      acc + (session.pointsEarned || 0), 0
-    )
+    // Calculate total points (weighted by mastery level)
+    const totalPoints = (
+      (masteryLevels.mastered * 100) +    // 100 points per mastered card
+      (masteryLevels.learning * 75) +      // 75 points per learning card
+      (masteryLevels.struggling * 25) +    // 25 points per struggling card
+      studySessions.reduce((acc, session) => acc + (session.pointsEarned || 0), 0)  // Plus session points
+    );
 
     // Calculate total study time
     const totalStudyTime = studySessions.reduce((acc, session) => 
@@ -157,6 +157,12 @@ export async function GET() {
       cardsReviewed,
       totalCards,
       masteryLevel,
+      masteryBreakdown: {
+        mastered: masteryLevels.mastered,
+        learning: masteryLevels.learning,
+        struggling: masteryLevels.struggling,
+        new: masteryLevels.new
+      },
       minutesStudied: studyTimeMinutes,
       studySessions: studySessions.length,
       currentStreak,

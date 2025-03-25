@@ -11,6 +11,7 @@ import { DeckCompletionScreen } from '@/components/session/DeckCompletionScreen'
 import { LoadingState, ErrorState, ProcessingState } from '@/components/session/StudyDeckStates';
 import { MindMapModal, SettingsModal } from '@/components/session/StudyModals';
 import { StudyActionButtons } from '@/components/session/StudyActionButtons';
+import { NoDueCardsScreen } from '@/components/session/NoDueCardsScreen';
 
 export default function StudyDeckPage() {
   const params = useParams();
@@ -110,28 +111,33 @@ export default function StudyDeckPage() {
     await handleRestartDeck();
     resetSession();
   };
-  // Loading state
-  if (isLoading) {
-    return <LoadingState />;
+
+  // Get the next due date (earliest due date from remaining cards)
+  const nextDueDate = orderedCards.length > 0 
+    ? orderedCards.reduce((earliest, card) => {
+      if (!card.dueDate) return earliest;
+      const dueDate = new Date(card.dueDate);
+      return !earliest || dueDate < earliest ? dueDate : earliest;
+    }, null as Date | null)
+    : null;
+
+  // Loading states - check these first
+  if (isLoading || isLoadingCards || !deck) {
+    return <LoadingState message={isLoadingCards ? "Loading your cards..." : "Loading..."} />;
   }
 
-  // Error state - no deck found
-  if (!deck) {
+  // Error state - deck not found after loading complete
+  if (!isLoading && !deck) {
     return <ErrorState onReturnToDashboard={handleReturnToDashboard} />;
   }
 
   // Processing state - deck is being generated
-  if (deck?.isProcessing) {
+  if (deck.isProcessing) {
     return <ProcessingState />;
   }
-  
-  // Cards loading state - transitioning from processing to ready
-  if (isLoadingCards) {
-    return <LoadingState message="Loading your cards..." />;
-  }
 
-  // Completion state - all cards reviewed
-  if (deckCompleted) {
+  // Completion state - finished all cards in this session
+  if (deckCompleted && cardsReviewed > 0) {
     return (
       <DeckCompletionScreen
         totalPoints={totalPoints}
@@ -141,6 +147,17 @@ export default function StudyDeckPage() {
         sessionTime={sessionTime}
         pointsEarned={sessionPoints}
         cardsReviewed={cardsReviewed}
+      />
+    );
+  }
+
+  // No due cards state - no cards to review (not from this session)
+  if (newCardCount === 0 && dueCardCount === 0) {
+    return (
+      <NoDueCardsScreen
+        onRestartDeck={handleRestartDeckWithReset}
+        onReturnToDashboard={handleReturnToDashboard}
+        nextDueDate={nextDueDate || undefined}
       />
     );
   }

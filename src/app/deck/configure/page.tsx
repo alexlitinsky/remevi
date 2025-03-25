@@ -35,6 +35,7 @@ interface UploadInfo {
   }
 }
 
+// TODO: modify these in the future
 const QUESTION_RANGES = {
   low: { min: 1, max: 20, description: "Good for a quick review session" },
   moderate: { min: 20, max: 40, description: "Balanced for thorough learning" },

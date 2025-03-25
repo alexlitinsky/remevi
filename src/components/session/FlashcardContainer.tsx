@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flashcard } from '@/components/ui/flashcard';
-import { StudyControls } from '@/components/deck/StudyControls';
+import { StudyControls } from '@/components/session/StudyControls';
 import { type Difficulty } from '@/lib/srs';
 import { type FlashcardData } from '@/hooks/deck/types';
 
@@ -41,6 +41,7 @@ export function FlashcardContainer({
     }
     // Number keys for rating (only when card is flipped)
     if (showBack) {
+      console.log("e.key", e.key);
       if (e.key === '1') {
         const responseTime = Date.now() - startTime;
         onRate('hard', responseTime);

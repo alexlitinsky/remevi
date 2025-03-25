@@ -44,6 +44,7 @@ interface DeckStats {
     week: number
     total: number
   }
+  masteryLevel: number
 }
 
 export function StudyStats({ deckId }: StudyStatsProps) {
@@ -100,7 +101,8 @@ export function StudyStats({ deckId }: StudyStatsProps) {
   }
 
   // Calculate completion percentage
-  const completionPercentage = stats.totalCards > 0 ? Math.round((stats.cardsWithProgress / stats.totalCards) * 100) : 0
+  // const completionPercentage = stats.totalCards > 0 ? Math.round((stats.cardsWithProgress / stats.totalCards) * 100) : 0
+  const completionPercentage = stats.totalCards > 0 ? Math.round(stats.masteryLevel) : 0
 
   // Format average response time
   const avgResponseTime = stats.averageResponseTime ? `${Math.round(stats.averageResponseTime / 1000)} seconds` : "N/A"
@@ -427,7 +429,7 @@ export function StudyStats({ deckId }: StudyStatsProps) {
                 </div>
               </div>
 
-              <div className="bg-muted/30 rounded-lg p-6 mt-6">
+              {/* <div className="bg-muted/30 rounded-lg p-6 mt-6">
                 <h3 className="text-sm font-medium mb-4">Study Consistency</h3>
                 <div className="flex items-center gap-4">
                   <div className="grid grid-cols-7 gap-1">
@@ -453,7 +455,7 @@ export function StudyStats({ deckId }: StudyStatsProps) {
                     <p className="text-sm text-muted-foreground mt-1">You've studied on 18 out of the last 28 days</p>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </TabsContent>
         </Tabs>
