@@ -31,9 +31,18 @@ export function useDeckProgress(deckId: string) {
     localStorage.removeItem(`deck-${deckId}-progress`);
   };
 
+  // Safe setter for currentCardIndex that ensures it doesn't exceed bounds
+  const setCurrentCardIndexSafe = (index: number | ((prev: number) => number), maxIndex: number) => {
+    setCurrentCardIndex(prev => {
+      const newIndex = typeof index === 'function' ? index(prev) : index;
+      // Ensure index is between 0 and maxIndex
+      return Math.max(0, Math.min(newIndex, maxIndex));
+    });
+  };
+
   return {
     currentCardIndex,
-    setCurrentCardIndex,
+    setCurrentCardIndex: setCurrentCardIndexSafe,
     totalPoints,
     setTotalPoints,
     completedCardIds,

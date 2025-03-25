@@ -18,52 +18,55 @@ interface StudyDeckHeaderProps {
   streak: number
   pointsEarned: number
   sessionTime: number
+  progress: number
 }
 
 const ProgressBar = memo(({ 
   progress
 }: { 
   progress: number
-}) => (
-  <div className="w-full mt-4">
-    <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
-      <motion.div 
-        className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
-        initial={{ width: 0 }}
-        animate={{ width: `${progress * 100}%` }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
-      >
-        <motion.div
-          className="absolute inset-0 w-full h-full"
-          style={{
-            background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
-            backgroundSize: "200% 100%",
-          }}
-          animate={{
-            backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
-          }}
-          transition={{
-            duration: 2,
-            ease: "linear",
-            repeat: Infinity,
-          }}
-        />
-        
-        <motion.div
-          className="absolute inset-0 w-full h-full bg-blue-400 opacity-0"
-          animate={{
-            opacity: [0, 0.2, 0],
-          }}
-          transition={{
-            duration: 1.5,
-            ease: "easeInOut",
-            repeat: Infinity,
-          }}
-        />
-      </motion.div>
+}) => {
+  return (
+    <div className="w-full mt-4">
+      <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
+        <motion.div 
+          className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
+          initial={{ width: 0 }}
+          animate={{ width: `${progress * 100}%` }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+        >
+          <motion.div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
+              backgroundSize: "200% 100%",
+            }}
+            animate={{
+              backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
+            }}
+            transition={{
+              duration: 2,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          />
+          
+          <motion.div
+            className="absolute inset-0 w-full h-full bg-blue-400 opacity-0"
+            animate={{
+              opacity: [0, 0.2, 0],
+            }}
+            transition={{
+              duration: 1.5,
+              ease: "easeInOut",
+              repeat: Infinity,
+            }}
+          />
+        </motion.div>
+      </div>
     </div>
-  </div>
-));
+  )
+});
 ProgressBar.displayName = 'ProgressBar';
 
 export function StudyDeckHeader({
@@ -78,9 +81,9 @@ export function StudyDeckHeader({
   streak,
   pointsEarned,
   sessionTime,
+  progress,
 }: StudyDeckHeaderProps) {
   const totalOriginalCards = originalNewCount + originalDueCount
-  const progress = totalOriginalCards > 0 ? currentCardIndex / totalOriginalCards : 0
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)

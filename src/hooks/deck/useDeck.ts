@@ -45,6 +45,49 @@ export function useDeck(deckId: string) {
     moveToPrevCard
   } = useCardNavigation();
 
+  // Load study progress from local storage
+  useEffect(() => {
+    if (!deckId) return;
+    
+    const savedProgress = localStorage.getItem(`study-progress-${deckId}`);
+    if (savedProgress) {
+      try {
+        const { currentIndex, totalPointsEarned, completedCardIds, lastStudied } = JSON.parse(savedProgress);
+        
+        // Only restore progress if it's from the same day
+        const today = new Date().toDateString();
+        const lastStudyDate = lastStudied ? new Date(lastStudied).toDateString() : null;
+        
+        if (lastStudyDate === today) {
+          setCurrentCardIndex(currentIndex || 0, orderedCards.length - 1);
+          setTotalPoints(totalPointsEarned || 0);
+          setCompletedCardIds(completedCardIds || []);
+        } else {
+          // Clear old progress
+          localStorage.removeItem(`study-progress-${deckId}`);
+        }
+      } catch (error) {
+        console.error('Error parsing saved progress:', error);
+        localStorage.removeItem(`study-progress-${deckId}`);
+      }
+    }
+  }, [deckId]);
+
+  // Save progress to localStorage whenever it changes
+  useEffect(() => {
+    if (!deck) return;
+    
+    // Only save if we have made some progress
+    if (currentCardIndex > 0 || totalPoints > 0 || completedCardIds.length > 0) {
+      localStorage.setItem(`study-progress-${deck.id}`, JSON.stringify({
+        currentIndex: currentCardIndex,
+        totalPointsEarned: totalPoints,
+        completedCardIds,
+        lastStudied: new Date().toISOString()
+      }));
+    }
+  }, [currentCardIndex, deck?.id, deck, totalPoints, completedCardIds]);
+
   // Fetch deck and due cards
   useEffect(() => {
     let mounted = true;
@@ -124,7 +167,7 @@ export function useDeck(deckId: string) {
       setDeckCompleted(true);
     } else {
       setShowBack(false);
-      setCurrentCardIndex(prev => prev + 1);
+      setCurrentCardIndex(prev => prev + 1, orderedCards.length - 1);
     }
 
     // Update counts immediately
@@ -134,7 +177,6 @@ export function useDeck(deckId: string) {
     // Submit review in background
     submitCardReview(deck.id, currentCard.id, difficulty, responseTime).then(result => {
       if (!result) return;
-      // TODO: React strict mode calls it twice shouldnt be issue in prod
       setPointsEarned(result.pointsEarned);
       setTotalPoints(prev => prev + result.pointsEarned);
 
@@ -151,10 +193,6 @@ export function useDeck(deckId: string) {
             } 
           : card
       );
-
-      // Re-order cards in background
-      // const reorderedCards = orderCardsBySRS(updatedCards);
-      // setOrderedCards(reorderedCards);
     });
 
     // Track completed card
@@ -183,7 +221,7 @@ export function useDeck(deckId: string) {
       const dueCardsData = await fetchDueCards();
       if (dueCardsData) {
         updateCardCounts(dueCardsData);
-        setCurrentCardIndex(0);
+        setCurrentCardIndex(0, dueCardsData.cards.length - 1);
         setShowBack(false);
         setDeckCompleted(false);
       }
@@ -209,8 +247,8 @@ export function useDeck(deckId: string) {
     handleRestartDeck,
     clearProgress,
     flipCard,
-    moveToNextCard: (index: number) => moveToNextCard(index, orderedCards.length, setCurrentCardIndex),
-    moveToPrevCard: (index: number) => moveToPrevCard(index, setCurrentCardIndex),
+    moveToNextCard: (index: number) => moveToNextCard(index, orderedCards.length, (newIndex: number) => setCurrentCardIndex(newIndex, orderedCards.length - 1)),
+    moveToPrevCard: (index: number) => moveToPrevCard(index, (newIndex: number) => setCurrentCardIndex(newIndex, orderedCards.length - 1)),
     setDeckCompleted
   };
 } 

@@ -30,6 +30,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SignIn, SignedIn, SignedOut } from '@clerk/nextjs';
 import { useToast } from "@/components/ui/use-toast"
+import { SparklesCore } from "@/components/ui/sparkles";
 
 interface Flashcard {
   id: string;
@@ -215,23 +216,36 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 md:py-24"
+            className="text-center py-16 md:py-24 relative"
           >
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-gradient-to-b from-primary/20 via-primary/5 to-transparent rounded-full blur-[120px] -z-10" />
+            <div className="absolute inset-0 w-full h-full">
+              <SparklesCore
+                id="tsparticlesHero"
+                background="transparent"
+                minSize={0.6}
+                maxSize={1.4}
+                particleDensity={70}
+                className="w-full h-full"
+                particleColor="rgba(255, 255, 255, 0.3)"
+                speed={0.5}
+              />
+            </div>
 
-            <Badge variant="outline" className="mb-6 px-3 py-1 text-sm bg-primary/10 border-primary/20">
-              AI-Powered Learning
-            </Badge>
+            <div className="relative z-10">
+              <Badge variant="outline" className="mb-6 px-3 py-1 text-sm bg-primary/10 border-primary/20">
+                AI-Powered Learning
+              </Badge>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">
-              Transform Your Notes into
-              <br className="hidden sm:block" />
-              Interactive Study Materials
-            </h1>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">
+                Transform Your Notes into
+                <br className="hidden sm:block" />
+                Interactive Study Materials
+              </h1>
 
-            <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
-              Upload your study materials and let AI create effective flashcards and mind maps for accelerated learning
-            </p>
+              <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
+                Upload your study materials and let AI create effective flashcards and mind maps for accelerated learning
+              </p>
+            </div>
 
             <div {...getRootProps()} className="max-w-3xl mx-auto">
               <motion.div
@@ -471,10 +485,6 @@ export default function Home() {
                     <BookOpen className="h-6 w-6 text-primary" />
                     <h2 className="text-2xl font-bold">Your Study Decks</h2>
                   </div>
-                  <Button variant="outline" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Create Deck
-                  </Button>
                 </div>
 
                 {isLoadingDecks ? (

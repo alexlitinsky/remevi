@@ -22,8 +22,8 @@ export default function StudyDeckPage() {
   const [originalNewCount, setOriginalNewCount] = useState(0);
   const [originalDueCount, setOriginalDueCount] = useState(0);
   const [hasSetOriginalCounts, setHasSetOriginalCounts] = useState(false);
+  const [originalCardIds, setOriginalCardIds] = useState<string[]>([]);
 
-  
   const deckId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   
   const {
@@ -60,6 +60,59 @@ export default function StudyDeckPage() {
     isActive
   } = useSessionStats(deckId);
 
+  // Load original session state from localStorage
+  useEffect(() => {
+    const savedSession = localStorage.getItem(`session-state-${deckId}`);
+    if (savedSession) {
+      const { newCount, dueCount, cardIds } = JSON.parse(savedSession);
+      console.log('Loading saved session state:', JSON.stringify({ newCount, dueCount, cardIds }, null, 2));
+      setOriginalNewCount(newCount);
+      setOriginalDueCount(dueCount);
+      setOriginalCardIds(cardIds);
+      setHasSetOriginalCounts(true);
+    } else {
+      console.log('No saved session state found');
+    }
+  }, [deckId]);
+
+  // Set original counts and cards when session starts
+  useEffect(() => {
+    if (!hasSetOriginalCounts && !isLoading && orderedCards.length > 0) {
+      const cardIds = orderedCards.map(card => card.id);
+      const newCount = orderedCards.filter(card => card.isNew).length;
+      const dueCount = orderedCards.filter(card => !card.isNew && card.isDue).length;
+
+      console.log('Setting initial session state:', JSON.stringify({
+        newCount,
+        dueCount,
+        totalCards: cardIds.length,
+        cardIds
+      }, null, 2));
+
+      setOriginalNewCount(newCount);
+      setOriginalDueCount(dueCount);
+      setOriginalCardIds(cardIds);
+      setHasSetOriginalCounts(true);
+      
+      // Save to localStorage
+      const sessionState = {
+        newCount,
+        dueCount,
+        cardIds
+      };
+      localStorage.setItem(`session-state-${deckId}`, JSON.stringify(sessionState));
+      console.log('Saved session state to localStorage:', JSON.stringify(sessionState, null, 2));
+    }
+  }, [orderedCards, isLoading, hasSetOriginalCounts, deckId]);
+
+  // Calculate actual progress based on original card list
+  const calculateProgress = () => {
+    if (originalCardIds.length === 0) return 0;
+    // Cap progress at 1 (100%)
+    const progress = Math.min((currentCardIndex) / originalCardIds.length, 1);
+    return progress;
+  };
+
   // End session when completed
   useEffect(() => {
     if (!hasStarted) {
@@ -75,14 +128,23 @@ export default function StudyDeckPage() {
     }
   }, [deckCompleted]);
 
-  // Set original counts when session starts
+  // Clear session state when completed or when leaving the page
   useEffect(() => {
-    if (!hasSetOriginalCounts && !isLoading && (newCardCount > 0 || dueCardCount > 0)) {
-      setOriginalNewCount(newCardCount);
-      setOriginalDueCount(dueCardCount);
-      setHasSetOriginalCounts(true);
+    const clearSessionState = () => {
+      localStorage.removeItem(`session-state-${deckId}`);
+      console.log('Cleared session state');
+    };
+
+    if (deckCompleted) {
+      clearSessionState();
     }
-  }, [newCardCount, dueCardCount, isLoading, hasSetOriginalCounts]);
+
+    // Clear session state when leaving the page
+    window.addEventListener('beforeunload', clearSessionState);
+    return () => {
+      window.removeEventListener('beforeunload', clearSessionState);
+    };
+  }, [deckCompleted, deckId]);
 
   const handleSeePerformance = () => {
     clearProgress();
@@ -180,6 +242,7 @@ export default function StudyDeckPage() {
             streak={streak}
             pointsEarned={sessionPoints}
             sessionTime={sessionTime}
+            progress={calculateProgress()}
           />
         </div>
         

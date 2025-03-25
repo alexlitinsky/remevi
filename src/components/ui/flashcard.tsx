@@ -97,17 +97,31 @@ export function Flashcard({
 
   return (
     <div className={cn("relative w-full max-w-2xl mx-auto", className)}>
-      {/* Points animation with faster fade out */}
+      {/* Points animation with improved positioning and styling */}
       <AnimatePresence>
         {showPoints && (
           <motion.div
-            initial={{ opacity: 0, y: 0 }}
-            animate={{ opacity: 1, y: -20 }}
-            exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.1 }} // Faster animation
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold rainbow-text z-50 pointer-events-none"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute -top-2 right-0 transform -translate-y-full 
+                       bg-green-500/10 backdrop-blur-sm border border-green-500/20 
+                       px-3 py-1.5 rounded-full
+                       text-lg font-medium text-green-500
+                       z-50 pointer-events-none
+                       flex items-center gap-1.5"
           >
-            +{earnedPoints} points!
+            <svg 
+              viewBox="0 0 24 24" 
+              className="w-4 h-4 animate-bounce"
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            +{earnedPoints}
           </motion.div>
         )}
       </AnimatePresence>

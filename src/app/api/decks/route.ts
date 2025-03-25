@@ -63,11 +63,36 @@ export async function GET() {
         return interaction && new Date(interaction.dueDate) <= now
       }).length
 
-      // Calculate total progress
-      const cardsWithProgress = deck.deckContent.filter((content: any) => 
-        content.studyContent.cardInteractions.length > 0
-      ).length
-      const totalProgress = flashcardCount > 0 ? Math.round((cardsWithProgress / flashcardCount) * 100) : 0
+      // Calculate mastery levels using the same logic as stats/route.ts
+      const masteryLevels = {
+        mastered: 0,
+        learning: 0,
+        struggling: 0,
+        new: 0
+      };
+
+      let totalCards = 0;
+      
+      // Process each card's mastery level
+      deck.deckContent.forEach(content => {
+        totalCards++;
+        const interaction = content.studyContent.cardInteractions[0];
+        
+        if (interaction) {
+          // Use the interaction's masteryLevel directly
+          masteryLevels[interaction.masteryLevel as keyof typeof masteryLevels]++;
+        } else {
+          masteryLevels.new++;
+        }
+      });
+
+      // Calculate weighted mastery level exactly as in stats/route.ts
+      const totalProgress = totalCards > 0 
+        ? Math.round(((masteryLevels.mastered * 100) + 
+                     (masteryLevels.learning * 66) + 
+                     (masteryLevels.struggling * 33) + 
+                     (masteryLevels.new * 0)) / totalCards)
+        : 0;
 
       // Get last studied date from study sessions
       const lastStudied = deck.studySessions[0]?.startTime

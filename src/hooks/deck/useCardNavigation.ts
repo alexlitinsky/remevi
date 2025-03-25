@@ -8,17 +8,17 @@ export function useCardNavigation() {
     setShowBack(!showBack);
   };
 
-  const moveToNextCard = (currentIndex: number, maxIndex: number, onMove: (index: number) => void) => {
+  const moveToNextCard = (currentIndex: number, maxIndex: number, onMove: (index: number, maxIndex: number) => void) => {
     if (currentIndex < maxIndex - 1) {
-      onMove(currentIndex + 1);
+      onMove(currentIndex + 1, maxIndex);
       setShowBack(false);
       setPointsEarned(null);
     }
   };
 
-  const moveToPrevCard = (currentIndex: number, onMove: (index: number) => void) => {
+  const moveToPrevCard = (currentIndex: number, onMove: (index: number, maxIndex: number) => void) => {
     if (currentIndex > 0) {
-      onMove(currentIndex - 1);
+      onMove(currentIndex - 1, currentIndex);
       setShowBack(false);
       setPointsEarned(null);
     }
