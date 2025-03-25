@@ -48,7 +48,10 @@ export function ProcessingState() {
   return (
     <div className="h-screen pt-16 bg-background flex items-center justify-center">
       <div className="text-center space-y-6">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+        <div className="spinner-3d">
+          <div className="ring-1"></div>
+          <div className="ring-2"></div>
+        </div>
         <h1 className="text-2xl font-bold text-white animate-pulse">Processing Your Deck</h1>
         <p className="text-zinc-400">
           We&apos;re generating flashcards and a mind map for your study deck. This may take a minute or two.

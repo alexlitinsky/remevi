@@ -22,11 +22,30 @@ export async function GET() {
           include: {
             studyContent: {
               include: {
-                flashcardContent: true
+                flashcardContent: true,
+                cardInteractions: {
+                  where: {
+                    userId: user.id
+                  },
+                  orderBy: {
+                    lastReviewed: 'desc'
+                  },
+                  take: 1
+                }
               }
             }
           }
-        }
+        },
+        studySessions: {
+          where: {
+            userId: user.id
+          },
+          orderBy: {
+            startTime: 'desc'
+          },
+          take: 1
+        },
+        tags: true
       }
     })
 
@@ -34,18 +53,39 @@ export async function GET() {
     const formattedDecks = decks.map(deck => {
       // Count the number of flashcards in the deck
       const flashcardCount = deck.deckContent.filter(
-        (content: { studyContent: { type: string; flashcardContent: any } }) => 
-          content.studyContent.type === 'flashcard' && content.studyContent.flashcardContent
-      ).length;
+        (content: any) => content.studyContent.type === 'flashcard' && content.studyContent.flashcardContent
+      ).length
+
+      // Calculate due cards
+      const now = new Date()
+      const dueCards = deck.deckContent.filter((content: any) => {
+        const interaction = content.studyContent.cardInteractions[0]
+        return interaction && new Date(interaction.dueDate) <= now
+      }).length
+
+      // Calculate total progress
+      const cardsWithProgress = deck.deckContent.filter((content: any) => 
+        content.studyContent.cardInteractions.length > 0
+      ).length
+      const totalProgress = flashcardCount > 0 ? Math.round((cardsWithProgress / flashcardCount) * 100) : 0
+
+      // Get last studied date from study sessions
+      const lastStudied = deck.studySessions[0]?.startTime
 
       return {
         id: deck.id,
         title: deck.title,
+        category: deck.category || "Uncategorized",
+        flashcardCount,
         createdAt: deck.createdAt,
-        isProcessing: false,
-        flashcardCount
-      };
-    });
+        isProcessing: deck.isProcessing,
+        error: deck.error,
+        lastStudied: lastStudied?.toISOString(),
+        dueCards,
+        totalProgress,
+        tags: deck.tags.map(tag => tag.name)
+      }
+    })
 
     return NextResponse.json(formattedDecks)
   } catch (error) {

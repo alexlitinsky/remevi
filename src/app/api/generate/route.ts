@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
               content: [
                 {
                   type: 'text',
-                  text: `You are a helpful AI that creates study materials. ${questionCountPrompt} ${pageRangePrompt} Generate flashcards and a mind map from the provided file. Return a JSON object with flashcards array and mindMap object.`
+                  text: `You are a helpful AI that creates study materials. ${questionCountPrompt} ${pageRangePrompt} Generate flashcards and a mind map from the provided file. Also determine the most appropriate category for this study material. Return a JSON object with flashcards array, mindMap object, and category string.`
                 },
                 {
                   type: 'file',
@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
               nodes: z.array(z.object({ id: z.string(), label: z.string() })), 
               connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) 
             }),
+            category: z.string()
           }),
         });
 
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        // Update deck with mind map and processing status
+        // Update deck with mind map, category and processing status
         await db.deck.update({
           where: { id: deck.id },
           data: {
@@ -175,6 +176,7 @@ export async function POST(request: NextRequest) {
               nodes,
               connections: object.mindMap.connections,
             },
+            category: object.category,
             isProcessing: false,
           },
         });

@@ -11,16 +11,23 @@ export async function GET(req: NextRequest) {
     
     const url = new URL(req.url);
     const pathParts = url.pathname.split('/');
-    const deckId = pathParts[pathParts.length - 2]; // Account for 'stats' at the end
+    const id = pathParts[pathParts.length - 2]; // -2 because stats is the last part
     
-    if (!deckId) {
+    if (!id) {
       return new NextResponse("Missing deck ID", { status: 400 });
     }
+    
+    // Get current date for time-based queries
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
     
     // Get the deck with its content and interactions
     const deck = await db.deck.findUnique({
       where: {
-        id: deckId,
+        id,
         userId: user.id
       },
       include: {
@@ -36,6 +43,17 @@ export async function GET(req: NextRequest) {
               }
             }
           }
+        },
+        studySessions: {
+          where: {
+            userId: user.id,
+            startTime: {
+              gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
+            }
+          },
+          orderBy: {
+            startTime: 'desc'
+          }
         }
       }
     });
@@ -44,101 +62,125 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Deck not found", { status: 404 });
     }
     
-    // Calculate statistics
-    const totalCards = deck.deckContent.length;
-    const cardsWithProgress = deck.deckContent.filter(content => 
-      content.studyContent.cardInteractions.length > 0
-    ).length;
-    const newCards = totalCards - cardsWithProgress;
+    // Calculate study time statistics
+    const studyTimeStats = {
+      today: 0,
+      week: 0,
+      total: 0
+    };
     
-    // Calculate cards due today
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
+    const todaySessions = deck.studySessions.filter(session => 
+      session.startTime >= startOfToday
+    );
+    const weekSessions = deck.studySessions.filter(session => 
+      session.startTime >= startOfWeek
+    );
     
-    const dueCards = deck.deckContent.filter(content => {
-      const interaction = content.studyContent.cardInteractions[0];
-      return interaction && new Date(interaction.dueDate) <= today;
-    }).length;
+    studyTimeStats.today = todaySessions.reduce((acc, session) => 
+      acc + (session.totalTime || 0), 0) / 60 // Convert to minutes
+    studyTimeStats.week = weekSessions.reduce((acc, session) => 
+      acc + (session.totalTime || 0), 0) / 60
+    studyTimeStats.total = deck.studySessions.reduce((acc, session) => 
+      acc + (session.totalTime || 0), 0) / 60
     
-    // Calculate averages and totals
-    let totalStreak = 0;
-    let totalEaseFactor = 0;
+    // Calculate mastery levels
+    const masteryLevels = {
+      mastered: 0,
+      learning: 0,
+      struggling: 0,
+      new: 0
+    };
+    
+    // Calculate review history
+    const reviewsByDate: Record<string, { total: number; easy: number; medium: number; hard: number }> = {};
+    const last30Days = Array.from({ length: 30 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      return date.toISOString().split('T')[0];
+    });
+    
+    last30Days.forEach(date => {
+      reviewsByDate[date] = { total: 0, easy: 0, medium: 0, hard: 0 };
+    });
+    
+    let totalCards = 0;
+    let cardsWithProgress = 0;
     let totalResponseTime = 0;
-    let countWithResponseTime = 0;
+    let responseTimeCount = 0;
+    let totalEaseFactor = 0;
+    let easeFactorCount = 0;
+    let totalStreak = 0;
+    let streakCount = 0;
     let totalPoints = 0;
+    let dueCards = 0;
+    let newCards = 0;
     
+    // Process each card's data
     deck.deckContent.forEach(content => {
+      totalCards++;
       const interaction = content.studyContent.cardInteractions[0];
+      
       if (interaction) {
-        totalStreak += interaction.streak;
-        totalEaseFactor += interaction.easeFactor;
-        totalPoints += interaction.score;
+        cardsWithProgress++;
+        masteryLevels[interaction.masteryLevel as keyof typeof masteryLevels]++;
         
         if (interaction.responseTime) {
           totalResponseTime += interaction.responseTime;
-          countWithResponseTime++;
+          responseTimeCount++;
         }
+        
+        if (interaction.easeFactor) {
+          totalEaseFactor += interaction.easeFactor;
+          easeFactorCount++;
+        }
+        
+        if (interaction.streak) {
+          totalStreak += interaction.streak;
+          streakCount++;
+        }
+        
+        totalPoints += interaction.score;
+        
+        // Check if card is due
+        if (interaction.dueDate <= now) {
+          dueCards++;
+        }
+        
+        // Add to review history if reviewed in last 30 days
+        if (interaction.lastReviewed) {
+          const reviewDate = interaction.lastReviewed.toISOString().split('T')[0];
+          if (reviewsByDate[reviewDate]) {
+            reviewsByDate[reviewDate].total++;
+            if (interaction.difficulty) {
+              reviewsByDate[reviewDate][interaction.difficulty as 'easy' | 'medium' | 'hard']++;
+            }
+          }
+        }
+      } else {
+        newCards++;
+        masteryLevels.new++;
       }
     });
     
-    const averageStreak = cardsWithProgress > 0 ? totalStreak / cardsWithProgress : 0;
-    const averageEaseFactor = cardsWithProgress > 0 ? totalEaseFactor / cardsWithProgress : 2.5;
-    const averageResponseTime = countWithResponseTime > 0 ? totalResponseTime / countWithResponseTime : 0;
-    
-    // Calculate review history (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const reviewHistory = deck.deckContent.flatMap(content => 
-      content.studyContent.cardInteractions
-        .filter(interaction => interaction.lastReviewed && new Date(interaction.lastReviewed) >= thirtyDaysAgo)
-        .map(interaction => ({
-          date: interaction.lastReviewed,
-          difficulty: interaction.difficulty
-        }))
-    );
-    
-    // Group reviews by date
-    interface ReviewsByDateEntry {
-      total: number;
-      easy: number;
-      medium: number;
-      hard: number;
-      [key: string]: number;
-    }
-    
-    const reviewsByDate: Record<string, ReviewsByDateEntry> = {};
-    
-    reviewHistory.forEach(review => {
-      if (!review.date) return;
-      
-      const date = new Date(review.date).toISOString().split('T')[0];
-      if (!reviewsByDate[date]) {
-        reviewsByDate[date] = { total: 0, easy: 0, medium: 0, hard: 0 };
-      }
-      reviewsByDate[date].total++;
-      
-      const difficulty = review.difficulty || 'medium';
-      if (difficulty === 'easy' || difficulty === 'medium' || difficulty === 'hard') {
-        reviewsByDate[date][difficulty]++;
-      }
-    });
-    
-    return NextResponse.json({
-      deckId,
+    const stats = {
+      deckId: deck.id,
       deckTitle: deck.title,
       totalCards,
       cardsWithProgress,
       newCards,
       dueCards,
-      averageStreak,
-      averageEaseFactor,
-      averageResponseTime,
+      averageStreak: streakCount > 0 ? totalStreak / streakCount : 0,
+      averageEaseFactor: easeFactorCount > 0 ? totalEaseFactor / easeFactorCount : 2.5,
+      averageResponseTime: responseTimeCount > 0 ? totalResponseTime / responseTimeCount : null,
       totalPoints,
-      reviewsByDate
-    });
+      reviewsByDate,
+      masteryLevels,
+      studyTime: studyTimeStats
+    };
+    
+    return NextResponse.json(stats);
   } catch (error) {
-    console.error("Error fetching deck statistics:", error);
+    console.error("Error fetching deck stats:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

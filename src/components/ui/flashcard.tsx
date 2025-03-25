@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useCallback, memo } from "react"
+import React, { useState, useEffect, memo } from "react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "./card"
-import { Button } from "./button"
 import { motion, AnimatePresence } from "framer-motion"
-import { type Difficulty } from "@/lib/srs"
 
 interface FlashcardProps {
   front: string
@@ -14,7 +12,7 @@ interface FlashcardProps {
   onPrev?: () => void
   className?: string
   pointsEarned?: number | null
-  progress?: number // Add progress prop (0-1)
+  progress?: number
   totalCards?: number
   currentCardIndex?: number
 }
@@ -74,8 +72,6 @@ export function Flashcard({
   back,
   showBack,
   onFlip,
-  onNext,
-  onPrev,
   className,
   pointsEarned = null,
   progress = 0,
@@ -99,22 +95,6 @@ export function Flashcard({
     }
   }, [pointsEarned]);
 
-  // Handle keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' && onNext) {
-        onNext();
-      } else if (e.key === 'ArrowLeft' && onPrev) {
-        onPrev();
-      } else if (e.key === ' ' || e.key === 'Enter') {
-        onFlip();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onNext, onPrev, onFlip]);
-
   return (
     <div className={cn("relative w-full max-w-2xl mx-auto", className)}>
       {/* Points animation with faster fade out */}
@@ -125,7 +105,7 @@ export function Flashcard({
             animate={{ opacity: 1, y: -20 }}
             exit={{ opacity: 0, y: -40 }}
             transition={{ duration: 0.1 }} // Faster animation
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold text-yellow-500 z-50 pointer-events-none"
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold rainbow-text z-50 pointer-events-none"
           >
             +{earnedPoints} points!
           </motion.div>
@@ -145,14 +125,6 @@ export function Flashcard({
           <CardFront content={front} onClick={onFlip} />
           <CardBack content={back} onClick={onFlip} />
         </div>
-      </div>
-
-      <div className="flex flex-col gap-4 mt-4">
-        <ProgressBar 
-          progress={progress} 
-          totalCards={totalCards}
-          currentCardIndex={currentCardIndex}
-        />
       </div>
     </div>
   );

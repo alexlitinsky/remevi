@@ -75,6 +75,18 @@ export async function POST(req: NextRequest) {
       review.difficulty,
     );
 
+    // Determine mastery level based on performance
+    let masteryLevel = "new";
+    if (nextReview.repetitions > 0) {
+      if (nextReview.easeFactor >= 2.5 && newStreak >= 3) {
+        masteryLevel = "mastered";
+      } else if (nextReview.easeFactor >= 2.0) {
+        masteryLevel = "learning";
+      } else {
+        masteryLevel = "struggling";
+      }
+    }
+
     // Create or update a study session
     const session = await db.studySession.upsert({
       where: {
@@ -117,6 +129,7 @@ export async function POST(req: NextRequest) {
         score: nextReview.points,
         responseTime: review.responseTime,
         difficulty: review.difficulty,
+        masteryLevel,
       },
       update: {
         sessionId: session.id,
@@ -131,6 +144,7 @@ export async function POST(req: NextRequest) {
         },
         responseTime: review.responseTime,
         difficulty: review.difficulty,
+        masteryLevel,
       },
     });
 

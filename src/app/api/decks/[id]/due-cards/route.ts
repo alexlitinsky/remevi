@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
       .slice(0, userPrefs.reviewsPerDay);
     
     // Combine new and due cards
-    const cardsToStudy = [...limitedNewCards, ...limitedDueCards];
+    const cardsToStudy = [...limitedDueCards, ...limitedNewCards];
 
     return NextResponse.json({
       deckId: deckId,

@@ -160,6 +160,7 @@ model Deck {
   userId             String
   title              String
   description        String?
+  category           String?              // Added field for deck category
   isPublic           Boolean              @default(false)
   mindMap            Json?
   isProcessing       Boolean              @default(false)
@@ -212,6 +213,7 @@ model CardInteraction {
   difficulty         String?              // "easy", "medium", "hard"
   correct            Boolean?             // For MCQ and fill-in-blank
   score              Int                  @default(0)
+  masteryLevel       String               @default("new") // "mastered", "learning", "struggling", "new"
   
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
@@ -236,6 +238,9 @@ model StudySession {
   totalTime          Int?                 // in seconds
   cardsStudied       Int                  @default(0)
   pointsEarned       Int                  @default(0)
+  averageResponseTime Int?                // in milliseconds
+  correctCount       Int                  @default(0)
+  incorrectCount     Int                  @default(0)
   
   // Relationships
   user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -244,4 +249,5 @@ model StudySession {
   
   @@index([userId])
   @@index([deckId])
+  @@index([startTime])
 }

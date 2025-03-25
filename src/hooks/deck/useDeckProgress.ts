@@ -6,39 +6,29 @@ export function useDeckProgress(deckId: string) {
   const [totalPoints, setTotalPoints] = useState(0);
   const [completedCardIds, setCompletedCardIds] = useState<string[]>([]);
 
-  // Load study progress from local storage
+  // Load progress from localStorage on mount
   useEffect(() => {
-    if (!deckId) return;
-    
-    const savedProgress = localStorage.getItem(`study-progress-${deckId}`);
+    const savedProgress = localStorage.getItem(`deck-${deckId}-progress`);
     if (savedProgress) {
-      try {
-        const { currentIndex, totalPointsEarned, completedCardIds } = JSON.parse(savedProgress);
-        setCurrentCardIndex(currentIndex || 0);
-        setTotalPoints(totalPointsEarned || 0);
-        setCompletedCardIds(completedCardIds || []);
-      } catch (error) {
-        console.error('Error parsing saved progress:', error);
-        localStorage.removeItem(`study-progress-${deckId}`);
-      }
+      const { points, completed } = JSON.parse(savedProgress);
+      setTotalPoints(points);
+      setCompletedCardIds(completed);
     }
   }, [deckId]);
 
-  // Save progress to localStorage whenever it changes
+  // Save progress to localStorage when it changes
   useEffect(() => {
-    // Only save if we have made some progress
-    if (currentCardIndex > 0 || totalPoints > 0) {
-      localStorage.setItem(`study-progress-${deckId}`, JSON.stringify({
-        currentIndex: currentCardIndex,
-        totalPointsEarned: totalPoints,
-        completedCardIds,
-        lastStudied: new Date().toISOString()
-      }));
-    }
-  }, [currentCardIndex, deckId, totalPoints, completedCardIds]);
+    localStorage.setItem(`deck-${deckId}-progress`, JSON.stringify({
+      points: totalPoints,
+      completed: completedCardIds
+    }));
+  }, [deckId, totalPoints, completedCardIds]);
 
   const clearProgress = () => {
-    localStorage.removeItem(`study-progress-${deckId}`);
+    setCurrentCardIndex(0);
+    setTotalPoints(0);
+    setCompletedCardIds([]);
+    localStorage.removeItem(`deck-${deckId}-progress`);
   };
 
   return {
