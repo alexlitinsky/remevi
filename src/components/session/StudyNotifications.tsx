@@ -1,7 +1,7 @@
 import { XCircle, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { JSX } from "react"
 
 interface Achievement {

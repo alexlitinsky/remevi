@@ -2,6 +2,29 @@ import { NextResponse } from "next/server"
 import { currentUser } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
 
+interface DeckContent {
+  studyContent: {
+    id: string;
+    type: string;
+    flashcardContent: {
+      id: string;
+      studyContentId: string;
+      front: string;
+      back: string;
+    } | null;
+    cardInteractions: Array<{
+      id: string;
+      createdAt: Date;
+      updatedAt: Date;
+      dueDate: Date;
+      easeFactor: number;
+      interval: number;
+      repetitions: number;
+      masteryLevel: string;
+    }>;
+  };
+}
+
 // GET /api/decks - Get all decks for the current user
 export async function GET() {
   try {
@@ -53,12 +76,12 @@ export async function GET() {
     const formattedDecks = decks.map(deck => {
       // Count the number of flashcards in the deck
       const flashcardCount = deck.deckContent.filter(
-        (content: any) => content.studyContent.type === 'flashcard' && content.studyContent.flashcardContent
+        (content: DeckContent) => content.studyContent.type === 'flashcard' && content.studyContent.flashcardContent
       ).length
 
       // Calculate due cards
       const now = new Date()
-      const dueCards = deck.deckContent.filter((content: any) => {
+      const dueCards = deck.deckContent.filter((content: DeckContent) => {
         const interaction = content.studyContent.cardInteractions[0]
         return interaction && new Date(interaction.dueDate) <= now
       }).length

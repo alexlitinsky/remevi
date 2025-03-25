@@ -74,7 +74,6 @@ export function StudyDeckHeader({
   deckId,
   newCardCount,
   dueCardCount,
-  totalCardCount,
   currentCardIndex,
   originalNewCount,
   originalDueCount,
@@ -83,7 +82,6 @@ export function StudyDeckHeader({
   sessionTime,
   progress,
 }: StudyDeckHeaderProps) {
-  const totalOriginalCards = originalNewCount + originalDueCount
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)

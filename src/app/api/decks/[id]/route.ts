@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from "next/server"
 import { currentUser } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
 
+interface DeckContentItem {
+  studyContent: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    studyMaterialId: string;
+    type: string;
+    difficultyLevel: string;
+    shared: boolean;
+    flashcardContent: {
+      id: string;
+      studyContentId: string;
+      front: string;
+      back: string;
+    } | null;
+  };
+}
+
 export async function GET(req: NextRequest) {
   try {
     const user = await currentUser()
@@ -51,7 +69,7 @@ export async function GET(req: NextRequest) {
     // Calculate study streak
     const sessions = deck.studySessions
     let currentStreak = 0
-    let lastStudyDate = sessions[0]?.startTime
+    const lastStudyDate = sessions[0]?.startTime
 
     if (lastStudyDate) {
       const today = new Date()
@@ -70,7 +88,7 @@ export async function GET(req: NextRequest) {
       if (studiedToday) {
         currentStreak = 1
         // Count backwards from yesterday
-        let checkDate = yesterday
+        const checkDate = yesterday
         for (let i = 1; i < sessions.length; i++) {
           const sessionDate = new Date(sessions[i].startTime)
           sessionDate.setHours(0, 0, 0, 0)
@@ -84,7 +102,7 @@ export async function GET(req: NextRequest) {
         }
       } else {
         // Check if studied yesterday and count backwards
-        let checkDate = yesterday
+        const checkDate = yesterday
         for (const session of sessions) {
           const sessionDate = new Date(session.startTime)
           sessionDate.setHours(0, 0, 0, 0)
@@ -104,14 +122,14 @@ export async function GET(req: NextRequest) {
     
     // Extract flashcards from the deck content
     const flashcards = deck.deckContent
-      .filter((content: any) => 
+      .filter((content: DeckContentItem) => 
         content.studyContent.type === 'flashcard' && 
         content.studyContent.flashcardContent
       )
-      .map((content: any) => ({
+      .map((content: DeckContentItem) => ({
         id: content.studyContent.id,
-        front: content.studyContent.flashcardContent.front,
-        back: content.studyContent.flashcardContent.back
+        front: content.studyContent.flashcardContent!.front,
+        back: content.studyContent.flashcardContent!.back
       }))
 
     const formattedDeck = {

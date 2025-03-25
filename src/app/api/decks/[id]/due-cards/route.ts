@@ -3,6 +3,29 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { isCardDue } from "@/lib/srs";
 
+interface DeckContent {
+  studyContent: {
+    id: string;
+    type: string;
+    flashcardContent: {
+      id: string;
+      studyContentId: string;
+      front: string;
+      back: string;
+    } | null;
+    cardInteractions: Array<{
+      id: string;
+      createdAt: Date;
+      updatedAt: Date;
+      dueDate: Date;
+      easeFactor: number;
+      interval: number;
+      repetitions: number;
+      masteryLevel: string;
+    }>;
+  };
+}
+
 interface Card {
   id: string;
   front: string;
@@ -55,7 +78,7 @@ export async function GET(req: NextRequest) {
     const dueCards: Card[] = [];
     
     // Process each deck content item
-    deck.deckContent.forEach((content: any) => {
+    deck.deckContent.forEach((content: DeckContent) => {
       const studyContent = content.studyContent;
       
       // Only process flashcard content for now

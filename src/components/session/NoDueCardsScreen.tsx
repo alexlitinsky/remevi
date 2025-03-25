@@ -30,7 +30,7 @@ export function NoDueCardsScreen({
           <Clock className="w-12 h-12 mx-auto text-primary" />
           <h2 className="text-2xl font-bold">No Cards Due</h2>
           <p className="text-muted-foreground">
-            Great job! You've reviewed all your due cards. Come back {formattedNextDue} for more cards to review.
+            Great job! You&apos;ve reviewed all your due cards. Come back {formattedNextDue} for more cards to review.
           </p>
         </div>
 

@@ -45,7 +45,6 @@ export default function StudyDeckPage() {
     flipCard,
     moveToNextCard,
     moveToPrevCard,
-    setDeckCompleted
   } = useDeck(deckId);
 
   const {
@@ -57,7 +56,6 @@ export default function StudyDeckPage() {
     startSession,
     endSession,
     resetSession,
-    isActive
   } = useSessionStats(deckId);
 
   // Load original session state from localStorage
@@ -119,14 +117,14 @@ export default function StudyDeckPage() {
       setHasStarted(true);
       startSession();
     }
-  }, [hasStarted]);
+  }, [hasStarted, startSession]);
 
   // End session when completed
   useEffect(() => {
     if (deckCompleted) {
       endSession();
     }
-  }, [deckCompleted]);
+  }, [deckCompleted, endSession]);
 
   // Clear session state when completed or when leaving the page
   useEffect(() => {

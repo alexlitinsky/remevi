@@ -1,9 +1,7 @@
 import { XCircle, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { motion } from "framer-motion"
-import { useState } from "react"
 import { useStudySettings } from "@/hooks/deck/useStudySettings"
 
 interface MindMapModalProps {

@@ -14,32 +14,16 @@ import {
   Trophy,
   Zap,
   Brain,
-  FileText,
-  FileIcon as FilePdf,
-  FileImage,
   Flame,
   BarChart3,
   ArrowRight,
-  Plus,
-  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SignIn, SignedIn, SignedOut } from '@clerk/nextjs';
-import { useToast } from "@/components/ui/use-toast"
+import { SignIn } from '@clerk/nextjs';
 import { SparklesCore } from "@/components/ui/sparkles";
-
-interface Flashcard {
-  id: string;
-  front: string;
-  back: string;
-  lastReviewed?: string;
-  nextReview?: string;
-  mastery: number;
-}
 
 interface Deck {
   id: string;
@@ -180,26 +164,6 @@ export default function Home() {
     },
     maxFiles: 1,
   });
-
-  const getFileIcon = (type: string) => {
-    if (type.includes('pdf')) return <FilePdf className="h-5 w-5 text-red-500" />
-    if (type.includes('image')) return <FileImage className="h-5 w-5 text-blue-500" />
-    return <FileText className="h-5 w-5 text-green-500" />
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-  };
 
   const getDaysAgo = (dateString: string) => {
     const days = Math.floor((new Date().getTime() - new Date(dateString).getTime()) / (1000 * 3600 * 24))

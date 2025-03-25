@@ -74,9 +74,6 @@ export function Flashcard({
   onFlip,
   className,
   pointsEarned = null,
-  progress = 0,
-  totalCards = 1,
-  currentCardIndex = 0,
 }: FlashcardProps) {
   const [showPoints, setShowPoints] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState(0);

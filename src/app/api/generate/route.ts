@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Create flashcard content for each flashcard
-        const flashcardPromises = object.flashcards.map(async (card: any, index: number) => {
+        const flashcardPromises = object.flashcards.map(async (card: { front: string; back: string }, index: number) => {
           // First create the study content
           const studyContent = await db.studyContent.create({
             data: {

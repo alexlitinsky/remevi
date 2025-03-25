@@ -24,7 +24,7 @@ export function ErrorState({ onReturnToDashboard }: { onReturnToDashboard: () =>
         </div>
 
         <h2 className="text-2xl font-bold mb-2">Oops! Something went wrong</h2>
-        <p className="text-muted-foreground mb-8">We couldn't load your study session. Please try again later.</p>
+        <p className="text-muted-foreground mb-8">We couldn&apos;t load your study session. Please try again later.</p>
 
         <Button onClick={onReturnToDashboard}>Return to Dashboard</Button>
       </div>
@@ -44,7 +44,7 @@ export function ProcessingState() {
 
         <h2 className="text-2xl font-bold mb-2">Processing Your Deck</h2>
         <p className="text-muted-foreground mb-8">
-          We're analyzing your content and creating flashcards. This may take a few minutes.
+          We&apos;re analyzing your content and creating flashcards. This may take a few minutes.
         </p>
 
         <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-4">

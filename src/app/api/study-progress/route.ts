@@ -2,11 +2,6 @@ import { NextResponse } from "next/server"
 import { currentUser } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
 
-interface MasteryData {
-  date: string
-  mastery: number
-}
-
 export async function GET() {
   try {
     const user = await currentUser()
@@ -16,7 +11,6 @@ export async function GET() {
 
     // Get current date for time-based queries
     const now = new Date()
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const startOfWeek = new Date(now)
     startOfWeek.setDate(now.getDate() - now.getDay())
     startOfWeek.setHours(0, 0, 0, 0)

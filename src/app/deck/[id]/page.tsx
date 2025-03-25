@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { StudyStats } from '@/components/deck/StudyStats';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Settings, Sparkles, Clock, Calendar } from 'lucide-react';
+import { ArrowRight, BookOpen, Sparkles, Clock, Calendar } from 'lucide-react';
 
 interface Deck {
   id: string;
@@ -83,7 +83,7 @@ export default function DeckPage() {
         </div>
         <h1 className="text-3xl font-bold">Deck not found</h1>
         <p className="text-muted-foreground max-w-md text-center">
-          We couldn't find the deck you're looking for. It may have been deleted or you might not have access to it.
+          We couldn&apos;t find the deck you&apos;re looking for. It may have been deleted or you might not have access to it.
         </p>
         <Button size="lg" onClick={() => router.push('/deck')} className="mt-4">
           Return to Decks
@@ -239,7 +239,7 @@ export default function DeckPage() {
                 <div>
                   <h3 className="font-semibold text-yellow-500">Processing your deck</h3>
                   <p className="text-muted-foreground text-sm mt-1">
-                    We're analyzing your cards and preparing your study materials. This may take a few minutes.
+                    We&apos;re analyzing your cards and preparing your study materials. This may take a few minutes.
                   </p>
                 </div>
               </div>

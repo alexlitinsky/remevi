@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { DeckData, FlashcardData, Difficulty } from './types';
 import { useDeckProgress } from './useDeckProgress';
-import { useCardOrdering } from './useCardOrdering';
 import { useDeckAPI } from './useDeckAPI';
 import { useCardNavigation } from './useCardNavigation';
 
@@ -24,12 +23,10 @@ export function useDeck(deckId: string) {
     clearProgress
   } = useDeckProgress(deckId);
 
-  const { orderCardsBySRS } = useCardOrdering();
   
   const {
     isLoading,
     isLoadingCards,
-    wasProcessing,
     fetchDueCards,
     fetchDeck,
     submitCardReview
@@ -159,9 +156,6 @@ export function useDeck(deckId: string) {
     const currentCard = orderedCards[currentCardIndex];
     const isLastCard = currentCardIndex >= orderedCards.length - 1;
     
-    // Immediately update UI
-    const estimatedPoints = difficulty === 'easy' ? 15 : difficulty === 'medium' ? 10 : 5;
-    
     // Move to next card immediately
     if (isLastCard) {
       setDeckCompleted(true);
@@ -180,19 +174,6 @@ export function useDeck(deckId: string) {
       setPointsEarned(result.pointsEarned);
       setTotalPoints(prev => prev + result.pointsEarned);
 
-      // Update card data
-      const updatedCards = orderedCards.map(card => 
-        card.id === currentCard.id 
-          ? { 
-              ...card, 
-              dueDate: result.cardInteraction.dueDate,
-              easeFactor: result.cardInteraction.easeFactor,
-              repetitions: result.cardInteraction.repetitions,
-              interval: result.cardInteraction.interval,
-              isNew: false
-            } 
-          : card
-      );
     });
 
     // Track completed card

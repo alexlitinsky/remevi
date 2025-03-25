@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { DeckData, FlashcardData, Difficulty } from './types';
+import type { DeckData, Difficulty } from './types';
 
 export function useDeckAPI(deckId: string) {
   const [isLoading, setIsLoading] = useState(true);

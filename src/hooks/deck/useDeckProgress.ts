@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import type { StudyProgress } from './types';
 
 export function useDeckProgress(deckId: string) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);

@@ -47,7 +47,7 @@ export function DeckCompletionScreen({
             </div>
 
             <h2 className="text-2xl font-bold mb-2">Session Complete!</h2>
-            <p className="text-muted-foreground mb-8">Great job! You've completed your study session.</p>
+            <p className="text-muted-foreground mb-8">Great job! You&apos;ve completed your study session.</p>
 
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="bg-muted/30 rounded-lg p-4">
