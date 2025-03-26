@@ -4,6 +4,10 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { Header } from "@/components/layout/header";
+import { PricingButton } from "@/components/pricing/PricingButton";
+import { getUserSubscriptionStatus } from "@/lib/stripe";
+import { currentUser } from "@clerk/nextjs/server";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,11 +16,14 @@ export const metadata: Metadata = {
   description: "Generate flashcards and mind maps from your study materials",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await currentUser();
+  const subscription = user ? await getUserSubscriptionStatus(user.id) : null;
+
   return (
     <ClerkProvider appearance={{
       baseTheme: dark,
@@ -33,6 +40,8 @@ export default function RootLayout({
         <body className={`${inter.className} h-full bg-[#0B1120] text-foreground`}>
           <Header />
           {children}
+          {user && <PricingButton subscription={subscription} />}
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>

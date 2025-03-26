@@ -70,8 +70,8 @@ export async function syncStripeDataToKV(customerId: string) {
 }
 
 export const STRIPE_PRICE_IDS = {
-  MONTHLY: process.env.STRIPE_PRICE_ID_MONTHLY,
-  ANNUAL: process.env.STRIPE_PRICE_ID_ANNUAL,
+  MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY,
+  ANNUAL: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ANNUAL,
 } as const;
 
 export async function getUserSubscriptionStatus(userId: string) {

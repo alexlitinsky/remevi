@@ -6,14 +6,16 @@ import { NextResponse } from "next/server";
 export async function GET(req: Request) {
   const user = await currentUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
+  
   const url = new URL(req.url);
+  const returnUrl = url.searchParams.get("returnUrl") || url.origin;
 
   const stripeCustomerId = await kv.get<string>(`stripe:user:${user.id}`);
   if (!stripeCustomerId) return new Response("No subscription found", { status: 404 });
 
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
-    return_url: `${url.origin}/dashboard`,
+    return_url: returnUrl,
   });
 
   return NextResponse.json({ url: session.url });
