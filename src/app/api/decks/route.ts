@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server"
 import { currentUser } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(20, '1 m'), // 20 requests per minute
+  analytics: true,
+})
 
 interface DeckContent {
   studyContent: {
@@ -31,6 +39,12 @@ export async function GET() {
     const user = await currentUser()
     if (!user?.id) {
       return new NextResponse("Unauthorized", { status: 401 })
+    }
+
+    // Rate limiting
+    const { success } = await ratelimit.limit(user.id)
+    if (!success) {
+      return new NextResponse("Too Many Requests", { status: 429 })
     }
 
     const decks = await db.deck.findMany({
@@ -149,6 +163,12 @@ export async function POST(req: Request) {
     const user = await currentUser()
     if (!user?.id) {
       return new NextResponse("Unauthorized", { status: 401 })
+    }
+
+    // Rate limiting
+    const { success } = await ratelimit.limit(user.id)
+    if (!success) {
+      return new NextResponse("Too Many Requests", { status: 429 })
     }
 
     const { title, description } = await req.json()
