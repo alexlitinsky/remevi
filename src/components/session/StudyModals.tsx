@@ -1,6 +1,5 @@
 import { XCircle, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import { motion } from "framer-motion"
 import { useStudySettings } from "@/hooks/deck/useStudySettings"
 
@@ -85,9 +84,9 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isVisible, onClose, onRefreshCards, deckId }: SettingsModalProps) {
-  const { settings, updateSettings } = useStudySettings(deckId);
+  const { settings, updateSettings, isLoading } = useStudySettings(deckId);
 
-  if (!isVisible) return null
+  if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -104,59 +103,54 @@ export function SettingsModal({ isVisible, onClose, onRefreshCards, deckId }: Se
           </Button>
         </div>
 
-        <div className="p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">Show Card Hints</h3>
-              <p className="text-sm text-muted-foreground">Display hints for difficult cards</p>
-            </div>
-            <Switch 
-              checked={settings.showHints} 
-              onCheckedChange={(checked) => updateSettings({ showHints: checked })} 
-            />
+        {isLoading ? (
+          <div className="p-8 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
           </div>
+        ) : (
+          <>
+            <div className="p-4 space-y-6">
+              <div>
+                <h3 className="font-medium mb-4">Daily Study Limits</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground">New Cards Per Day</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={settings.newCardsPerDay}
+                      onChange={(e) => updateSettings({ newCardsPerDay: parseInt(e.target.value) })}
+                      className="w-full mt-1.5 bg-background rounded-md border border-input px-3 py-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Maximum number of new cards to study each day</p>
+                  </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">Audio Pronunciation</h3>
-              <p className="text-sm text-muted-foreground">Read card content aloud</p>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Reviews Per Day</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="200"
+                      value={settings.reviewsPerDay}
+                      onChange={(e) => updateSettings({ reviewsPerDay: parseInt(e.target.value) })}
+                      className="w-full mt-1.5 bg-background rounded-md border border-input px-3 py-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Maximum number of card reviews per day</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <Switch 
-              checked={settings.audioEnabled} 
-              onCheckedChange={(checked) => updateSettings({ audioEnabled: checked })} 
-            />
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">Shuffle Cards</h3>
-              <p className="text-sm text-muted-foreground">Randomize card order</p>
+            <div className="p-4 border-t flex justify-end">
+              <Button variant="outline" onClick={onRefreshCards} className="gap-2">
+                <Zap className="h-4 w-4" />
+                Refresh Cards
+              </Button>
             </div>
-            <Switch 
-              checked={settings.shuffleCards} 
-              onCheckedChange={(checked) => updateSettings({ shuffleCards: checked })} 
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">Focus Mode</h3>
-              <p className="text-sm text-muted-foreground">Hide distractions while studying</p>
-            </div>
-            <Switch 
-              checked={settings.focusMode} 
-              onCheckedChange={(checked) => updateSettings({ focusMode: checked })} 
-            />
-          </div>
-        </div>
-
-        <div className="p-4 border-t flex justify-end">
-          <Button variant="outline" onClick={onRefreshCards} className="gap-2">
-            <Zap className="h-4 w-4" />
-            Refresh Cards
-          </Button>
-        </div>
+          </>
+        )}
       </motion.div>
     </div>
-  )
+  );
 } 

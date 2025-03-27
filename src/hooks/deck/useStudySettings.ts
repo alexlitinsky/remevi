@@ -1,41 +1,63 @@
 import { useState, useEffect } from 'react';
 
 interface StudySettings {
-  showHints: boolean;
-  audioEnabled: boolean;
-  shuffleCards: boolean;
-  focusMode: boolean;
+  newCardsPerDay: number;
+  reviewsPerDay: number;
 }
 
 const DEFAULT_SETTINGS: StudySettings = {
-  showHints: true,
-  audioEnabled: false,
-  shuffleCards: true,
-  focusMode: false,
+  newCardsPerDay: 15,
+  reviewsPerDay: 20
 };
 
 export function useStudySettings(deckId: string) {
   const [settings, setSettings] = useState<StudySettings>(DEFAULT_SETTINGS);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load settings on mount
+  // Load settings from API on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem(`deck-${deckId}-settings`);
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+    async function loadSettings() {
+      try {
+        const response = await fetch('/api/users/me/preferences');
+        if (response.ok) {
+          const data = await response.json();
+          setSettings({
+            newCardsPerDay: data.newCardsPerDay,
+            reviewsPerDay: data.reviewsPerDay
+          });
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
+    loadSettings();
   }, [deckId]);
 
-  // Save settings when changed
-  useEffect(() => {
-    localStorage.setItem(`deck-${deckId}-settings`, JSON.stringify(settings));
-  }, [deckId, settings]);
-
-  const updateSettings = (newSettings: Partial<StudySettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+  const updateSettings = async (newSettings: Partial<StudySettings>) => {
+    try {
+      const response = await fetch('/api/users/me/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSettings),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSettings({
+          newCardsPerDay: data.newCardsPerDay,
+          reviewsPerDay: data.reviewsPerDay
+        });
+      }
+    } catch (error) {
+      console.error('Error updating settings:', error);
+    }
   };
 
   return {
     settings,
     updateSettings,
+    isLoading,
   };
 } 

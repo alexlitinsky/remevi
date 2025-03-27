@@ -8,6 +8,7 @@ import { PricingButton } from "@/components/pricing/PricingButton";
 import { getUserSubscriptionStatus } from "@/lib/stripe";
 import { currentUser } from "@clerk/nextjs/server";
 import { Toaster } from "sonner";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -38,10 +39,12 @@ export default async function RootLayout({
           <meta name="darkreader-lock" />
         </head>
         <body className={`${inter.className} h-full bg-[#0B1120] text-foreground`}>
-          <Header />
-          {children}
-          {user && <PricingButton subscription={subscription} />}
-          <Toaster />
+          <SubscriptionProvider>
+            <Header />
+            {children}
+            {user && <PricingButton subscription={subscription} />}
+            <Toaster />
+          </SubscriptionProvider>
         </body>
       </html>
     </ClerkProvider>

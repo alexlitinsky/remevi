@@ -5,7 +5,10 @@ import { generateObject} from 'ai';
 import { openaiResponsesProvider } from '@/lib/ai/providers';
 import { z } from 'zod';
 import { getFileFromStorage } from '@/lib/storage';
-
+import { getUserSubscriptionStatus, isSubscribed } from '@/lib/stripe';
+import { FREEMIUM_LIMITS } from '@/lib/constants';
+import { AiModel } from '@/types/ai';
+import { Difficulty } from '@/types/difficulty';
 // Helper function to remove file extension
 function removeFileExtension(filename: string): string {
   return filename.replace(/\.[^/.]+$/, '');
@@ -34,7 +37,26 @@ export async function POST(request: NextRequest) {
 
     // Handle both direct uploads and Supabase storage
     // Handle uploaded file from Supabase storage
-    const { uploadId, filePath, metadata: fileMetadata, questionCount, pageRange } = await request.json();
+    const { uploadId, filePath, metadata: fileMetadata, questionCount, pageRange, aiModel, difficulty } = await request.json();
+
+    const subscription = await getUserSubscriptionStatus(user.id);
+    const subscribed = isSubscribed(subscription);
+    
+    const limits = subscribed ? FREEMIUM_LIMITS.PRO : FREEMIUM_LIMITS.FREE;
+
+    const { error } = await validateFreemiumLimits({
+      userId: user.id,
+      fileMetadata,
+      pageRange,
+      aiModel: aiModel as AiModel,
+      difficulty: difficulty as Difficulty,
+      subscribed,
+      limits
+    });
+
+    if (error) {
+      return new Response(error, { status: 400 });
+    }
 
     if (!uploadId || !filePath) {
       return new Response('Invalid upload data provided', { status: 400 });
@@ -210,4 +232,55 @@ export async function POST(request: NextRequest) {
     console.error('Error generating study materials:', error);
     return new Response('Error processing file', { status: 500 });
   }
+}
+
+async function validateFreemiumLimits({
+  userId,
+  fileMetadata,
+  pageRange,
+  aiModel,
+  difficulty,
+  subscribed,
+  limits
+}: {
+  userId: string,
+  fileMetadata: { size: number },
+  pageRange?: { start: number, end: number },
+  aiModel: AiModel,
+  difficulty: Difficulty,
+  subscribed: boolean,
+  limits: typeof FREEMIUM_LIMITS.FREE | typeof FREEMIUM_LIMITS.PRO
+}) {
+  // Validate file size
+  if (fileMetadata.size > limits.maxFileSize) {
+    return { error: 'File size exceeds your plan limit' };
+  }
+
+  // Validate page range
+  if (pageRange && (pageRange.end - pageRange.start + 1) > limits.maxPages) {
+    return { error: 'Page count exceeds your plan limit' };
+  }
+
+  // Validate AI model
+  if (!limits.allowedAiModels.includes(aiModel)) {
+    return { error: 'AI model not available in your plan' };
+  }
+
+  // Validate difficulty
+  if (!limits.allowedDifficulties.includes(difficulty)) {
+    return { error: 'Difficulty level not available in your plan' };
+  }
+
+  // Check deck count for free users
+  if (!subscribed) {
+    const deckCount = await db.deck.count({
+      where: { userId }
+    });
+    
+    if (deckCount >= limits.maxDecks) {
+      return { error: 'You have reached the maximum number of decks for your plan' };
+    }
+  }
+
+  return { error: null };
 }
