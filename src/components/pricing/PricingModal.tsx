@@ -81,7 +81,7 @@ export function PricingModal({ open, onOpenChange, subscription }: PricingModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] max-w-[400px] overflow-y-auto p-0">
+      <DialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] max-w-[400px] overflow-y-auto p-0 bg-black">
         <div className="px-6 pt-6">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-center text-2xl font-bold tracking-tight">
