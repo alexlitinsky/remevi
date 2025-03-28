@@ -146,7 +146,7 @@ export function StudyDeckHeader({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-              {currentCardIndex + 1} / {originalNewCount + originalDueCount}
+              {currentCardIndex + 1} / {newCardCount + dueCardCount}
             </Badge>
 
             <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">

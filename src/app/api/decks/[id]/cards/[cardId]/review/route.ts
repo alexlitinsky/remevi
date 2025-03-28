@@ -95,30 +95,32 @@ export async function POST(req: NextRequest) {
       create: {
         userId: user.id,
         deckId: deckId,
+        startTime: new Date(),
         cardsStudied: 1,
         pointsEarned: nextReview.points,
       },
       update: {
         cardsStudied: {
-          increment: 1,
+          increment: 1
         },
         pointsEarned: {
-          increment: nextReview.points,
+          increment: nextReview.points
         },
-      },
+        endTime: new Date(),
+      }
     });
 
-    // Update or create card interaction
-    cardInteraction = await db.cardInteraction.upsert({
+    // Create or update card interaction
+    const updatedCardInteraction = await db.cardInteraction.upsert({
       where: {
         userId_studyContentId: {
           userId: user.id,
-          studyContentId,
+          studyContentId: studyContentId,
         },
       },
       create: {
         userId: user.id,
-        studyContentId,
+        studyContentId: studyContentId,
         sessionId: session.id,
         easeFactor: nextReview.easeFactor,
         interval: nextReview.interval,
@@ -126,10 +128,10 @@ export async function POST(req: NextRequest) {
         dueDate: nextReview.dueDate,
         lastReviewed: new Date(),
         streak: newStreak,
-        score: nextReview.points,
         responseTime: review.responseTime,
         difficulty: review.difficulty,
-        masteryLevel,
+        score: nextReview.points,
+        masteryLevel
       },
       update: {
         sessionId: session.id,
@@ -139,12 +141,10 @@ export async function POST(req: NextRequest) {
         dueDate: nextReview.dueDate,
         lastReviewed: new Date(),
         streak: newStreak,
-        score: {
-          increment: nextReview.points,
-        },
         responseTime: review.responseTime,
         difficulty: review.difficulty,
-        masteryLevel,
+        score: nextReview.points,
+        masteryLevel
       },
     });
 
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      cardInteraction,
+      cardInteraction: updatedCardInteraction,
       pointsEarned: nextReview.points,
       nextReview: nextReview.dueDate,
     });

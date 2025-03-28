@@ -41,6 +41,13 @@ const BASE_POINTS = 10;
 const MAX_RESPONSE_TIME = 30000; // 30 seconds
 const MIN_EASE_FACTOR = 1.3;
 
+export function calculatePoints(difficulty: Difficulty, responseTime: number): number {
+  const speedMultiplier = Math.max(1, 2 - (responseTime / MAX_RESPONSE_TIME));
+  const difficultyMultiplier = DIFFICULTY_MULTIPLIER[difficulty];
+  
+  return Math.round(BASE_POINTS * speedMultiplier * difficultyMultiplier);
+}
+
 export function calculateNextReview(
   review: ReviewData,
   currentStreak: number,
@@ -71,14 +78,8 @@ export function calculateNextReview(
     interval = Math.max(1, Math.floor(interval * 0.75));
   }
 
-  // Calculate points
-  const speedMultiplier = Math.max(1, 2 - (responseTime / MAX_RESPONSE_TIME));
-  const difficultyMultiplier = DIFFICULTY_MULTIPLIER[difficulty];
-  const streakMultiplier = Math.min(2, 1 + (currentStreak * 0.1));
-  
-  const points = Math.round(
-    BASE_POINTS * speedMultiplier * difficultyMultiplier * streakMultiplier
-  );
+  // Calculate points using shared function
+  const points = calculatePoints(difficulty, responseTime);
 
   // Calculate next due date
   const dueDate = new Date();

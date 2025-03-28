@@ -9,9 +9,124 @@ import { getUserSubscriptionStatus, isSubscribed } from '@/lib/stripe';
 import { FREEMIUM_LIMITS } from '@/lib/constants';
 import { AiModel } from '@/types/ai';
 import { Difficulty } from '@/types/difficulty';
+import { PDFDocument, PDFPage } from 'pdf-lib';
+
+const PAGES_PER_CHUNK = 5;
+
 // Helper function to remove file extension
 function removeFileExtension(filename: string): string {
   return filename.replace(/\.[^/.]+$/, '');
+}
+
+async function splitPdfIntoChunks(fileBuffer: Buffer, pageRange?: { start: number; end: number }): Promise<Buffer[]> {
+  const pdfDoc = await PDFDocument.load(fileBuffer);
+  const totalPages = pdfDoc.getPageCount();
+  
+  // Determine page range
+  const startPage = pageRange?.start ?? 0;
+  const endPage = Math.min(pageRange?.end ?? totalPages, totalPages);
+  const chunks: Buffer[] = [];
+
+  // Process pages in chunks
+  for (let i = startPage; i < endPage; i += PAGES_PER_CHUNK) {
+    const chunkDoc = await PDFDocument.create();
+    const chunkEnd = Math.min(i + PAGES_PER_CHUNK, endPage);
+    
+    // Copy pages for this chunk
+    const pageIndices = Array.from({ length: chunkEnd - i }, (_, idx) => i + idx);
+    const pages = await chunkDoc.copyPages(pdfDoc, pageIndices);
+    pages.forEach((page: PDFPage) => chunkDoc.addPage(page));
+    
+    const chunkBytes = await chunkDoc.save();
+    chunks.push(Buffer.from(chunkBytes));
+  }
+
+  return chunks;
+}
+
+async function processChunk(
+  chunk: Buffer, 
+  chunkIndex: number, 
+  totalChunks: number,
+  difficultyPrompt: string,
+  aiModel: string
+) {
+  const chunkPrompt = `Process part ${chunkIndex + 1} of ${totalChunks} of the document. Focus on generating flashcards only.\n\n${difficultyPrompt}`;
+  
+  try {
+    const result = await generateObject({
+      model: aiModel === 'advanced' ? openai4oResponsesProvider : openai4oMiniResponsesProvider,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: chunkPrompt
+            },
+            {
+              type: 'file',
+              data: chunk,
+              mimeType: 'application/pdf'
+            }
+          ]
+        }
+      ],
+      schema: z.object({
+        flashcards: z.array(z.object({ front: z.string(), back: z.string() })),
+        category: z.string()
+      }),
+      maxTokens: 4000,
+      temperature: 0.7
+    });
+
+    console.log(`Successfully processed chunk ${chunkIndex + 1}/${totalChunks} with ${result.object.flashcards.length} flashcards`);
+    return result.object;
+  } catch (error) {
+    console.error(`Error processing chunk ${chunkIndex + 1}/${totalChunks}:`, error);
+    return {
+      flashcards: [],
+      category: 'unknown'
+    };
+  }
+}
+
+async function generateMindMap(fileBuffer: Buffer, aiModel: string) {
+  try {
+    const result = await generateObject({
+      model: aiModel === 'advanced' ? openai4oResponsesProvider : openai4oMiniResponsesProvider,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Generate a comprehensive mind map for the entire document. Focus on key concepts and their relationships.'
+            },
+            {
+              type: 'file',
+              data: fileBuffer,
+              mimeType: 'application/pdf'
+            }
+          ]
+        }
+      ],
+      schema: z.object({
+        mindMap: z.object({ 
+          nodes: z.array(z.object({ id: z.string(), label: z.string() })), 
+          connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) 
+        })
+      }),
+      maxTokens: 4000,
+      temperature: 0.5 // Lower temperature for more consistent mind map
+    });
+
+    console.log('Successfully generated mind map');
+    return result.object.mindMap;
+  } catch (error) {
+    console.error('Error generating mind map:', error);
+    return { nodes: [], connections: [] };
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -106,28 +221,28 @@ export async function POST(request: NextRequest) {
         const difficultyPrompt = `You are an expert study material creator. Generate a comprehensive set of flashcards based on the following difficulty level:
 
         ${difficulty === 'low' ? `LOW DIFFICULTY:
-        - Generate 30-50 flashcards focusing on foundational concepts
+        - Generate 6-10 flashcards per chunk focusing on foundational concepts
         - Each card should cover a single, essential concept
         - Front: Simple, direct questions or key terms
         - Back: Clear, concise explanations with basic examples
         - Focus on: Core terminology, main ideas, basic principles` 
         
         : difficulty === 'moderate' ? `MODERATE DIFFICULTY:
-        - Generate 50-100 flashcards with balanced depth
+        - Generate 10-20 flashcards per chunk with balanced depth
         - Mix of basic and intermediate concepts
         - Front: Combination of terms, concepts, and application questions
         - Back: Detailed explanations with examples and relationships
         - Focus on: Key concepts, supporting details, relationships between ideas`
         
         : `HIGH DIFFICULTY:
-        - Generate 100-200 flashcards for comprehensive coverage
+        - Generate 20-40 flashcards per chunk for comprehensive coverage
         - Include basic, intermediate, and advanced concepts
         - Front: Complex scenarios, analytical questions, and interconnected concepts
         - Back: In-depth explanations with examples, edge cases, and connections
         - Focus on: Deep understanding, nuanced details, practical applications, and theoretical foundations`}
 
         IMPORTANT GUIDELINES:
-        1. Prioritize quality and comprehensiveness over arbitrary limits
+        1. Focus on the content in this section of the document
         2. Each flashcard must be self-contained and valuable on its own
         3. Ensure progressive difficulty within the selected level
         4. Include practical examples and real-world applications where relevant
@@ -135,42 +250,69 @@ export async function POST(request: NextRequest) {
         
         ${pageRangePrompt}`;
 
-        const result = await generateObject({
-          model: aiModel === 'advanced' ? openai4oResponsesProvider : openai4oMiniResponsesProvider,
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: difficultyPrompt
-                },
-                {
-                  type: 'file',
-                  data: fileBuffer,
-                  mimeType: metadata.type
-                }
-              ]
-            }
-          ],
-          schema: z.object({
-            flashcards: z.array(z.object({ front: z.string(), back: z.string() })),
-            mindMap: z.object({ 
-              nodes: z.array(z.object({ id: z.string(), label: z.string() })), 
-              connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) 
-            }),
-            category: z.string()
-          }),
-        });
+        // Split PDF into chunks
+        const chunks = await splitPdfIntoChunks(fileBuffer, pageRange);
+        console.log(`Split PDF into ${chunks.length} chunks`);
+        
+        // Process chunks for flashcards
+        const chunkResults = [];
+        const batchSize = 3;
+        let successfulChunks = 0;
+        
+        for (let i = 0; i < chunks.length; i += batchSize) {
+          const batch = chunks.slice(i, i + batchSize);
+          const batchPromises = batch.map((chunk, idx) => {
+            const currentChunkIndex = i + idx;
+            return processChunk(chunk, currentChunkIndex, chunks.length, difficultyPrompt, aiModel);
+          });
+          
+          const results = await Promise.all(batchPromises);
+          const validResults = results.filter(r => r.flashcards.length > 0);
+          chunkResults.push(...validResults);
+          successfulChunks += validResults.length;
+          
+          if (i + batchSize < chunks.length) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
 
-        const object = result.object;
+          await db.deck.update({
+            where: { id: deck.id },
+            data: {
+              isProcessing: true,
+              error: `Processed ${successfulChunks}/${chunks.length} chunks (${chunkResults.flatMap(r => r.flashcards).length} flashcards so far)` 
+            }
+          });
+        }
+
+        if (chunkResults.length === 0) {
+          throw new Error('Failed to generate any flashcards from the document');
+        }
+
+        console.log(`Successfully processed ${successfulChunks}/${chunks.length} chunks`);
+        console.log(`Generated ${chunkResults.flatMap(r => r.flashcards).length} total flashcards`);
+
+        // Generate mind map once for the entire document
+        const mindMap = await generateMindMap(fileBuffer, aiModel);
+
+        // Combine results
+        const allFlashcards = chunkResults.flatMap(result => result.flashcards);
+
+        // Use the most common category
+        const category = chunkResults
+          .map(r => r.category)
+          .reduce((acc, curr) => {
+            acc[curr] = (acc[curr] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+        const finalCategory = Object.entries(category)
+          .reduce((a, b) => a[1] > b[1] ? a : b)[0];
 
         // Add coordinates to mind map nodes
         const centerX = 500;
         const centerY = 300;
         const radius = 200;
-        const nodes = object.mindMap.nodes.map((node: { id: string; label: string }, index: number) => {
-          const angle = (2 * Math.PI * index) / object.mindMap.nodes.length;
+        const nodes = mindMap.nodes.map((node: { id: string; label: string }, index: number) => {
+          const angle = (2 * Math.PI * index) / mindMap.nodes.length;
           return {
             ...node,
             x: centerX + radius * Math.cos(angle),
@@ -179,16 +321,26 @@ export async function POST(request: NextRequest) {
         });
 
         // Create flashcard content for each flashcard
-        const flashcardPromises = object.flashcards.map(async (card: { front: string; back: string }, index: number) => {
-          // First create the study content
+        const flashcardPromises = allFlashcards.map(async (card: { front: string; back: string }, index: number) => {
+          // Create the study content with its flashcard content
           const studyContent = await db.studyContent.create({
             data: {
-              studyMaterialId: studyMaterial.id,
               type: 'flashcard',
+              studyMaterialId: studyMaterial.id,
               flashcardContent: {
                 create: {
                   front: card.front,
                   back: card.back
+                }
+              },
+              deckContent: {
+                create: {
+                  deck: {
+                    connect: {
+                      id: deck.id
+                    }
+                  },
+                  order: index
                 }
               }
             },
@@ -196,40 +348,23 @@ export async function POST(request: NextRequest) {
               flashcardContent: true
             }
           });
-
-          // Then add it to the deck
-          await db.deckContent.create({
-            data: {
-              deckId: deck.id,
-              studyContentId: studyContent.id,
-              order: index
-            }
-          });
-
           return studyContent;
         });
 
         // Wait for all flashcards to be created
         await Promise.all(flashcardPromises);
 
-        // Update study material status
-        await db.studyMaterial.update({
-          where: { id: studyMaterial.id },
-          data: {
-            status: 'completed'
-          }
-        });
-
-        // Update deck with mind map, category and processing status
+        // Update the deck with the mind map and category
         await db.deck.update({
           where: { id: deck.id },
           data: {
             mindMap: {
               nodes,
-              connections: object.mindMap.connections,
+              connections: mindMap.connections,
             },
-            category: object.category,
+            category: finalCategory,
             isProcessing: false,
+            error: null, // Clear the error field since processing completed successfully
           },
         });
       } catch (error) {

@@ -17,6 +17,8 @@ import {
   Flame,
   BarChart3,
   ArrowRight,
+  Loader2,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +26,21 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { SignIn } from '@clerk/nextjs';
 import { SparklesCore } from "@/components/ui/sparkles";
+import { useUploadContext, FileMetadata } from '@/contexts/UploadContext';
+import { toast } from 'sonner';
+import { FREEMIUM_LIMITS } from '@/lib/constants';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Deck {
   id: string;
@@ -72,23 +89,23 @@ export default function Home() {
     })).reverse(),
     totalPoints: 0
   });
+  const [isExtractingMeta, setIsExtractingMeta] = useState(false);
+  const { setFile, setMetadata, file, metadata } = useUploadContext();
+  const { subscription } = useSubscription();
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+  const limits = subscription?.status === "active" ? FREEMIUM_LIMITS.PRO : FREEMIUM_LIMITS.FREE;
 
   useEffect(() => {
     if (isSignedIn) {
       fetchDecks();
       fetchProgress();
       
-      const pendingUploadInfo = localStorage.getItem('pendingUploadInfo');
-      if (pendingUploadInfo) {
-        try {
-          router.push('/deck/configure');
-        } catch (error) {
-          console.error('Error parsing pending upload info:', error);
-          localStorage.removeItem('pendingUploadInfo');
-        }
+      if (file && metadata) {
+        router.push('/deck/configure');
       }
     }
-  }, [isSignedIn, router]);
+  }, [isSignedIn, router, file, metadata]);
 
   const fetchProgress = async () => {
     try {
@@ -117,43 +134,88 @@ export default function Home() {
     }
   };
 
+  const extractMetadata = async (file: File): Promise<FileMetadata> => {
+    const metadata: FileMetadata = {
+      originalName: file.name,
+      type: file.type,
+      size: file.size,
+    };
+
+    if (file.type === 'application/pdf') {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const response = await fetch('/api/extract-pdf-metadata', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+          },
+          body: arrayBuffer,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to extract PDF metadata');
+        }
+
+        const { pageCount } = await response.json();
+        metadata.pageCount = pageCount;
+      } catch (error) {
+        console.error('Error extracting PDF metadata:', error);
+        toast.error('Error reading PDF file. Please try again.');
+        throw error;
+      }
+    }
+
+    return metadata;
+  };
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
-    
-    try {
-      setIsProcessing(true);
-      
-      // Upload file to Supabase storage via our API
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const response = await fetch('/api/temp-upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to upload file');
-      }
-      
-      const { uploadId, filePath, metadata } = await response.json();
-      localStorage.setItem('pendingUploadInfo', JSON.stringify({ uploadId, filePath, metadata }));
 
-      if (!isSignedIn) {
-        setShowSignIn(true);
-        setIsProcessing(false);
-        return;
-      }
-
-      router.push('/deck/configure');
-
-    } catch (error) {
-      console.error('Error handling file:', error);
-    } finally {
-      setIsProcessing(false);
+    // Check file size
+    if (file.size > limits.maxFileSize) {
+      toast.error(`File size (${formatFileSize(file.size)}) exceeds plan limit (${formatFileSize(limits.maxFileSize)}).`);
+      return;
     }
-  }, [isSignedIn, router]);
+
+    // Check file type
+    const allowedTypes = [
+      'application/pdf',
+      'text/plain',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Unsupported file type. Please upload a PDF, TXT, or DOC file.');
+      return;
+    }
+
+    setIsExtractingMeta(true);
+
+    try {
+      const metadata = await extractMetadata(file);
+      setFile(file);
+      setMetadata(metadata);
+
+      if (isSignedIn) {
+        router.push('/deck/configure');
+      } else {
+        setShowSignIn(true);
+      }
+    } catch (error) {
+      console.error('Error processing file:', error);
+    } finally {
+      setIsExtractingMeta(false);
+    }
+  }, [isSignedIn, router, setFile, setMetadata, limits.maxFileSize]);
+
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes) return "0 B";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -163,6 +225,7 @@ export default function Home() {
       'text/plain': ['.txt'],
     },
     maxFiles: 1,
+    disabled: isProcessing,
   });
 
   const getDaysAgo = (dateString: string) => {
@@ -171,6 +234,29 @@ export default function Home() {
     if (days === 1) return "Yesterday"
     return `${days} days ago`
   }
+
+  const handleDelete = async (deckId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation to deck page
+    setIsDeleting(deckId);
+    try {
+      const response = await fetch(`/api/decks/${deckId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete deck');
+      }
+
+      toast.success('Deck deleted successfully');
+      // Remove the deck from local state instead of refreshing
+      setDecks(prevDecks => prevDecks.filter(deck => deck.id !== deckId));
+    } catch (error) {
+      console.error('Error deleting deck:', error);
+      toast.error('Failed to delete deck');
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90">
@@ -217,6 +303,7 @@ export default function Home() {
                 whileTap={{ scale: 0.99 }}
                 className={cn(
                   "relative py-12 px-8 rounded-2xl cursor-pointer transition-all duration-300",
+                  isProcessing ? "cursor-not-allowed opacity-70" : "cursor-pointer",
                   isDragActive
                     ? "border-2 border-dashed border-primary/50 bg-primary/5"
                     : "border-2 border-dashed border-muted/50 hover:border-primary/30 bg-card/30",
@@ -233,15 +320,19 @@ export default function Home() {
                     <p className="text-2xl font-medium">Drop your files here</p>
                   ) : (
                     <>
-                      <p className="text-xl md:text-2xl font-medium">
-                        Drag & drop your files here, or click to select files
-                      </p>
-                      <p className="text-muted-foreground">Supports PDF, DOCX, and TXT files</p>
                       {isProcessing && (
                         <div className="flex items-center justify-center gap-2 text-primary mt-4">
-                          <Sparkles className="h-5 w-5 animate-pulse" />
-                          <span>Processing your document...</span>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>{isExtractingMeta ? 'Analyzing file...' : 'Processing...'}</span>
                         </div>
+                      )}
+                      {!isProcessing && (
+                        <>
+                          <p className="text-xl md:text-2xl font-medium">
+                            Drag & drop your files here, or click to select files
+                          </p>
+                          <p className="text-muted-foreground">Supports PDF, DOCX, and TXT files</p>
+                        </>
                       )}
                     </>
                   )}
@@ -479,64 +570,136 @@ export default function Home() {
                     {decks.map((deck) => (
                       <Card
                         key={deck.id}
-                        onClick={() => router.push(`/deck/${deck.id}`)}
-                        className="group relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] border border-primary/10 hover:border-primary/30 hover:shadow-lg bg-card/50 backdrop-blur-sm"
+                        className="group relative overflow-hidden transition-all duration-300 hover:scale-[1.02] border border-primary/10 hover:border-primary/30 hover:shadow-lg bg-card/50 backdrop-blur-sm"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="h-1 w-full bg-gradient-to-r from-primary to-primary/50" />
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <Badge variant="outline" className="mb-2 text-xs">
-                                {deck.category || "Uncategorized"}
-                              </Badge>
-                              <h3 className="text-lg font-medium line-clamp-2">{deck.title}</h3>
-                            </div>
-                            <div className="rounded-full bg-primary/10 p-1.5">
-                              <BookOpen className="h-4 w-4 text-primary" />
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col gap-4">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">{deck.flashcardCount} cards</span>
-                              <span className="text-muted-foreground">
-                                {deck.lastStudied ? getDaysAgo(deck.lastStudied) : "Never studied"}
-                              </span>
-                            </div>
-
-                            {deck.isProcessing ? (
-                              <div className="flex items-center gap-2 text-yellow-500 text-sm">
-                                <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-yellow-500"></div>
-                                <span>Processing your deck...</span>
-                              </div>
-                            ) : deck.totalProgress !== undefined ? (
-                              <div className="space-y-1.5">
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-muted-foreground">Progress</span>
-                                  <span>{deck.totalProgress}%</span>
-                                </div>
-                                <Progress value={deck.totalProgress} className="h-1" />
-                              </div>
-                            ) : null}
-
-                            {deck.dueCards !== undefined && (
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">Due today:</span>
-                                <Badge variant="secondary" className="font-mono">
-                                  {deck.dueCards} cards
+                        <div 
+                          role="button"
+                          onClick={() => router.push(`/deck/${deck.id}`)}
+                          className="cursor-pointer"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="h-1 w-full bg-gradient-to-r from-primary to-primary/50" />
+                          <CardContent className="p-6">
+                            {/* Title section */}
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <Badge variant="outline" className="mb-2 text-xs">
+                                  {deck.category || "Uncategorized"}
                                 </Badge>
+                                <h3 className="text-lg font-medium line-clamp-2">{deck.title}</h3>
                               </div>
-                            )}
-                          </div>
+                              <div className="rounded-full bg-primary/10 p-1.5">
+                                <BookOpen className="h-4 w-4 text-primary" />
+                              </div>
+                            </div>
 
-                          <div className="mt-4 pt-4 border-t border-primary/10 flex justify-end">
-                            <Button variant="ghost" size="sm" className="gap-1 text-xs group-hover:text-primary transition-colors">
-                              Study Now
-                              <ArrowRight className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </CardContent>
+                            {/* Stats section */}
+                            <div className="flex flex-col gap-4">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">{deck.flashcardCount} cards</span>
+                                <span className="text-muted-foreground">
+                                  {deck.lastStudied ? getDaysAgo(deck.lastStudied) : "Never studied"}
+                                </span>
+                              </div>
+
+                              {deck.isProcessing ? (
+                                <div className="flex items-center gap-2 text-yellow-500 text-sm">
+                                  <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-yellow-500"></div>
+                                  <span>Processing your deck...</span>
+                                </div>
+                              ) : deck.totalProgress !== undefined ? (
+                                <div className="space-y-1.5">
+                                  <div className="flex justify-between text-xs">
+                                    <span className="text-muted-foreground">Progress</span>
+                                    <span>{deck.totalProgress}%</span>
+                                  </div>
+                                  <Progress value={deck.totalProgress} className="h-1" />
+                                </div>
+                              ) : null}
+
+                              {deck.dueCards !== undefined && (
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-muted-foreground">Due today:</span>
+                                  <Badge variant="secondary" className="font-mono">
+                                    {deck.dueCards} cards
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Separate non-clickable section for buttons */}
+                            <div 
+                              className="relative mt-4 pt-4 border-t border-primary/10 flex justify-between items-center"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="z-10">
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="gap-1 text-xs hover:text-destructive transition-colors"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                      Delete
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent 
+                                    className="fixed inset-0 m-auto h-fit max-h-[90vh] max-w-[400px] overflow-y-auto p-0 bg-black"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <div className="px-6 pt-6">
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle className="text-center text-2xl font-bold tracking-tight">Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription className="text-center mt-2">
+                                          This action cannot be undone. This will permanently delete your deck
+                                          and all associated study materials.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                    </div>
+
+                                    <div className="p-6">
+                                      <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
+                                        <AlertDialogCancel className="sm:mt-0">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={async (e) => {
+                                            e.stopPropagation();
+                                            await handleDelete(deck.id, e);
+                                          }}
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                          disabled={isDeleting === deck.id}
+                                        >
+                                          {isDeleting === deck.id ? (
+                                            <>
+                                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                                              Deleting...
+                                            </>
+                                          ) : (
+                                            'Delete'
+                                          )}
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </div>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                              <div className="z-10">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="gap-1 text-xs group-hover:text-primary transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(`/deck/${deck.id}/session`);
+                                  }}
+                                >
+                                  Study Now
+                                  <ArrowRight className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </div>
                       </Card>
                     ))}
                   </div>

@@ -28,6 +28,7 @@ import { toast } from "sonner"
 import { useSubscription } from "@/contexts/SubscriptionContext"
 import { cn } from "@/lib/utils"
 import { Difficulty } from "@/types/difficulty"
+import { useUploadContext } from "@/contexts/UploadContext"
 
 interface UploadInfo {
   uploadId: string
@@ -42,9 +43,9 @@ interface UploadInfo {
 
 // TODO: modify these in the future
 const QUESTION_RANGES = {
-  low: { min: 1, max: 20, description: "Good for a quick review session" },
-  moderate: { min: 20, max: 40, description: "Balanced for thorough learning" },
-  high: { min: 40, max: 60, description: "Comprehensive coverage of material" },
+  low: { description: "Brief overview with key concepts" },
+  moderate: { description: "Balanced coverage of main topics" },
+  high: { description: "Comprehensive deep-dive into the material" },
 } as const
 
 type AiModel = "standard" | "advanced"
@@ -56,121 +57,158 @@ interface PageRange {
 
 export default function ConfigurePage() {
   const router = useRouter()
-  const [uploadInfo, setUploadInfo] = useState<UploadInfo | null>(null)
+  const { file: uploadedFile, metadata: fileMetadata, clearUploadData } = useUploadContext();
   const [difficulty, setDifficulty] = useState<Difficulty>("low")
   const [pageRange, setPageRange] = useState<PageRange>({ start: 1, end: 1 })
   const [isGenerating, setIsGenerating] = useState(false)
+  const [generationStep, setGenerationStep] = useState('')
   const [generationProgress, setGenerationProgress] = useState(0)
   const [aiModel, setAiModel] = useState<AiModel>("standard")
   const [showPricing, setShowPricing] = useState(false)
-  const { subscription, isLoading } = useSubscription()
+  const { subscription, isLoading: isLoadingSubscription } = useSubscription()
 
   const limits = subscription?.status === "active" ? FREEMIUM_LIMITS.PRO : FREEMIUM_LIMITS.FREE
 
   useEffect(() => {
-    const pendingUploadInfo = localStorage.getItem('pendingUploadInfo')
-    if (!pendingUploadInfo) {
+    if (isLoadingSubscription) return;
+
+    if (!uploadedFile || !fileMetadata) {
+      console.warn("Missing file or metadata in context. Redirecting home.");
+      const timer = setTimeout(() => router.push('/'), 100);
+      return () => clearTimeout(timer);
+    }
+
+    if (fileMetadata.size > limits.maxFileSize) {
+      toast.error(`File size (${formatFileSize(fileMetadata.size)}) exceeds plan limit (${formatFileSize(limits.maxFileSize)}).`)
+      clearUploadData();
       router.push('/')
       return
     }
-    const info = JSON.parse(pendingUploadInfo)
 
-    // Check file size limit
-    if (info.metadata.size > limits.maxFileSize) {
-      toast.error(`File size exceeds ${limits.maxFileSize / (1024 * 1024)}MB limit`)
-      router.push('/')
-      return
-    }
-
-    setUploadInfo(info)
-
-    // Set initial page range based on document and limits
-    if (info?.metadata?.pageCount) {
-      const maxPages = Math.min(info.metadata.pageCount, limits.maxPages)
+    if (fileMetadata.type.includes("pdf") && fileMetadata.pageCount) {
+      const maxAllowedPages = limits.maxPages;
+      const documentPages = fileMetadata.pageCount;
+      const initialEndPage = Math.min(documentPages, maxAllowedPages);
       setPageRange({
         start: 1,
-        end: maxPages,
-      })
+        end: initialEndPage,
+      });
+    } else {
+      setPageRange({ start: 1, end: 1 });
     }
-  }, [router, limits.maxFileSize, limits.maxPages])
+  }, [router, limits, uploadedFile, fileMetadata, clearUploadData, isLoadingSubscription]);
 
   const handleGenerate = async () => {
-    if (!uploadInfo) return
+    if (!uploadedFile || !fileMetadata) {
+      toast.error("File information is missing. Please re-upload.");
+      router.push('/');
+      return;
+    }
 
-    setIsGenerating(true)
-    let progressInterval: NodeJS.Timeout | undefined
+    const selectedPageCount = pageRange.end - pageRange.start + 1;
+    if (isPDF && selectedPageCount > limits.maxPages) {
+      toast.error(`Selected page range (${selectedPageCount}) exceeds your plan limit of ${limits.maxPages} pages.`);
+      setShowPricing(true);
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerationProgress(0);
+    let tempUploadSuccess = false;
+    let uploadId = '';
+    let filePath = '';
 
     try {
-      // Start progress animation
-      progressInterval = setInterval(() => {
-        setGenerationProgress((prev) => {
-          if (prev >= 100) {
-            if (progressInterval) clearInterval(progressInterval)
-            return 100
-          }
-          return prev + Math.floor(Math.random() * 10) + 1
-        })
-      }, 500)
+      setGenerationStep("Uploading file...");
+      setGenerationProgress(10);
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
 
-      const response = await fetch('/api/generate', {
+      const uploadResponse = await fetch('/api/temp-upload', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          uploadId: uploadInfo.uploadId,
-          filePath: uploadInfo.filePath,
-          metadata: uploadInfo.metadata,
-          questionCount: QUESTION_RANGES[difficulty].max,
-          pageRange: uploadInfo.metadata.type.includes('pdf') ? pageRange : undefined,
-          aiModel,
-          difficulty
-        }),
-      })
+        body: formData,
+      });
 
-      if (!response.ok) {
-        const errorMessage = await response.text()
-        toast.error(errorMessage)
-        if (errorMessage.includes('not available in your plan') || errorMessage.includes('exceeds your plan')) {
-          setShowPricing(true)
-        }
-        return
+      setGenerationProgress(40);
+
+      if (!uploadResponse.ok) {
+        const errorJson = await uploadResponse.json().catch(() => ({}));
+        throw new Error(errorJson.message || 'Failed to upload file');
       }
 
-      const { deckId } = await response.json()
-      localStorage.removeItem('pendingUploadInfo')
-      router.push(`/deck/${deckId}/session`)
-    } catch (error) {
-      console.error('Error generating questions:', error)
-      toast.error('Failed to generate study materials')
+      const uploadResult = await uploadResponse.json();
+      uploadId = uploadResult.uploadId;
+      filePath = uploadResult.filePath;
+      tempUploadSuccess = true;
+      setGenerationProgress(50);
+
+      setGenerationStep("Preparing generation...");
+      const generatePayload = {
+        uploadId: uploadId,
+        filePath: filePath,
+        metadata: fileMetadata,
+        pageRange: fileMetadata.type.includes('pdf') ? pageRange : undefined,
+        aiModel,
+        difficulty
+      };
+
+      const generateResponse = await fetch('/api/generate-chunks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(generatePayload),
+      });
+
+      setGenerationProgress(75);
+
+      if (!generateResponse.ok) {
+        const errorJson = await generateResponse.json().catch(() => ({}));
+        const errorMessage = errorJson.error || 'Failed to start generation';
+        if (errorMessage.includes('not available in your plan') || errorMessage.includes('exceeds your plan')) {
+          setShowPricing(true);
+        }
+        throw new Error(errorMessage);
+      }
+
+      setGenerationStep("Generation started!");
+      setGenerationProgress(100);
+
+      const { deckId } = await generateResponse.json();
+      toast.success("Study deck created! Redirecting...");
+      router.push(`/deck/${deckId}/session`);
+      setTimeout(() => clearUploadData(), 500);
+
+    } catch (error: any) {
+      console.error('Error during generation process:', error);
+      toast.error(`Error: ${error.message || 'An unexpected error occurred.'}`);
     } finally {
-      if (progressInterval) clearInterval(progressInterval)
-      setIsGenerating(false)
-      setGenerationProgress(0)
+      setIsGenerating(false);
+      setGenerationStep('');
     }
-  }
+  };
 
   const handleCancel = () => {
-    localStorage.removeItem('pendingUploadInfo')
-    router.push('/')
+    clearUploadData();
+    router.push('/');
   }
 
   const getFileIcon = () => {
-    if (!uploadInfo) return <FileText className="h-6 w-6" />
-
-    const fileType = uploadInfo.metadata.type
-    if (fileType.includes("pdf")) return <FilePdf className="h-6 w-6 text-red-500" />
-    if (fileType.includes("image")) return <FileImage className="h-6 w-6 text-blue-500" />
-    return <FileText className="h-6 w-6 text-green-500" />
+    if (!fileMetadata) return <FileText className="h-6 w-6" />;
+    const fileType = fileMetadata.type;
+    if (fileType.includes("pdf")) return <FilePdf className="h-6 w-6 text-red-500" />;
+    if (fileType.includes("image")) return <FileImage className="h-6 w-6 text-blue-500" />;
+    if (fileType.includes("wordprocessingml")) return <FileText className="h-6 w-6 text-blue-500" />;
+    if (fileType.includes("text")) return <FileText className="h-6 w-6 text-gray-500" />;
+    return <FileText className="h-6 w-6" />;
   }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes) return "0 B";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  if (isLoading) {
+  if (isLoadingSubscription) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-background/80">
         <div className="flex flex-col items-center gap-4">
@@ -178,51 +216,59 @@ export default function ConfigurePage() {
           <p className="text-muted-foreground animate-pulse">Loading subscription status...</p>
         </div>
       </div>
-    )
+    );
   }
 
-  if (!uploadInfo) {
+  if (!uploadedFile || !fileMetadata) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-background/80">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground animate-pulse">Loading document information...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
-    )
+    );
   }
 
-  const isPDF = uploadInfo?.metadata.type.includes("pdf")
-  const estimatedQuestionCount =
-    QUESTION_RANGES[difficulty].min +
-    Math.floor(Math.random() * (QUESTION_RANGES[difficulty].max - QUESTION_RANGES[difficulty].min))
+  const isPDF = fileMetadata?.type.includes("pdf");
+  const getEstimatedTime = (difficulty: Difficulty) => {
+    switch (difficulty) {
+      case 'low':
+        return 15;
+      case 'moderate':
+        return 30;
+      case 'high':
+        return 45;
+      default:
+        return 30;
+    }
+  };
 
-  const estimatedTime = Math.round(estimatedQuestionCount * 1.5)
+  const estimatedTime = getEstimatedTime(difficulty);
 
   const handleDifficultyChange = (value: Difficulty) => {
-    if (!limits.allowedDifficulties.includes(value as any)) {
-      setShowPricing(true)
-      return
+    if (!limits.allowedDifficulties.includes(value)) {
+      setShowPricing(true);
+      toast.info(`The '${value}' difficulty requires an upgrade.`);
+      return;
     }
-    setDifficulty(value)
-  }
+    setDifficulty(value);
+  };
 
   const handleAiModelChange = (value: AiModel) => {
-    if (!limits.allowedAiModels.includes(value as any)) {
-      setShowPricing(true)
-      return
+    if (!limits.allowedAiModels.includes(value)) {
+      setShowPricing(true);
+      toast.info(`The '${value}' AI model requires an upgrade.`);
+      return;
     }
-    setAiModel(value)
-  }
+    setAiModel(value);
+  };
 
   const handlePageRangeChange = (start: number, end: number) => {
-    if (end - start + 1 > limits.maxPages) {
-      toast.error(`Free users can only process up to ${limits.maxPages} pages`)
-      setShowPricing(true)
-      return
-    }
-    setPageRange({ start, end })
-  }
+    setPageRange({
+      start: Math.max(1, start),
+      end: Math.min(fileMetadata?.pageCount || end, end)
+    });
+  };
+
+  const pageRangeExceedsLimit = isPDF && (pageRange.end - pageRange.start + 1 > limits.maxPages);
 
   return (
     <>
@@ -235,6 +281,7 @@ export default function ConfigurePage() {
                   variant="ghost"
                   size="icon"
                   onClick={handleCancel}
+                  disabled={isGenerating}
                   className="mr-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -252,10 +299,11 @@ export default function ConfigurePage() {
               <div className="flex items-center p-4 rounded-lg bg-muted/30 border border-muted">
                 <div className="mr-4 p-3 rounded-full bg-muted">{getFileIcon()}</div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium truncate">{uploadInfo.metadata.originalName}</h3>
+                  <h3 className="font-medium truncate">{fileMetadata.originalName}</h3>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                    <span>{formatFileSize(uploadInfo.metadata.size)}</span>
-                    {isPDF && uploadInfo.metadata.pageCount && <span>{uploadInfo.metadata.pageCount} pages</span>}
+                    <span>{formatFileSize(fileMetadata.size)}</span>
+                    {isPDF && fileMetadata.pageCount && <span>{fileMetadata.pageCount} pages</span>}
+                    {!isPDF && <span>{fileMetadata.type}</span>}
                   </div>
                 </div>
               </div>
@@ -266,22 +314,22 @@ export default function ConfigurePage() {
                   <div className="flex items-center justify-between">
                     <Label className="text-base font-medium">Question Amount</Label>
                     <Badge variant="secondary" className="font-mono">
-                      ~{estimatedQuestionCount} questions
+                      Dynamic
                     </Badge>
                   </div>
 
                   <RadioGroup
                     value={difficulty}
-                    onValueChange={(value) => handleDifficultyChange(value as any)}
+                    onValueChange={(value) => handleDifficultyChange(value as Difficulty)}
                     className="grid grid-cols-3 gap-3"
                   >
-                    <Label className="cursor-pointer">
-                      <div className="flex flex-col h-full rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50">
+                    <Label className={cn("cursor-pointer", !limits.allowedDifficulties.includes("low") && "opacity-50 cursor-not-allowed")}>
+                      <div className={cn("flex flex-col h-full rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50",
+                        !limits.allowedDifficulties.includes("low") && "pointer-events-none")}>
                         <div className="flex items-center gap-3">
-                          <RadioGroupItem value="low" id="low" />
+                          <RadioGroupItem value="low" id="low" disabled={!limits.allowedDifficulties.includes("low")} />
                           <div className="flex items-center justify-between flex-1">
                             <div className="font-medium">Low</div>
-                            <div className="text-sm">1-20</div>
                           </div>
                           <Zap className="h-5 w-5 text-yellow-500" />
                         </div>
@@ -291,13 +339,13 @@ export default function ConfigurePage() {
                       </div>
                     </Label>
 
-                    <Label className={cn("cursor-pointer", !limits.allowedDifficulties.includes("moderate" as any) && "opacity-50")}>
-                      <div className="flex flex-col h-full rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50">
+                    <Label className={cn("cursor-pointer", !limits.allowedDifficulties.includes("moderate") && "opacity-50 cursor-not-allowed")}>
+                      <div className={cn("flex flex-col h-full rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50",
+                        !limits.allowedDifficulties.includes("moderate") && "pointer-events-none")}>
                         <div className="flex items-center gap-3">
-                          <RadioGroupItem value="moderate" id="moderate" />
+                          <RadioGroupItem value="moderate" id="moderate" disabled={!limits.allowedDifficulties.includes("moderate")} />
                           <div className="flex items-center justify-between flex-1">
                             <div className="font-medium">Moderate</div>
-                            <div className="text-sm">20-40</div>
                           </div>
                           <Brain className="h-5 w-5 text-blue-500" />
                         </div>
@@ -307,13 +355,13 @@ export default function ConfigurePage() {
                       </div>
                     </Label>
 
-                    <Label className={cn("cursor-pointer", !limits.allowedDifficulties.includes("high" as any) && "opacity-50")}>
-                      <div className="flex flex-col h-full rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50">
+                    <Label className={cn("cursor-pointer", !limits.allowedDifficulties.includes("high") && "opacity-50 cursor-not-allowed")}>
+                      <div className={cn("flex flex-col h-full rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50",
+                        !limits.allowedDifficulties.includes("high") && "pointer-events-none")}>
                         <div className="flex items-center gap-3">
-                          <RadioGroupItem value="high" id="high" />
+                          <RadioGroupItem value="high" id="high" disabled={!limits.allowedDifficulties.includes("high")} />
                           <div className="flex items-center justify-between flex-1">
                             <div className="font-medium">High</div>
-                            <div className="text-sm">40-60</div>
                           </div>
                           <Sparkles className="h-5 w-5 text-purple-500" />
                         </div>
@@ -334,12 +382,13 @@ export default function ConfigurePage() {
 
                   <RadioGroup
                     value={aiModel}
-                    onValueChange={(value) => handleAiModelChange(value as any)}
+                    onValueChange={(value) => handleAiModelChange(value as AiModel)}
                     className="grid grid-cols-2 gap-3"
                   >
-                    <Label className="cursor-pointer">
-                      <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50 h-full">
-                        <RadioGroupItem value="standard" id="standard" />
+                    <Label className={cn("cursor-pointer", !limits.allowedAiModels.includes("standard") && "opacity-50 cursor-not-allowed")}>
+                      <div className={cn("flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50 h-full",
+                        !limits.allowedAiModels.includes("standard") && "pointer-events-none")}>
+                        <RadioGroupItem value="standard" id="standard" disabled={!limits.allowedAiModels.includes("standard")} />
                         <div className="flex-1">
                           <div className="font-medium">Standard</div>
                           <div className="text-sm text-muted-foreground mt-0.5">
@@ -349,9 +398,10 @@ export default function ConfigurePage() {
                       </div>
                     </Label>
 
-                    <Label className={cn("cursor-pointer", !limits.allowedAiModels.includes("advanced" as any) && "opacity-50")}>
-                      <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50 h-full">
-                        <RadioGroupItem value="advanced" id="advanced" />
+                    <Label className={cn("cursor-pointer", !limits.allowedAiModels.includes("advanced") && "opacity-50 cursor-not-allowed")}>
+                      <div className={cn("flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:bg-primary/5 [&:has([data-state=checked])]:border-primary/50 h-full",
+                        !limits.allowedAiModels.includes("advanced") && "pointer-events-none")}>
+                        <RadioGroupItem value="advanced" id="advanced" disabled={!limits.allowedAiModels.includes("advanced")} />
                         <div className="flex-1">
                           <div className="font-medium">Advanced</div>
                           <div className="text-sm text-muted-foreground mt-0.5">
@@ -367,31 +417,32 @@ export default function ConfigurePage() {
                 </div>
 
                 {/* Page Range (for PDFs) */}
-                {isPDF && uploadInfo.metadata.pageCount && (
+                {isPDF && fileMetadata.pageCount && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <Label className="text-base font-medium">Page Range</Label>
-                      <Badge variant="secondary" className="font-mono">
-                        {pageRange.end - pageRange.start + 1} pages
+                      <Badge variant={pageRangeExceedsLimit ? "destructive" : "secondary"} className="font-mono">
+                        {pageRange.end - pageRange.start + 1} pages selected
                       </Badge>
                     </div>
 
                     <div className="pt-2">
                       <Slider
                         min={1}
-                        max={Math.min(uploadInfo.metadata.pageCount, limits.maxPages)}
+                        max={fileMetadata.pageCount}
                         step={1}
                         value={[pageRange.start, pageRange.end]}
                         onValueChange={(values) => {
                           if (values.length === 2) {
-                            handlePageRangeChange(values[0], values[1])
+                            handlePageRangeChange(values[0], values[1]);
                           }
                         }}
-                        className="mt-2"
+                        className={cn("mt-2", isGenerating && "opacity-50")}
+                        disabled={isGenerating}
                       />
                       <div className="flex justify-between text-xs text-muted-foreground mt-2">
                         <span>Page 1</span>
-                        <span>Page {uploadInfo.metadata.pageCount}</span>
+                        <span>Page {fileMetadata.pageCount}</span>
                       </div>
                     </div>
 
@@ -403,12 +454,8 @@ export default function ConfigurePage() {
                           min={1}
                           max={pageRange.end}
                           value={pageRange.start}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setPageRange({
-                              ...pageRange,
-                              start: Math.max(1, Math.min(pageRange.end, parseInt(e.target.value) || 1)),
-                            })
-                          }
+                          onChange={(e) => handlePageRangeChange(parseInt(e.target.value) || 1, pageRange.end)}
+                          disabled={isGenerating}
                           className="mt-1.5"
                         />
                       </div>
@@ -417,33 +464,24 @@ export default function ConfigurePage() {
                         <Input
                           type="number"
                           min={pageRange.start}
-                          max={uploadInfo.metadata.pageCount}
+                          max={fileMetadata.pageCount}
                           value={pageRange.end}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setPageRange({
-                              ...pageRange,
-                              end: Math.max(
-                                pageRange.start,
-                                Math.min(uploadInfo.metadata.pageCount || 1, parseInt(e.target.value) || pageRange.start),
-                              ),
-                            })
-                          }
+                          onChange={(e) => handlePageRangeChange(pageRange.start, parseInt(e.target.value) || pageRange.start)}
+                          disabled={isGenerating}
                           className="mt-1.5"
                         />
                       </div>
                     </div>
 
-                    {/* Add upgrade prompt if document exceeds free limit */}
-                    {uploadInfo.metadata.pageCount > limits.maxPages && (
+                    {fileMetadata.pageCount > FREEMIUM_LIMITS.FREE.maxPages && subscription?.status !== 'active' && (
                       <div className="mt-2 text-sm text-amber-500 flex items-center gap-2">
-                        <span>Upgrade to process more than {limits.maxPages} pages</span>
-                        <Button
-                          variant="link"
-                          className="text-blue-500 p-0 h-auto font-medium"
-                          onClick={() => setShowPricing(true)}
-                        >
-                          Learn more
-                        </Button>
+                        <span>Free plan processes up to {FREEMIUM_LIMITS.FREE.maxPages} pages.</span>
+                        <Button variant="link" className="text-blue-500 p-0 h-auto font-medium" onClick={() => setShowPricing(true)}>Upgrade</Button>
+                      </div>
+                    )}
+                    {pageRangeExceedsLimit && (
+                      <div className="mt-2 text-sm text-red-500">
+                        Selected page range exceeds your plan's limit of {limits.maxPages} pages. Generation is disabled.
                       </div>
                     )}
                   </div>
@@ -468,11 +506,15 @@ export default function ConfigurePage() {
               <Button variant="outline" onClick={handleCancel} disabled={isGenerating} className="cursor-pointer">
                 Cancel
               </Button>
-              <Button onClick={handleGenerate} disabled={isGenerating} className="gap-2 cursor-pointer">
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating || pageRangeExceedsLimit}
+                className="gap-2 cursor-pointer"
+              >
                 {isGenerating ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Generating... {generationProgress}%
+                    {generationStep || `Generating... ${generationProgress}%`}
                   </>
                 ) : (
                   <>
@@ -493,13 +535,7 @@ export default function ConfigurePage() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground text-center mt-2">
-                  {generationProgress < 30
-                    ? "Analyzing document content..."
-                    : generationProgress < 60
-                      ? "Generating questions and answers..."
-                      : generationProgress < 90
-                        ? "Creating flashcards..."
-                        : "Finalizing your study materials..."}
+                  {generationStep || 'Starting generation...'}
                 </p>
               </div>
             )}
@@ -513,5 +549,5 @@ export default function ConfigurePage() {
         subscription={subscription}
       />
     </>
-  )
+  );
 }

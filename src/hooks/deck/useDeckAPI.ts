@@ -19,12 +19,12 @@ export function useDeckAPI(deckId: string) {
       }
       
       const data = await response.json();
-      setIsLoadingCards(false);
       return data;
     } catch (error) {
       console.error('Failed to fetch due cards:', error);
-      setIsLoadingCards(false);
       return null;
+    } finally {
+      setIsLoadingCards(false);
     }
   }, [deckId]);
 
@@ -39,9 +39,13 @@ export function useDeckAPI(deckId: string) {
       const finishedProcessing = wasProcessing && !deckData.isProcessing;
       setWasProcessing(deckData.isProcessing);
       
-      // Only set loading to false when we have the deck data and it's not processing
+      // Only set loading to false when we have both deck data and cards
       if (!deckData.isProcessing) {
-        setIsLoading(false);
+        const dueCardsData = await fetchDueCards();
+        if (dueCardsData) {
+          setIsLoading(false);
+          return { deckData, finishedProcessing, dueCardsData };
+        }
       }
       
       return { deckData, finishedProcessing };
@@ -50,7 +54,7 @@ export function useDeckAPI(deckId: string) {
       setIsLoading(false);
       return null;
     }
-  }, [deckId, wasProcessing]);
+  }, [deckId, wasProcessing, fetchDueCards]);
 
   const submitCardReview = async (
     deckId: string, 

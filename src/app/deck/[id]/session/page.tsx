@@ -154,6 +154,11 @@ export default function StudyDeckPage() {
     router.push(`/deck/${deck?.id}`);
   };
 
+  const handleReturnToHome = () => {
+    clearProgress();
+    router.push(`/`);
+  };
+
   const handleRefreshCards = () => {
     setShowSettings(false);
     window.location.reload();
@@ -161,10 +166,10 @@ export default function StudyDeckPage() {
 
   // Wrap handleCardRate to track session stats
   const handleCardRateWithStats = async (difficulty: Difficulty, responseTime: number) => {
-    await handleCardRate(difficulty, responseTime);
     if (pointsEarned) {
       addPoints(pointsEarned);
     }
+    await handleCardRate(difficulty, responseTime);
   };
 
   const handleRestartDeckWithReset = async () => {
@@ -181,19 +186,23 @@ export default function StudyDeckPage() {
     }, null as Date | null)
     : null;
 
-  // Loading states - check these first
-  if (isLoading || isLoadingCards || !deck) {
-    return <LoadingState message={isLoadingCards ? "Loading your cards..." : "Loading..."} />;
-  }
-
-  // Error state - deck not found after loading complete
-  if (!isLoading && !deck) {
-    return <ErrorState onReturnToDashboard={handleReturnToDashboard} />;
-  }
-
   // Processing state - deck is being generated
-  if (deck.isProcessing) {
-    return <ProcessingState />;
+  if (deck?.isProcessing) {
+    return <ProcessingState progress={deck.error} />;
+  }
+
+  // Loading states - only show if not processing
+  if (!deck || isLoading || isLoadingCards) {
+    return <LoadingState />;
+  }
+
+  // Error state - generation failed
+  if (deck.error) {
+    return <ErrorState 
+      message={deck.error}
+      description="There was an error generating your flashcards. Please try again or contact support if the issue persists."
+      onReturnToHome={handleReturnToHome} 
+    />;
   }
 
   // Completion state - finished all cards in this session
@@ -204,6 +213,7 @@ export default function StudyDeckPage() {
         onRestartDeck={handleRestartDeckWithReset}
         onSeePerformance={handleSeePerformance}
         onReturnToDashboard={handleReturnToDashboard}
+        onReturnToHome={handleReturnToHome}
         sessionTime={sessionTime}
         pointsEarned={sessionPoints}
         cardsReviewed={cardsReviewed}

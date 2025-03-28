@@ -9,12 +9,13 @@ import { getUserSubscriptionStatus } from "@/lib/stripe";
 import { currentUser } from "@clerk/nextjs/server";
 import { Toaster } from "sonner";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { UploadProvider } from "@/contexts/UploadContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AI Study Assistant",
-  description: "Generate flashcards and mind maps from your study materials",
+  title: "Remevi",
+  description: "Learn anything 10x faster",
 };
 
 export default async function RootLayout({
@@ -40,10 +41,12 @@ export default async function RootLayout({
         </head>
         <body className={`${inter.className} h-full bg-[#0B1120] text-foreground`}>
           <SubscriptionProvider>
-            <Header />
-            {children}
-            {user && <PricingButton subscription={subscription} />}
-            <Toaster />
+            <UploadProvider>
+              <Header />
+              {children}
+              {user && <PricingButton subscription={subscription} />}
+              <Toaster />
+            </UploadProvider>
           </SubscriptionProvider>
         </body>
       </html>

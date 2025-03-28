@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import type { Stripe } from "stripe";
 import { useAuth } from "@clerk/nextjs";

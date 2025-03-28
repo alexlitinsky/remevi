@@ -3,6 +3,7 @@ import type { DeckData, FlashcardData, Difficulty } from './types';
 import { useDeckProgress } from './useDeckProgress';
 import { useDeckAPI } from './useDeckAPI';
 import { useCardNavigation } from './useCardNavigation';
+import { calculatePoints } from '@/lib/srs';
 
 export function useDeck(deckId: string) {
   const [deck, setDeck] = useState<DeckData | null>(null);
@@ -94,17 +95,21 @@ export function useDeck(deckId: string) {
       const result = await fetchDeck();
       if (!result || !mounted) return;
 
-      const { deckData, finishedProcessing } = result;
+      const { deckData, finishedProcessing, dueCardsData } = result;
       
       // Only set deck if we're mounted and have valid data
       if (mounted && deckData) {
         setDeck(deckData);
 
-        // Only fetch due cards if not processing and not in the middle of a transition
-        if (!deckData.isProcessing && !finishedProcessing) {
-          const dueCardsData = await fetchDueCards();
-          if (dueCardsData && mounted) {
-            updateCardCounts(dueCardsData);
+        // If we got due cards data with the initial fetch, use it
+        if (dueCardsData) {
+          updateCardCounts(dueCardsData);
+        }
+        // Otherwise, only fetch due cards if not processing and not in transition
+        else if (!deckData.isProcessing && !finishedProcessing) {
+          const newDueCardsData = await fetchDueCards();
+          if (newDueCardsData && mounted) {
+            updateCardCounts(newDueCardsData);
           }
         }
 
@@ -116,9 +121,9 @@ export function useDeck(deckId: string) {
         // If just finished processing, fetch due cards again
         if (finishedProcessing && mounted) {
           setTimeout(async () => {
-            const dueCardsData = await fetchDueCards();
-            if (dueCardsData && mounted) {
-              updateCardCounts(dueCardsData);
+            const newDueCardsData = await fetchDueCards();
+            if (newDueCardsData && mounted) {
+              updateCardCounts(newDueCardsData);
             }
           }, 500);
         }
@@ -155,8 +160,23 @@ export function useDeck(deckId: string) {
 
     const currentCard = orderedCards[currentCardIndex];
     const isLastCard = currentCardIndex >= orderedCards.length - 1;
-    
-    // Move to next card immediately
+
+    // Calculate estimated points using the same function as backend
+    const estimatedPoints = calculatePoints(difficulty, responseTime);
+    setPointsEarned(estimatedPoints);
+    setTotalPoints(prev => prev + estimatedPoints);
+
+    // Update UI immediately
+    setCompletedCardIds(prev => {
+      if (prev.includes(currentCard.id)) return prev;
+      return [...prev, currentCard.id];
+    });
+
+    // Update counts immediately
+    setNewCardCount(prev => prev - (currentCard.isNew ? 1 : 0));
+    setDueCardCount(prev => prev - (!currentCard.isNew ? 1 : 0));
+
+    // Move to next card or complete deck immediately
     if (isLastCard) {
       setDeckCompleted(true);
     } else {
@@ -164,22 +184,14 @@ export function useDeck(deckId: string) {
       setCurrentCardIndex(prev => prev + 1, orderedCards.length - 1);
     }
 
-    // Update counts immediately
-    setNewCardCount(prev => prev - (currentCard.isNew ? 1 : 0));
-    setDueCardCount(prev => prev - (!currentCard.isNew ? 1 : 0));
-
     // Submit review in background
     submitCardReview(deck.id, currentCard.id, difficulty, responseTime).then(result => {
       if (!result) return;
-      setPointsEarned(result.pointsEarned);
-      setTotalPoints(prev => prev + result.pointsEarned);
-
-    });
-
-    // Track completed card
-    setCompletedCardIds(prev => {
-      if (prev.includes(currentCard.id)) return prev;
-      return [...prev, currentCard.id];
+      // Points should match exactly now, but update total if there's any difference
+      if (result.pointsEarned !== estimatedPoints) {
+        const pointsDiff = result.pointsEarned - estimatedPoints;
+        setTotalPoints(prev => prev + pointsDiff);
+      }
     });
   };
 

@@ -6,7 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { StudyStats } from '@/components/deck/StudyStats';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Sparkles, Clock, Calendar } from 'lucide-react';
+import { ArrowRight, BookOpen, Sparkles, Clock, Calendar, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { toast } from 'sonner';
 
 interface Deck {
   id: string;
@@ -27,6 +39,7 @@ export default function DeckPage() {
   const router = useRouter();
   const [deck, setDeck] = useState<Deck | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const deckId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
 
@@ -63,6 +76,26 @@ export default function DeckPage() {
 
     fetchDeck();
   }, [deckId]);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/decks/${deckId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete deck');
+      }
+
+      toast.success('Deck deleted successfully');
+      router.push('/');
+    } catch (error) {
+      console.error('Error deleting deck:', error);
+      toast.error('Failed to delete deck');
+      setIsDeleting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -144,6 +177,45 @@ export default function DeckPage() {
               </div>
             </div>
             <div className="flex gap-3">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="lg" className="gap-2" disabled={isDeleting}>
+                    <Trash2 className="h-4 w-4" />
+                    Delete Deck
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] max-w-[400px] overflow-y-auto p-0 bg-black">
+                  <div className="px-6 pt-6">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-center text-2xl font-bold tracking-tight">Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-center mt-2">
+                        This action cannot be undone. This will permanently delete your deck
+                        and all associated study materials.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                  </div>
+
+                  <div className="p-6">
+                    <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
+                      <AlertDialogCancel className="sm:mt-0">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                            Deleting...
+                          </>
+                        ) : (
+                          'Delete Deck'
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </div>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button size="lg" onClick={() => router.push(`/deck/${deckId}/session`)} className="gap-2">
                 <BookOpen className="h-4 w-4" />
                 Start Studying
