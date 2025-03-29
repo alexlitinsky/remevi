@@ -176,23 +176,23 @@ export function useDeck(deckId: string) {
     setNewCardCount(prev => prev - (currentCard.isNew ? 1 : 0));
     setDueCardCount(prev => prev - (!currentCard.isNew ? 1 : 0));
 
-    // Move to next card or complete deck immediately
-    if (isLastCard) {
-      setDeckCompleted(true);
-    } else {
+    // Move to next card or complete deck
+    if (!isLastCard) {
       setShowBack(false);
       setCurrentCardIndex(prev => prev + 1, orderedCards.length - 1);
     }
 
-    // Submit review in background
-    submitCardReview(deck.id, currentCard.id, difficulty, responseTime).then(result => {
-      if (!result) return;
-      // Points should match exactly now, but update total if there's any difference
-      if (result.pointsEarned !== estimatedPoints) {
-        const pointsDiff = result.pointsEarned - estimatedPoints;
-        setTotalPoints(prev => prev + pointsDiff);
-      }
-    });
+    // Submit review and wait for it to complete
+    const result = await submitCardReview(deck.id, currentCard.id, difficulty, responseTime);
+    if (result && result.pointsEarned !== estimatedPoints) {
+      const pointsDiff = result.pointsEarned - estimatedPoints;
+      setTotalPoints(prev => prev + pointsDiff);
+    }
+
+    // Set deck completed after review is submitted
+    if (isLastCard) {
+      setDeckCompleted(true);
+    }
   };
 
   // Restart the deck
@@ -242,6 +242,8 @@ export function useDeck(deckId: string) {
     flipCard,
     moveToNextCard: (index: number) => moveToNextCard(index, orderedCards.length, (newIndex: number) => setCurrentCardIndex(newIndex, orderedCards.length - 1)),
     moveToPrevCard: (index: number) => moveToPrevCard(index, (newIndex: number) => setCurrentCardIndex(newIndex, orderedCards.length - 1)),
-    setDeckCompleted
+    setDeckCompleted,
+    completedCardIds,
+    setPointsEarned
   };
 } 

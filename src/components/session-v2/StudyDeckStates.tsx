@@ -1,6 +1,6 @@
-import { XCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { AlertCircle, Clock, XCircle } from "lucide-react";
 
 export function RainbowSpinner() {
   return (
@@ -48,6 +48,40 @@ export function RainbowSpinner() {
   )
 }
 
+interface ErrorStateProps {
+  message: string;
+  description: string;
+  onReturnToHome: () => void;
+}
+
+export function ErrorState({ message, description, onReturnToHome }: ErrorStateProps) {
+  return (
+    <div className="h-screen flex items-center justify-center p-4 bg-background">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="max-w-lg w-full text-center space-y-6"
+      >
+        <div className="mx-auto w-16 h-16 flex items-center justify-center">
+          <AlertCircle className="w-12 h-12 text-destructive/70" />
+        </div>
+        
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold">{message}</h2>
+          <p className="text-muted-foreground">
+            {description}
+          </p>
+        </div>
+        
+        <Button onClick={onReturnToHome} className="mt-4">
+          Return to Home
+        </Button>
+      </motion.div>
+    </div>
+  );
+}
+
 export function LoadingState({ message = "Loading your study session..." }: { message?: string }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 flex items-center justify-center">
@@ -66,26 +100,6 @@ export function LoadingState({ message = "Loading your study session..." }: { me
         >
           {message}
         </motion.p>
-      </div>
-    </div>
-  )
-}
-
-export function ErrorState({ 
-  message = "Deck not found",
-  description = "This deck doesn't exist or you don't have access to it.",
-  onReturnToHome
-}: { 
-  message?: string;
-  description?: string;
-  onReturnToHome: () => void;
-}) {
-  return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-4">{message}</h2>
-        <p className="text-muted-foreground mb-8">{description}</p>
-        <Button onClick={onReturnToHome}>Return to Home</Button>
       </div>
     </div>
   );
@@ -150,4 +164,4 @@ export function ProcessingState({ progress }: { progress?: string }) {
       </div>
     </div>
   )
-} 
+}

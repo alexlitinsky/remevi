@@ -70,52 +70,16 @@ export async function GET(req: NextRequest) {
     // Calculate study streak
     const sessions = deck.studySessions
     let currentStreak = 0
-    const lastStudyDate = sessions[0]?.startTime
 
-    if (lastStudyDate) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      
-      const yesterday = new Date(today)
-      yesterday.setDate(yesterday.getDate() - 1)
-
-      // Check if studied today
-      const studiedToday = sessions.some(session => {
-        const sessionDate = new Date(session.startTime)
-        sessionDate.setHours(0, 0, 0, 0)
-        return sessionDate.getTime() === today.getTime()
-      })
-
-      if (studiedToday) {
-        currentStreak = 1
-        // Count backwards from yesterday
-        const checkDate = yesterday
-        for (let i = 1; i < sessions.length; i++) {
-          const sessionDate = new Date(sessions[i].startTime)
-          sessionDate.setHours(0, 0, 0, 0)
-          
-          if (sessionDate.getTime() === checkDate.getTime()) {
-            currentStreak++
-            checkDate.setDate(checkDate.getDate() - 1)
-          } else {
-            break
-          }
-        }
-      } else {
-        // Check if studied yesterday and count backwards
-        const checkDate = yesterday
-        for (const session of sessions) {
-          const sessionDate = new Date(session.startTime)
-          sessionDate.setHours(0, 0, 0, 0)
-          
-          if (sessionDate.getTime() === checkDate.getTime()) {
-            currentStreak++
-            checkDate.setDate(checkDate.getDate() - 1)
-          } else {
-            break
-          }
-        }
+    // Get user progress for streak
+    const userProgress = await db.userProgress.findUnique({
+      where: {
+        userId: user.id
       }
+    })
+
+    if (userProgress) {
+      currentStreak = userProgress.streak || 0
     }
 
     // Transform the deck to match the expected format in the frontend
@@ -139,12 +103,12 @@ export async function GET(req: NextRequest) {
       category: deck.category || "Uncategorized",
       tags: deck.tags.map(tag => tag.name),
       createdAt: deck.createdAt,
-      isProcessing: deck.isProcessing,
+      isProcessing: deck.isProcessing && flashcards.length === 0,
       error: deck.error || null,
       flashcards,
       mindMap: mindMapData,
       studyStreak: currentStreak,
-      lastStudied: lastStudyDate
+      lastStudied: sessions[0]?.startTime
     }
 
     return NextResponse.json(formattedDeck)

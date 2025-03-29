@@ -21,53 +21,24 @@ interface StudyDeckHeaderProps {
   progress: number
 }
 
-const ProgressBar = memo(({ 
-  progress
-}: { 
-  progress: number
-}) => {
+// Progress bar component
+const ProgressBar = memo(function ProgressBar({ progress }: { progress: number }) {
   return (
-    <div className="w-full mt-4">
-      <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
-        <motion.div 
-          className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
-          initial={{ width: 0 }}
-          animate={{ width: `${progress * 100}%` }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
-        >
-          <motion.div
-            className="absolute inset-0 w-full h-full"
-            style={{
-              background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
-              backgroundSize: "200% 100%",
-            }}
-            animate={{
-              backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
-            }}
-            transition={{
-              duration: 2,
-              ease: "linear",
-              repeat: Infinity,
-            }}
-          />
-          
-          <motion.div
-            className="absolute inset-0 w-full h-full bg-blue-400 opacity-0"
-            animate={{
-              opacity: [0, 0.2, 0],
-            }}
-            transition={{
-              duration: 1.5,
-              ease: "easeInOut",
-              repeat: Infinity,
-            }}
-          />
-        </motion.div>
-      </div>
+    <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+      <motion.div 
+        className="h-full bg-blue-600 rounded-full"
+        initial={{ width: 0 }}
+        animate={{ width: `${progress * 100}%` }}
+        transition={{ 
+          type: "spring", 
+          stiffness: 200, 
+          damping: 20,
+          mass: 1
+        }}
+      />
     </div>
-  )
+  );
 });
-ProgressBar.displayName = 'ProgressBar';
 
 export function StudyDeckHeader({
   title,
@@ -145,10 +116,6 @@ export function StudyDeckHeader({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-              {currentCardIndex + 1} / {newCardCount + dueCardCount}
-            </Badge> */}
-
             <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">
               {newCardCount} new
             </Badge>

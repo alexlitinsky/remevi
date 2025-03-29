@@ -57,7 +57,11 @@ export function StudyStats({ deckId }: StudyStatsProps) {
     const fetchStats = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/decks/${deckId}/stats`)
+        const response = await fetch(`/api/decks/${deckId}/stats`, {
+          headers: {
+            'x-user-timezone': Intl.DateTimeFormat().resolvedOptions().timeZone
+          }
+        })
         
         if (!response.ok) {
           throw new Error("Failed to fetch statistics")
@@ -110,25 +114,26 @@ export function StudyStats({ deckId }: StudyStatsProps) {
 
   // Get dates for review history (last 7 days)
   const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date()
-    date.setDate(date.getDate() - i)
-    return date.toISOString().split("T")[0]
-  }).reverse()
+    const date = new Date();
+    date.setHours(0, 0, 0, 0); // Set to start of day
+    date.setDate(date.getDate() - i);
+    return date.toLocaleDateString('en-US');
+  }).reverse();
 
   // Prepare review data for chart
   const reviewData = last7Days.map((date) => {
-    const formattedDate = new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    const dayData = stats.reviewsByDate[date] || { total: 0, easy: 0, medium: 0, hard: 0 };
     return {
-      date: formattedDate,
-      count: stats.reviewsByDate[date]?.total || 0,
-      easy: stats.reviewsByDate[date]?.easy || 0,
-      medium: stats.reviewsByDate[date]?.medium || 0,
-      hard: stats.reviewsByDate[date]?.hard || 0,
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      count: dayData.total,
+      easy: dayData.easy,
+      medium: dayData.medium,
+      hard: dayData.hard,
     }
-  })
+  });
 
-  // Find max count for chart scaling
-  const maxCount = Math.max(...reviewData.map((d) => d.count || 1))
+  // Find max count for chart scaling (minimum of 1 to avoid division by zero)
+  const maxCount = Math.max(1, ...reviewData.map((d) => d.count));
 
   return (
     <Card className="w-full border border-primary/10 bg-card/50 backdrop-blur-sm">

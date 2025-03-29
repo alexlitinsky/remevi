@@ -17,7 +17,12 @@ export async function POST(req: NextRequest) {
     // For a route like /api/decks/[id]/cards/[cardId]/review
     // The id will be at index 3 and cardId at index 5
     const deckId = pathParts[3];
-    const studyContentId = pathParts[5]; // This is now the studyContentId
+    const studyContentId = pathParts[5];
+    
+    // Get user's timezone
+    const userTimezone = req.headers.get('x-user-timezone') || 'UTC';
+    
+    console.log('Processing review for:', { deckId, studyContentId });
     
     if (!deckId || !studyContentId) {
       return new NextResponse("Missing required parameters", { status: 400 });
@@ -35,6 +40,7 @@ export async function POST(req: NextRequest) {
     });
 
     const { difficulty, responseTime } = await req.json();
+    console.log('Review data:', { difficulty, responseTime });
 
     // Get the study content to ensure it exists
     const studyContent = await db.studyContent.findUnique({
@@ -58,6 +64,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log('Existing card interaction:', cardInteraction);
+
     const review = {
       difficulty: difficulty as Difficulty,
       responseTime: parseInt(responseTime),
@@ -70,10 +78,14 @@ export async function POST(req: NextRequest) {
       cardInteraction?.repetitions ?? 0
     );
 
+    console.log('Calculated next review:', nextReview);
+
     const newStreak = calculateStreak(
       cardInteraction?.streak ?? 0,
       review.difficulty,
     );
+
+    console.log('New streak:', newStreak);
 
     // Determine mastery level based on performance
     let masteryLevel = "new";
@@ -90,7 +102,7 @@ export async function POST(req: NextRequest) {
     // Create or update a study session
     const session = await db.studySession.upsert({
       where: {
-        id: cardInteraction?.sessionId || 'new-session',
+        id: cardInteraction?.sessionId || `new-session-${Date.now()}`,
       },
       create: {
         userId: user.id,
@@ -110,7 +122,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // Create or update card interaction
+    // Create or update card interaction with explicit session ID
     const updatedCardInteraction = await db.cardInteraction.upsert({
       where: {
         userId_studyContentId: {
@@ -143,12 +155,21 @@ export async function POST(req: NextRequest) {
         streak: newStreak,
         responseTime: review.responseTime,
         difficulty: review.difficulty,
-        score: nextReview.points,
+        score: {
+          increment: nextReview.points
+        },
         masteryLevel
       },
+      include: {
+        studyContent: true
+      }
     });
 
-    // Update user progress
+    // Update user progress with proper date handling
+    const now = new Date();
+    const userDate = new Date(now.toLocaleString('en-US', { timeZone: userTimezone }));
+    userDate.setHours(0, 0, 0, 0);
+
     await db.userProgress.upsert({
       where: {
         userId: user.id,
@@ -157,21 +178,25 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         points: nextReview.points,
         streak: newStreak,
-        lastStudyDate: new Date(),
+        lastStudyDate: userDate,
       },
       update: {
         points: {
           increment: nextReview.points,
         },
         streak: newStreak,
-        lastStudyDate: new Date(),
+        lastStudyDate: userDate,
       },
     });
 
+    // Return detailed response for debugging
     return NextResponse.json({
       cardInteraction: updatedCardInteraction,
       pointsEarned: nextReview.points,
       nextReview: nextReview.dueDate,
+      session: session,
+      masteryLevel,
+      streak: newStreak
     });
   } catch (error) {
     console.error("Error reviewing card:", error);

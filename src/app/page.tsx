@@ -101,11 +101,19 @@ export default function Home() {
       fetchDecks();
       fetchProgress();
       
+      // const pendingUpload = localStorage.getItem('pendingUpload');
+      // if (pendingUpload) {
+      //   const { file, metadata } = JSON.parse(pendingUpload);
+      //   setFile(file);
+      //   setMetadata(metadata);
+      //   localStorage.removeItem('pendingUpload');
+      // }
+
       if (file && metadata) {
         router.push('/deck/configure');
       }
     }
-  }, [isSignedIn, router, file, metadata]);
+  }, [isSignedIn, router, file, metadata, setFile, setMetadata]);
 
   const fetchProgress = async () => {
     try {
@@ -177,6 +185,12 @@ export default function Home() {
       toast.error(`File size (${formatFileSize(file.size)}) exceeds plan limit (${formatFileSize(limits.maxFileSize)}).`);
       return;
     }
+    // Check deck limit
+    if (decks.length >= limits.maxDecks) {
+      toast.error(`You've reached your plan's deck limit (${limits.maxDecks} decks). Please upgrade to create more.`);
+      return;
+    }
+
 
     // Check file type
     const allowedTypes = [
@@ -201,6 +215,11 @@ export default function Home() {
       if (isSignedIn) {
         router.push('/deck/configure');
       } else {
+        // Store file and metadata in localStorage before sign-in
+        // localStorage.setItem('pendingUpload', JSON.stringify({
+        //   metadata,
+        //   file
+        // }));
         setShowSignIn(true);
       }
     } catch (error) {
@@ -452,13 +471,16 @@ export default function Home() {
                       </div>
 
                       <div className="grid grid-cols-7 gap-2">
-                        {['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'].map((day, index) => {
-                          const value = progress.weeklyActivity[index] || 0
-                          const maxValue = Math.max(...progress.weeklyActivity, 1)
-                          const heightPercent = (value / maxValue) * 100
+                        {Array.from({ length: 7 }, (_, i) => {
+                          const date = new Date();
+                          date.setDate(date.getDate() - (6 - i));
+                          const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                          const value = progress.weeklyActivity[i] || 0;
+                          const maxValue = Math.max(...progress.weeklyActivity, 1);
+                          const heightPercent = (value / maxValue) * 100;
 
                           return (
-                            <div key={day} className="flex flex-col items-center gap-2">
+                            <div key={dayName} className="flex flex-col items-center gap-2">
                               {/* Bar container */}
                               <div className="w-full h-[100px] flex items-end bg-muted/10 rounded-sm overflow-hidden">
                                 {/* Actual bar */}
@@ -474,16 +496,16 @@ export default function Home() {
 
                               {/* Day label */}
                               <span className="text-xs text-muted-foreground">
-                                {day}
+                                {dayName}
                               </span>
                             </div>
-                          )
+                          );
                         })}
                       </div>
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
                       <Card className="bg-muted/30 border-primary/5">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
@@ -494,7 +516,7 @@ export default function Home() {
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-muted/30 border-primary/5">
+                      {/* <Card className="bg-muted/30 border-primary/5">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="text-muted-foreground text-sm">Study Sessions</div>
@@ -502,7 +524,7 @@ export default function Home() {
                           </div>
                           <div className="text-2xl font-bold mt-2">{progress.studySessions || 0}</div>
                         </CardContent>
-                      </Card>
+                      </Card> */}
 
                       <Card className="bg-muted/30 border-primary/5">
                         <CardContent className="p-4">
@@ -520,7 +542,7 @@ export default function Home() {
                             <div className="text-muted-foreground text-sm">Total Points</div>
                             <Trophy className="h-4 w-4 text-yellow-500" />
                           </div>
-                          <div className="text-2xl font-bold mt-2">{progress.totalPoints || 1250}</div>
+                          <div className="text-2xl font-bold mt-2">{progress.totalPoints || 0}</div>
                         </CardContent>
                       </Card>
                     </div>
@@ -638,7 +660,7 @@ export default function Home() {
                                     <Button 
                                       variant="ghost" 
                                       size="sm" 
-                                      className="gap-1 text-xs hover:text-destructive transition-colors"
+                                      className="gap-1 text-xs hover:text-destructive transition-colors cursor-pointer"
                                     >
                                       <Trash2 className="h-3 w-3" />
                                       Delete
@@ -687,7 +709,7 @@ export default function Home() {
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
-                                  className="gap-1 text-xs group-hover:text-primary transition-colors"
+                                  className="gap-1 text-xs group-hover:text-primary cursor-pointer transition-colors"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     router.push(`/deck/${deck.id}/session`);

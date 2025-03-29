@@ -32,9 +32,9 @@ const DIFFICULTY_QUALITY = {
 };
 
 const DIFFICULTY_MULTIPLIER = {
-  hard: 2.0,
+  hard: 1.0,
   medium: 1.5,
-  easy: 1.0,
+  easy: 2.0,
 };
 
 const BASE_POINTS = 10;

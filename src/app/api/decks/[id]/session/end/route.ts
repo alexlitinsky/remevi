@@ -53,6 +53,50 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // Get user's timezone
+    const userTimezone = req.headers.get('x-user-timezone') || 'UTC';
+    const userDate = new Date(endTime.toLocaleString('en-US', { timeZone: userTimezone }));
+    userDate.setHours(0, 0, 0, 0);
+
+    // Get or create user progress
+    const userProgress = await db.userProgress.findUnique({
+      where: { userId: user.id }
+    });
+
+    let newStreak = 1; // Default to 1 for first time studying
+
+    if (userProgress) {
+      const lastStudyDate = userProgress.lastStudyDate;
+      if (lastStudyDate) {
+        const yesterday = new Date(userDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        if (lastStudyDate.getTime() === userDate.getTime()) {
+          // Already studied today, keep current streak
+          newStreak = userProgress.streak;
+        } else if (lastStudyDate.getTime() === yesterday.getTime()) {
+          // Studied yesterday, increment streak
+          newStreak = userProgress.streak + 1;
+        }
+      }
+    }
+
+    // Update user progress
+    await db.userProgress.upsert({
+      where: {
+        userId: user.id
+      },
+      create: {
+        userId: user.id,
+        streak: newStreak,
+        lastStudyDate: userDate
+      },
+      update: {
+        streak: newStreak,
+        lastStudyDate: userDate
+      }
+    });
+
     return NextResponse.json(updatedSession);
   } catch (error) {
     console.error("Error ending study session:", error);

@@ -221,21 +221,21 @@ export async function POST(request: NextRequest) {
         const difficultyPrompt = `You are an expert study material creator. Generate a comprehensive set of flashcards based on the following difficulty level:
 
         ${difficulty === 'low' ? `LOW DIFFICULTY:
-        - Generate 6-10 flashcards per chunk focusing on foundational concepts
+        - Generate 15-25 flashcards per chunk focusing on foundational concepts
         - Each card should cover a single, essential concept
         - Front: Simple, direct questions or key terms
         - Back: Clear, concise explanations with basic examples
         - Focus on: Core terminology, main ideas, basic principles` 
         
         : difficulty === 'moderate' ? `MODERATE DIFFICULTY:
-        - Generate 10-20 flashcards per chunk with balanced depth
+        - Generate 25-35 flashcards per chunk with balanced depth
         - Mix of basic and intermediate concepts
         - Front: Combination of terms, concepts, and application questions
         - Back: Detailed explanations with examples and relationships
         - Focus on: Key concepts, supporting details, relationships between ideas`
         
         : `HIGH DIFFICULTY:
-        - Generate 20-40 flashcards per chunk for comprehensive coverage
+        - Generate 35-45 flashcards per chunk for comprehensive coverage
         - Include basic, intermediate, and advanced concepts
         - Front: Complex scenarios, analytical questions, and interconnected concepts
         - Back: In-depth explanations with examples, edge cases, and connections
@@ -291,9 +291,6 @@ export async function POST(request: NextRequest) {
         console.log(`Successfully processed ${successfulChunks}/${chunks.length} chunks`);
         console.log(`Generated ${chunkResults.flatMap(r => r.flashcards).length} total flashcards`);
 
-        // Generate mind map once for the entire document
-        const mindMap = await generateMindMap(fileBuffer, aiModel);
-
         // Combine results
         const allFlashcards = chunkResults.flatMap(result => result.flashcards);
 
@@ -304,43 +301,22 @@ export async function POST(request: NextRequest) {
             acc[curr] = (acc[curr] || 0) + 1;
             return acc;
           }, {} as Record<string, number>);
-        const finalCategory = Object.entries(category)
-          .reduce((a, b) => a[1] > b[1] ? a : b)[0];
 
-        // Add coordinates to mind map nodes
-        const centerX = 500;
-        const centerY = 300;
-        const radius = 200;
-        const nodes = mindMap.nodes.map((node: { id: string; label: string }, index: number) => {
-          const angle = (2 * Math.PI * index) / mindMap.nodes.length;
-          return {
-            ...node,
-            x: centerX + radius * Math.cos(angle),
-            y: centerY + radius * Math.sin(angle),
-          };
-        });
+        const finalCategory = Object.entries(category)
+          .sort((a, b) => b[1] - a[1])
+          .map(([cat]) => cat)[0];
 
         // Create flashcard content for each flashcard
         const flashcardPromises = allFlashcards.map(async (card: { front: string; back: string }, index: number) => {
-          // Create the study content with its flashcard content
+          // First create the study content
           const studyContent = await db.studyContent.create({
             data: {
-              type: 'flashcard',
               studyMaterialId: studyMaterial.id,
+              type: 'flashcard',
               flashcardContent: {
                 create: {
                   front: card.front,
                   back: card.back
-                }
-              },
-              deckContent: {
-                create: {
-                  deck: {
-                    connect: {
-                      id: deck.id
-                    }
-                  },
-                  order: index
                 }
               }
             },
@@ -348,25 +324,63 @@ export async function POST(request: NextRequest) {
               flashcardContent: true
             }
           });
+
+          // Then add it to the deck
+          await db.deckContent.create({
+            data: {
+              deckId: deck.id,
+              studyContentId: studyContent.id,
+              order: index
+            }
+          });
+
           return studyContent;
         });
 
         // Wait for all flashcards to be created
         await Promise.all(flashcardPromises);
 
-        // Update the deck with the mind map and category
+        // Update study material status
+        await db.studyMaterial.update({
+          where: { id: studyMaterial.id },
+          data: {
+            status: 'completed'
+          }
+        });
+
+        // Update deck with category and mark as not processing since flashcards are ready
         await db.deck.update({
           where: { id: deck.id },
           data: {
-            mindMap: {
-              nodes,
-              connections: mindMap.connections,
-            },
             category: finalCategory,
             isProcessing: false,
-            error: null, // Clear the error field since processing completed successfully
-          },
+            error: null
+          }
         });
+
+        // Generate mind map in the background
+        (async () => {
+          try {
+            console.log('Generating mind map...');
+            const mindMap = await generateMindMap(fileBuffer, aiModel);
+            
+            // Update deck with mind map once generated
+            await db.deck.update({
+              where: { id: deck.id },
+              data: {
+                mindMap: {
+                  nodes: mindMap.nodes,
+                  connections: mindMap.connections,
+                }
+              }
+            });
+            console.log('Mind map generation completed');
+          } catch (error) {
+            console.error('Error generating mind map:', error);
+            // Don't mark deck as error since flashcards are already available
+          }
+        })();
+
       } catch (error) {
         console.error('Error processing study materials:', error);
         

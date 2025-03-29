@@ -19,10 +19,13 @@ export async function GET(req: NextRequest) {
     
     // Get current date for time-based queries
     const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
+    // Convert to user's local timezone
+    const userTimezone = req.headers.get('x-user-timezone') || 'UTC';
+    const userDate = new Date(now.toLocaleString('en-US', { timeZone: userTimezone }));
+    userDate.setHours(0, 0, 0, 0);
+    const startOfToday = userDate;
+    const startOfWeek = new Date(userDate);
+    startOfWeek.setDate(userDate.getDate() - userDate.getDay());
     
     // Get the deck with its content and interactions
     const deck = await db.deck.findUnique({
@@ -38,6 +41,9 @@ export async function GET(req: NextRequest) {
                 cardInteractions: {
                   where: {
                     userId: user.id
+                  },
+                  orderBy: {
+                    lastReviewed: 'desc'
                   }
                 }
               }
@@ -91,17 +97,15 @@ export async function GET(req: NextRequest) {
       new: 0
     };
     
-    // Calculate review history
+    // Initialize review history for the last 7 days
     const reviewsByDate: Record<string, { total: number; easy: number; medium: number; hard: number }> = {};
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-      const date = new Date();
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(userDate);
       date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    });
-    
-    last30Days.forEach(date => {
-      reviewsByDate[date] = { total: 0, easy: 0, medium: 0, hard: 0 };
-    });
+      const formattedDate = date.toLocaleDateString('en-US', { timeZone: userTimezone });
+      reviewsByDate[formattedDate] = { total: 0, easy: 0, medium: 0, hard: 0 };
+      return formattedDate;
+    }).reverse();
     
     let totalCards = 0;
     let cardsWithProgress = 0;
@@ -141,18 +145,24 @@ export async function GET(req: NextRequest) {
         
         totalPoints += interaction.score;
         
-        // Check if card is due
-        if (interaction.dueDate <= now) {
-          dueCards++;
+        // Check if card is due - convert both dates to user timezone for comparison
+        if (interaction.dueDate) {
+          const dueDateInUserTz = new Date(interaction.dueDate.toLocaleString('en-US', { timeZone: userTimezone }));
+          dueDateInUserTz.setHours(0, 0, 0, 0);
+          if (dueDateInUserTz <= userDate) {
+            dueCards++;
+          }
         }
         
-        // Add to review history if reviewed in last 30 days
+        // Add to review history if reviewed in last 7 days
         if (interaction.lastReviewed) {
-          const reviewDate = interaction.lastReviewed.toISOString().split('T')[0];
-          if (reviewsByDate[reviewDate]) {
-            reviewsByDate[reviewDate].total++;
+          const reviewDate = new Date(interaction.lastReviewed.toLocaleString('en-US', { timeZone: userTimezone }));
+          const formattedReviewDate = reviewDate.toLocaleDateString('en-US', { timeZone: userTimezone });
+          
+          if (reviewsByDate[formattedReviewDate]) {
+            reviewsByDate[formattedReviewDate].total++;
             if (interaction.difficulty) {
-              reviewsByDate[reviewDate][interaction.difficulty as 'easy' | 'medium' | 'hard']++;
+              reviewsByDate[formattedReviewDate][interaction.difficulty as 'easy' | 'medium' | 'hard']++;
             }
           }
         }

@@ -282,7 +282,7 @@ export default function ConfigurePage() {
                   size="icon"
                   onClick={handleCancel}
                   disabled={isGenerating}
-                  className="mr-2"
+                  className="mr-2 cursor-pointer"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -352,6 +352,9 @@ export default function ConfigurePage() {
                         <div className="mt-2 text-sm text-muted-foreground">
                           {QUESTION_RANGES.moderate.description}
                         </div>
+                        <Badge variant="outline" className="text-xs font-medium px-2 py-0.5 mt-2">
+                          Premium
+                        </Badge>
                       </div>
                     </Label>
 
@@ -368,6 +371,9 @@ export default function ConfigurePage() {
                         <div className="mt-2 text-sm text-muted-foreground">
                           {QUESTION_RANGES.high.description}
                         </div>
+                        <Badge variant="outline" className="text-xs font-medium px-2 py-0.5 mt-2">
+                          Premium
+                        </Badge>
                       </div>
                     </Label>
                   </RadioGroup>

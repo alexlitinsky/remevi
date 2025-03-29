@@ -145,6 +145,14 @@ body {
   transform: rotateY(180deg);
 }
 
+.rotateY-180 {
+  transform: rotateY(180deg);
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
 .transition-transform {
   transition-property: transform;
 }

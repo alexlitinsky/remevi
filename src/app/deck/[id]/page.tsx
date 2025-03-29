@@ -19,6 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { toast } from 'sonner';
+import { useSessionStats } from '@/hooks/deck/useSessionStats';
 
 interface Deck {
   id: string;
@@ -42,13 +43,20 @@ export default function DeckPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const deckId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
+  
+  // Add useSessionStats hook
+  const { streak } = useSessionStats(deckId);
 
   useEffect(() => {
     const fetchDeck = async () => {
       try {
         const [deckResponse, statsResponse] = await Promise.all([
           fetch(`/api/decks/${deckId}`),
-          fetch(`/api/decks/${deckId}/stats`)
+          fetch(`/api/decks/${deckId}/stats`, {
+            headers: {
+              'x-user-timezone': Intl.DateTimeFormat().resolvedOptions().timeZone
+            }
+          })
         ]);
 
         if (deckResponse.ok && statsResponse.ok) {
@@ -125,6 +133,11 @@ export default function DeckPage() {
     );
   }
 
+  // Calculate days since last studied
+  const daysSinceLastStudied = deck.lastStudied
+    ? Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(deck.lastStudied).setHours(0, 0, 0, 0)) / (1000 * 3600 * 24))
+    : null;
+
   // Format dates for better display
   const formattedCreatedDate = new Date(deck.createdAt).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -138,11 +151,6 @@ export default function DeckPage() {
         month: 'long',
         day: 'numeric'
       })
-    : null;
-
-  // Calculate days since last studied
-  const daysSinceLastStudied = deck.lastStudied
-    ? Math.floor((new Date().getTime() - new Date(deck.lastStudied).getTime()) / (1000 * 3600 * 24))
     : null;
 
   return (
@@ -179,7 +187,7 @@ export default function DeckPage() {
             <div className="flex gap-3">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="lg" className="gap-2" disabled={isDeleting}>
+                  <Button variant="destructive" size="lg" className="gap-2 cursor-pointer" disabled={isDeleting}>
                     <Trash2 className="h-4 w-4" />
                     Delete Deck
                   </Button>
@@ -216,7 +224,7 @@ export default function DeckPage() {
                   </div>
                 </AlertDialogContent>
               </AlertDialog>
-              <Button size="lg" onClick={() => router.push(`/deck/${deckId}/session`)} className="gap-2">
+              <Button size="lg" onClick={() => router.push(`/deck/${deckId}/session-v2`)} className="gap-2 cursor-pointer">
                 <BookOpen className="h-4 w-4" />
                 Start Studying
               </Button>
@@ -295,7 +303,7 @@ export default function DeckPage() {
                     </div>
                   </div>
                   <div className="mt-3">
-                    <div className="text-3xl font-bold">{deck.studyStreak || 0} days</div>
+                    <div className="text-3xl font-bold">{streak} days</div>
                     <div className="mt-1 text-xs text-muted-foreground">Keep your streak going!</div>
                   </div>
                 </div>

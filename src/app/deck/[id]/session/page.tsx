@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useDeck } from '@/hooks/deck/useDeck';
 import { useSessionStats } from '@/hooks/deck/useSessionStats';
 import { type Difficulty } from '@/lib/srs';
+import { calculatePoints } from '@/lib/srs';
 import { StudyDeckHeader } from '@/components/session/StudyDeckHeader';
 import { FlashcardContainer } from '@/components/session/FlashcardContainer';
 import { DeckCompletionScreen } from '@/components/session/DeckCompletionScreen';
@@ -12,6 +13,7 @@ import { LoadingState, ErrorState, ProcessingState } from '@/components/session/
 import { MindMapModal, SettingsModal } from '@/components/session/StudyModals';
 import { StudyActionButtons } from '@/components/session/StudyActionButtons';
 import { NoDueCardsScreen } from '@/components/session/NoDueCardsScreen';
+import { toast } from 'sonner';
 
 export default function StudyDeckPage() {
   const params = useParams();
@@ -23,6 +25,8 @@ export default function StudyDeckPage() {
   const [originalDueCount, setOriginalDueCount] = useState(0);
   const [hasSetOriginalCounts, setHasSetOriginalCounts] = useState(false);
   const [originalCardIds, setOriginalCardIds] = useState<string[]>([]);
+  const [estimatedPoints, setEstimatedPoints] = useState(0);
+  const [lastEarnedPoints, setLastEarnedPoints] = useState<number | null>(null);
 
   const deckId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   
@@ -45,6 +49,8 @@ export default function StudyDeckPage() {
     flipCard,
     moveToNextCard,
     moveToPrevCard,
+    completedCardIds,
+    setPointsEarned
   } = useDeck(deckId);
 
   const {
@@ -105,56 +111,100 @@ export default function StudyDeckPage() {
 
   // Calculate actual progress based on original card list
   const calculateProgress = () => {
-    if (originalCardIds.length === 0) return 0;
+    if (orderedCards.length === 0) return 0;
     // Cap progress at 1 (100%)
-    const progress = Math.min((currentCardIndex) / originalCardIds.length, 1);
+    const progress = Math.min(currentCardIndex / orderedCards.length, 1);
     return progress;
   };
 
-  // End session when completed
+  // Start session effect
   useEffect(() => {
-    if (!hasStarted) {
+    let mounted = true;
+    
+    if (!hasStarted && showBack && mounted) {
       setHasStarted(true);
       startSession();
+      setPointsEarned(null);
     }
-  }, [hasStarted, startSession]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [hasStarted, showBack]);
 
   // End session when completed
   useEffect(() => {
-    if (deckCompleted) {
+    let mounted = true;
+
+    if (deckCompleted && mounted) {
       endSession();
+      setHasStarted(false);
+      clearProgress();
     }
-  }, [deckCompleted, endSession]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [deckCompleted]);
 
   // Clear session state when completed or when leaving the page
   useEffect(() => {
+    let mounted = true;
+
     const clearSessionState = () => {
-      localStorage.removeItem(`session-state-${deckId}`);
-      console.log('Cleared session state');
+      if (mounted) {
+        localStorage.removeItem(`session-state-${deckId}`);
+        console.log('Cleared session state');
+      }
     };
 
-    if (deckCompleted) {
+    if (deckCompleted && mounted) {
       clearSessionState();
+      endSession();
     }
 
-    // Clear session state when leaving the page
     window.addEventListener('beforeunload', clearSessionState);
+    
     return () => {
+      mounted = false;
       window.removeEventListener('beforeunload', clearSessionState);
+      const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      if (navigationEntry?.type !== 'reload') {
+        endSession();
+      }
     };
   }, [deckCompleted, deckId]);
 
-  const handleSeePerformance = () => {
+  // Show keyboard shortcuts toast for first-time users
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('has-seen-study-tutorial');
+    if (!hasSeenTutorial && hasStarted) {
+      toast.info(
+        'Keyboard Shortcuts',
+        {
+          description: 'Space/Enter to flip card\nQ: Hard, W: Medium, E: Easy',
+          duration: 5000,
+          position: 'bottom-center'
+        }
+      );
+      localStorage.setItem('has-seen-study-tutorial', 'true');
+    }
+  }, [hasStarted]);
+
+  const handleSeePerformance = async () => {
+    await endSession(); // End session before navigation
     clearProgress();
     router.push(`/deck/${deck?.id}`);
   };
 
-  const handleReturnToDashboard = () => {
+  const handleReturnToDashboard = async () => {
+    await endSession(); // End session before navigation
     clearProgress();
     router.push(`/deck/${deck?.id}`);
   };
 
-  const handleReturnToHome = () => {
+  const handleReturnToHome = async () => {
+    await endSession(); // End session before navigation
     clearProgress();
     router.push(`/`);
   };
@@ -166,15 +216,20 @@ export default function StudyDeckPage() {
 
   // Wrap handleCardRate to track session stats
   const handleCardRateWithStats = async (difficulty: Difficulty, responseTime: number) => {
-    if (pointsEarned) {
-      addPoints(pointsEarned);
-    }
+    const points = calculatePoints(difficulty, responseTime);
+    setLastEarnedPoints(points); // Set points for notification
+    addPoints(points);
     await handleCardRate(difficulty, responseTime);
+    // Reset points after a delay
+    setTimeout(() => setLastEarnedPoints(null), 1500);
   };
 
   const handleRestartDeckWithReset = async () => {
     await handleRestartDeck();
     resetSession();
+    setHasStarted(true); // Ensure timer starts
+    setPointsEarned(null);
+    setLastEarnedPoints(null);
   };
 
   // Get the next due date (earliest due date from remaining cards)
@@ -206,7 +261,7 @@ export default function StudyDeckPage() {
   }
 
   // Completion state - finished all cards in this session
-  if (deckCompleted && cardsReviewed > 0) {
+  if (deckCompleted) {
     return (
       <DeckCompletionScreen
         totalPoints={totalPoints}
@@ -221,8 +276,8 @@ export default function StudyDeckPage() {
     );
   }
 
-  // No due cards state - no cards to review (not from this session)
-  if (newCardCount === 0 && dueCardCount === 0) {
+  // No due cards state - no cards to review
+  if (!isLoading && cardsReviewed === 0 && (orderedCards.length === 0 || (newCardCount === 0 && dueCardCount === 0))) {
     return (
       <NoDueCardsScreen
         onRestartDeck={handleRestartDeckWithReset}
@@ -260,7 +315,7 @@ export default function StudyDeckPage() {
             cards={orderedCards}
             currentCardIndex={currentCardIndex}
             showBack={showBack}
-            pointsEarned={pointsEarned}
+            pointsEarned={lastEarnedPoints}
             onFlip={flipCard}
             onRate={handleCardRateWithStats}
             onNext={currentCardIndex < orderedCards.length - 1 ? () => moveToNextCard(currentCardIndex) : undefined}
@@ -273,6 +328,7 @@ export default function StudyDeckPage() {
       <StudyActionButtons
         onShowSettings={() => setShowSettings(true)}
         onToggleMindMap={() => setShowMindMap(!showMindMap)}
+        mindMapAvailable={!!deck?.mindMap?.nodes?.length}
       />
 
       {/* Settings modal */}
@@ -284,7 +340,7 @@ export default function StudyDeckPage() {
       />
 
       {/* Mind map modal */}
-      {deck?.mindMap && (
+      {deck?.mindMap?.nodes?.length && (
         <MindMapModal
           isVisible={showMindMap}
           onClose={() => setShowMindMap(false)}

@@ -2,68 +2,40 @@ import { useState, useEffect } from 'react';
 
 export function useSessionStats(deckId: string) {
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
-  const [streak, setStreak] = useState(0);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [cardsReviewed, setCardsReviewed] = useState(0);
-  const [isActive, setIsActive] = useState(false);
+  const [streak, setStreak] = useState(0);
 
-  // Start session timer only when active
+  // Load streak from API
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    
+    const fetchStreak = async () => {
+      try {
+        const response = await fetch('/api/study-progress');
+        if (response.ok) {
+          const data = await response.json();
+          setStreak(data.currentStreak || 0);
+        }
+      } catch (error) {
+        console.error('Failed to fetch streak:', error);
+      }
+    };
+    fetchStreak();
+  }, []);
+
+  // Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
     if (isActive) {
-      timer = setInterval(() => {
+      interval = setInterval(() => {
         setSessionTime(prev => prev + 1);
       }, 1000);
     }
-
     return () => {
-      if (timer) clearInterval(timer);
+      if (interval) clearInterval(interval);
     };
   }, [isActive]);
-
-  // Handle tab close/browser exit
-  useEffect(() => {
-    const handleBeforeUnload = async () => {
-      if (sessionId) {
-        await fetch(`/api/decks/${deckId}/session/end`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId }),
-          // Keep alive flag to ensure request completes
-          keepalive: true
-        });
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [sessionId, deckId]);
-
-  // Load streak from localStorage
-  useEffect(() => {
-    const lastStudyDate = localStorage.getItem('lastStudyDate');
-    const currentStreak = parseInt(localStorage.getItem('studyStreak') || '0');
-
-    const today = new Date().toDateString();
-    
-    if (lastStudyDate === today) {
-      setStreak(currentStreak);
-    } else if (lastStudyDate === new Date(Date.now() - 86400000).toDateString()) {
-      // Yesterday - continue streak
-      setStreak(currentStreak + 1);
-      localStorage.setItem('studyStreak', (currentStreak + 1).toString());
-      localStorage.setItem('lastStudyDate', today);
-    } else {
-      // Streak broken
-      setStreak(1);
-      localStorage.setItem('studyStreak', '1');
-      localStorage.setItem('lastStudyDate', today);
-    }
-  }, []);
 
   const addPoints = (points: number) => {
     setSessionPoints(prev => prev + points);
@@ -72,46 +44,65 @@ export function useSessionStats(deckId: string) {
 
   const startSession = async () => {
     try {
+      setIsActive(true); // Start timer immediately
+      setSessionTime(0);
+      setSessionPoints(0);
+      setCardsReviewed(0);
+
       const response = await fetch(`/api/decks/${deckId}/session/start`, {
         method: 'POST'
       });
       
-      if (!response.ok) throw new Error('Failed to start session');
+      if (!response.ok) {
+        setIsActive(false); // Stop timer if request fails
+        throw new Error('Failed to start session');
+      }
       
       const data = await response.json();
       setSessionId(data.id);
-      setIsActive(true);
-      setSessionTime(0);
-      setSessionPoints(0);
-      setCardsReviewed(0);
+
+      // Fetch initial streak
+      const streakResponse = await fetch('/api/study-progress');
+      if (streakResponse.ok) {
+        const streakData = await streakResponse.json();
+        setStreak(streakData.currentStreak || 0);
+      }
     } catch (error) {
       console.error('Failed to start session:', error);
+      setIsActive(false);
     }
   };
 
   const endSession = async () => {
-    if (sessionId) {
-      try {
-        await fetch(`/api/decks/${deckId}/session/end`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
-        });
-      } catch (error) {
-        console.error('Failed to end session:', error);
+    if (!sessionId) return;
+    
+    try {
+      setIsActive(false); // Stop timer immediately
+      await fetch(`/api/decks/${deckId}/session/end`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-timezone': Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        body: JSON.stringify({ sessionId })
+      });
+      
+      // Refresh streak after session ends
+      const response = await fetch('/api/study-progress');
+      if (response.ok) {
+        const data = await response.json();
+        setStreak(data.currentStreak || 0);
       }
+    } catch (error) {
+      console.error('Failed to end session:', error);
     }
-    setIsActive(false);
-    setSessionId(null);
   };
 
-  const resetSession = async () => {
-    // End current session if exists
-    if (sessionId) {
-      await endSession();
-    }
-    // Start new session
-    await startSession();
+  const resetSession = () => {
+    setSessionTime(0);
+    setSessionPoints(0);
+    setCardsReviewed(0);
+    setIsActive(true); // Start timer when resetting
   };
 
   return {
@@ -123,6 +114,5 @@ export function useSessionStats(deckId: string) {
     startSession,
     endSession,
     resetSession,
-    isActive
   };
 } 
