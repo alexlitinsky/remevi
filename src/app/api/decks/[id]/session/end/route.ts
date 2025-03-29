@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
       return new NextResponse("Missing deck ID", { status: 400 });
     }
 
-    // Get the session ID from the request body
-    const { sessionId } = await req.json();
+    // Get the session ID and client-tracked time from the request body
+    const { sessionId, sessionTime } = await req.json();
     if (!sessionId) {
       return new NextResponse("Missing session ID", { status: 400 });
     }
@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
       return new NextResponse("Session not found", { status: 404 });
     }
 
-    // Calculate total time in seconds
+    // Calculate total time in seconds - use client-provided time if available
     const endTime = new Date();
-    const totalTimeInSeconds = Math.round(
+    const totalTimeInSeconds = sessionTime || Math.round(
       (endTime.getTime() - session.startTime.getTime()) / 1000
     );
 

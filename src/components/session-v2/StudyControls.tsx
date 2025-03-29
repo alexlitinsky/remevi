@@ -36,20 +36,26 @@ export function StudyControls({
   return (
     <div className="w-full flex justify-center space-x-4 mt-6">
       <Button
-        onClick={() => handleRate('hard')}
+        onClick={() => handleRate('again')}
         className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full"
+      >
+        Again
+      </Button>
+      <Button
+        onClick={() => handleRate('hard')}
+        className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-full"
       >
         Hard
       </Button>
       <Button
-        onClick={() => handleRate('medium')}
-        className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-full"
+        onClick={() => handleRate('good')}
+        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
       >
-        Medium
+        Good
       </Button>
       <Button
         onClick={() => handleRate('easy')}
-        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
+        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full"
       >
         Easy
       </Button>

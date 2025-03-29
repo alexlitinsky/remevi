@@ -122,7 +122,12 @@ export const useStudySessionStore = create<StudySessionState>()(
       initSession: async () => {
         const { deckId } = get();
         if (!deckId) return;
-        
+
+        // Add the reset here, before setting isLoading
+        if (!get().hasStarted) {
+            set({ currentCardIndex: 0 });
+        }
+
         set({ isLoading: true, error: null });
         
         try {
@@ -263,7 +268,8 @@ export const useStudySessionStore = create<StudySessionState>()(
           orderedCards, 
           currentCardIndex,
           completedCardIds,
-          timerId
+          timerId,
+          sessionId
         } = get();
         
         if (!deck || !orderedCards.length) return;
@@ -314,7 +320,11 @@ export const useStudySessionStore = create<StudySessionState>()(
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ difficulty, responseTime }),
+              body: JSON.stringify({ 
+                difficulty, 
+                responseTime,
+                sessionId // Include the sessionId in all review requests
+              }),
             }
           );
           
@@ -451,7 +461,7 @@ export const useStudySessionStore = create<StudySessionState>()(
       
       // End the session
       endSession: async () => {
-        const { deckId, sessionId, timerId } = get();
+        const { deckId, sessionId, timerId, sessionTime } = get();
         
         // Stop the timer
         if (timerId) {
@@ -476,7 +486,10 @@ export const useStudySessionStore = create<StudySessionState>()(
               'Content-Type': 'application/json',
               'x-user-timezone': Intl.DateTimeFormat().resolvedOptions().timeZone
             },
-            body: JSON.stringify({ sessionId })
+            body: JSON.stringify({ 
+              sessionId,
+              sessionTime // Send the tracked session time to the backend
+            })
           });
           
           // Refresh streak data

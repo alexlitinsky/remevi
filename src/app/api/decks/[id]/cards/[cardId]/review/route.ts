@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       update: {},
     });
 
-    const { difficulty, responseTime } = await req.json();
+    const { difficulty, responseTime, sessionId: requestSessionId } = await req.json();
     console.log('Review data:', { difficulty, responseTime });
 
     // Get the study content to ensure it exists
@@ -99,30 +99,35 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create or update a study session
-    const session = await db.studySession.upsert({
+    // Get session ID from request or card interaction
+    const sessionId = requestSessionId || cardInteraction?.sessionId;
+    
+    if (!sessionId) {
+      return new NextResponse("Missing session ID", { status: 400 });
+    }
+    
+    // Find the existing session
+    const session = await db.studySession.findUnique({
       where: {
-        id: cardInteraction?.sessionId || `new-session-${Date.now()}`,
-      },
-      create: {
-        userId: user.id,
-        deckId: deckId,
-        startTime: new Date(),
-        cardsStudied: 1,
-        pointsEarned: nextReview.points,
-      },
-      update: {
-        cardsStudied: {
-          increment: 1
-        },
-        pointsEarned: {
-          increment: nextReview.points
-        },
-        endTime: new Date(),
+        id: sessionId,
+        userId: user.id
+      }
+    });
+    
+    if (!session) {
+      return new NextResponse("Session not found", { status: 404 });
+    }
+    
+    // Update the session stats without modifying timestamps
+    await db.studySession.update({
+      where: { id: sessionId },
+      data: {
+        cardsStudied: { increment: 1 },
+        pointsEarned: { increment: nextReview.points }
       }
     });
 
-    // Create or update card interaction with explicit session ID
+    // Create or update card interaction with existing session ID
     const updatedCardInteraction = await db.cardInteraction.upsert({
       where: {
         userId_studyContentId: {
@@ -133,7 +138,7 @@ export async function POST(req: NextRequest) {
       create: {
         userId: user.id,
         studyContentId: studyContentId,
-        sessionId: session.id,
+        sessionId: sessionId,
         easeFactor: nextReview.easeFactor,
         interval: nextReview.interval,
         repetitions: nextReview.repetitions,
@@ -146,7 +151,7 @@ export async function POST(req: NextRequest) {
         masteryLevel
       },
       update: {
-        sessionId: session.id,
+        sessionId: sessionId,
         easeFactor: nextReview.easeFactor,
         interval: nextReview.interval,
         repetitions: nextReview.repetitions,
@@ -194,7 +199,11 @@ export async function POST(req: NextRequest) {
       cardInteraction: updatedCardInteraction,
       pointsEarned: nextReview.points,
       nextReview: nextReview.dueDate,
-      session: session,
+      session: {
+        id: sessionId,
+        cardsStudied: (session.cardsStudied || 0) + 1,
+        pointsEarned: (session.pointsEarned || 0) + nextReview.points
+      },
       masteryLevel,
       streak: newStreak
     });

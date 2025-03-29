@@ -712,7 +712,7 @@ export default function Home() {
                                   className="gap-1 text-xs group-hover:text-primary cursor-pointer transition-colors"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    router.push(`/deck/${deck.id}/session`);
+                                    router.push(`/deck/${deck.id}/session-v2`);
                                   }}
                                 >
                                   Study Now

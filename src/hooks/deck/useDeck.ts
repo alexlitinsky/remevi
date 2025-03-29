@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import type { DeckData, FlashcardData, Difficulty } from './types';
+import type { DeckData, FlashcardData } from './types';
 import { useDeckProgress } from './useDeckProgress';
 import { useDeckAPI } from './useDeckAPI';
 import { useCardNavigation } from './useCardNavigation';
-import { calculatePoints } from '@/lib/srs';
+import { calculatePoints, type Difficulty } from '@/lib/srs';
 
 export function useDeck(deckId: string) {
   const [deck, setDeck] = useState<DeckData | null>(null);

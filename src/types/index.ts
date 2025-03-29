@@ -13,7 +13,7 @@ export interface Card {
   last_reviewed?: string
 }
 
-export type Difficulty = 'hard' | 'medium' | 'easy'
+export type Difficulty = 'hard' | 'good' | 'easy' | 'again'
 
 export interface StudySessionStats {
   totalCards: number

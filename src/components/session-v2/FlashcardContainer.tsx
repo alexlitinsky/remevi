@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flashcard } from '@/components/ui/flashcard';
 import { StudyControls } from '@/components/session-v2/StudyControls';
-import { type Difficulty } from '@/types';
+import { type Difficulty } from '@/lib/srs';
 import { type FlashcardData } from '@/stores/useStudySessionStore';
 
 interface FlashcardContainerProps {
@@ -44,11 +44,14 @@ export function FlashcardContainer({
     if (showBack) {
       if (e.key === 'q') {
         const responseTime = Date.now() - startTime;
-        onRate('hard', responseTime);
+        onRate('again', responseTime);
       } else if (e.key === 'w') {
         const responseTime = Date.now() - startTime;
-        onRate('medium', responseTime);
+        onRate('hard', responseTime);
       } else if (e.key === 'e') {
+        const responseTime = Date.now() - startTime;
+        onRate('good', responseTime);
+      } else if (e.key === 'r') {
         const responseTime = Date.now() - startTime;
         onRate('easy', responseTime);
       }
