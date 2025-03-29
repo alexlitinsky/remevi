@@ -66,6 +66,18 @@ export default function DeckStudyPage() {
     };
   }, [deckId, setDeckId, initSession, endSession]);
 
+  // Add this useEffect in session-v2/page.tsx
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      endSession();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [endSession]);
+
   // Handle different states
   if (isLoading) {
     return <LoadingState />;

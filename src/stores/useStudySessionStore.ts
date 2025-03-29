@@ -116,17 +116,43 @@ export const useStudySessionStore = create<StudySessionState>()(
       timerId: null,
 
       // Set deckId
-      setDeckId: (deckId: string) => set({ deckId }),
+      setDeckId: (deckId: string) => {
+        const { deckId: currentDeckId } = get();
+        if (deckId !== currentDeckId) {
+            // Reset ALL relevant state when switching decks
+            set({
+            currentCardIndex: 0,
+            completedCardIds: [],
+            totalPoints: 0,
+            deckCompleted: false,
+            hasStarted: false,
+            isSessionActive: false,
+            sessionPoints: 0,
+            cardsReviewed: 0,
+            hasSetOriginalCounts: false,
+            sessionTime: 0,
+            lastEarnedPoints: null,
+            originalNewCount: 0,
+            originalDueCount: 0,
+            originalCardIds: []
+            });
+        }
+        set({ deckId });
+      },
 
       // Initialize the session
       initSession: async () => {
         const { deckId } = get();
         if (!deckId) return;
 
-        // Add the reset here, before setting isLoading
-        if (!get().hasStarted) {
-            set({ currentCardIndex: 0 });
-        }
+        // Reset necessary state when initializing
+        set({ 
+            currentCardIndex: 0,
+            hasStarted: false,
+            isSessionActive: false,
+            deckCompleted: false,
+            // Don't reset completedCardIds to preserve progress
+        });
 
         set({ isLoading: true, error: null });
         
@@ -471,7 +497,11 @@ export const useStudySessionStore = create<StudySessionState>()(
         set({ 
           isSessionActive: false, 
           hasStarted: false,
-          timerId: null // Clear the timer ID to prevent memory leaks
+          timerId: null, // Clear the timer ID to prevent memory leaks
+          currentCardIndex: 0, // Reset position for next session
+          sessionPoints: 0,
+          lastEarnedPoints: null,
+          sessionTime: 0
         });
         
         // Clear session state from localStorage
@@ -511,10 +541,13 @@ export const useStudySessionStore = create<StudySessionState>()(
           currentCardIndex: 0,
           totalPoints: 0,
           completedCardIds: [],
-          lastEarnedPoints: null
+          lastEarnedPoints: null,
+          hasSetOriginalCounts: false
         });
         
         localStorage.removeItem(`study-progress-${deckId}`);
+        localStorage.removeItem(`session-state-${deckId}`); // Clear both storage items
+
       },
       
       // Toggle settings modal
