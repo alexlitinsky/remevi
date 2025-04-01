@@ -27,7 +27,7 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "border bg-background text-foreground",
+        default: "border bg-background",
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
       },
@@ -124,4 +124,12 @@ export {
   ToastDescription,
   ToastClose,
   ToastAction,
+}
+
+export interface ToastOptions {
+  title?: string
+  description?: string
+  action?: ToastActionElement
+  variant?: "default" | "destructive"
+  icon?: React.ReactNode
 } 

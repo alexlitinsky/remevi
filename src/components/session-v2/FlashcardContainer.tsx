@@ -35,6 +35,7 @@ export function FlashcardContainer({
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    e.preventDefault();
     // Space or Enter to flip card
     if ((e.key === ' ' || e.key === 'Enter')) {
       e.preventDefault(); // Prevent page scroll on space
@@ -42,17 +43,14 @@ export function FlashcardContainer({
     }
     // Number keys for rating (only when card is flipped)
     if (showBack) {
+      const responseTime = Date.now() - startTime;
       if (e.key === 'q') {
-        const responseTime = Date.now() - startTime;
         onRate('again', responseTime);
       } else if (e.key === 'w') {
-        const responseTime = Date.now() - startTime;
         onRate('hard', responseTime);
       } else if (e.key === 'e') {
-        const responseTime = Date.now() - startTime;
         onRate('good', responseTime);
       } else if (e.key === 'r') {
-        const responseTime = Date.now() - startTime;
         onRate('easy', responseTime);
       }
     }

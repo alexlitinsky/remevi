@@ -51,7 +51,7 @@ async function processChunk(
   difficultyPrompt: string,
   aiModel: string
 ) {
-  const chunkPrompt = `Process part ${chunkIndex + 1} of ${totalChunks} of the document. Focus on generating flashcards only.\n\n${difficultyPrompt}`;
+  const chunkPrompt = `Process part ${chunkIndex + 1} of ${totalChunks} of the document.\n\n${difficultyPrompt}`;
   
   try {
     const result = await generateObject({
@@ -73,26 +73,61 @@ async function processChunk(
         }
       ],
       schema: z.object({
-        flashcards: z.array(z.object({ front: z.string(), back: z.string() })),
+        summary: z.string().describe('A concise summary of this chunk\'s main concepts and their relationships'),
+        flashcards: z.array(z.object({ 
+          front: z.string(), 
+          back: z.string(),
+          topic: z.string().describe('The main topic/concept this flashcard covers')
+        })),
+        mcqs: z.array(z.object({
+          question: z.string(),
+          options: z.array(z.string()),
+          correctOptionIndex: z.number(),
+          explanation: z.string(),
+          topic: z.string().describe('The main topic/concept this question tests'),
+          difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of this question')
+        })),
+        frqs: z.array(z.object({
+          question: z.string(),
+          answers: z.array(z.string()),
+          caseSensitive: z.boolean(),
+          explanation: z.string(),
+          topic: z.string().describe('The main topic/concept this question tests'),
+          difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of this question')
+        })),
         category: z.string()
       }),
       maxTokens: 4000,
       temperature: 0.7
     });
 
-    console.log(`Successfully processed chunk ${chunkIndex + 1}/${totalChunks} with ${result.object.flashcards.length} flashcards`);
+    console.log(`Successfully processed chunk ${chunkIndex + 1}/${totalChunks} with:
+      - ${result.object.flashcards.length} flashcards
+      - ${result.object.mcqs.length} MCQs
+      - ${result.object.frqs.length} FRQs`);
     return result.object;
   } catch (error) {
     console.error(`Error processing chunk ${chunkIndex + 1}/${totalChunks}:`, error);
     return {
+      summary: '',
       flashcards: [],
+      mcqs: [],
+      frqs: [],
       category: 'unknown'
     };
   }
 }
 
-async function generateMindMap(fileBuffer: Buffer, aiModel: string) {
+async function generateMindMap(chunkResults: Array<{ summary: string; flashcards: any[]; mcqs: any[]; frqs: any[] }>, aiModel: string) {
   try {
+    // Combine summaries and extract topics
+    const summaries = chunkResults.map(r => r.summary).join('\n\n');
+    const topics = new Set([
+      ...chunkResults.flatMap(r => r.flashcards.map(f => f.topic)),
+      ...chunkResults.flatMap(r => r.mcqs.map(q => q.topic)),
+      ...chunkResults.flatMap(r => r.frqs.map(q => q.topic))
+    ]);
+
     const result = await generateObject({
       model: aiModel === 'advanced' ? openai4oResponsesProvider : openai4oMiniResponsesProvider,
       messages: [
@@ -101,24 +136,28 @@ async function generateMindMap(fileBuffer: Buffer, aiModel: string) {
           content: [
             {
               type: 'text',
-              text: 'Generate a comprehensive mind map for the entire document. Focus on key concepts and their relationships.'
-            },
-            {
-              type: 'file',
-              data: fileBuffer,
-              mimeType: 'application/pdf'
+              text: `Generate a comprehensive mind map based on these chunk summaries and key topics:\n\nSummaries:\n${summaries}\n\nKey Topics:\n${Array.from(topics).join('\n')}\n\nCreate a mind map that shows the relationships between these concepts.`
             }
           ]
         }
       ],
       schema: z.object({
         mindMap: z.object({ 
-          nodes: z.array(z.object({ id: z.string(), label: z.string() })), 
-          connections: z.array(z.object({ source: z.string(), target: z.string(), label: z.string() })) 
+          nodes: z.array(z.object({ 
+            id: z.string(), 
+            label: z.string(),
+            type: z.enum(['main', 'subtopic', 'detail']).describe('The hierarchical level of this node')
+          })), 
+          connections: z.array(z.object({ 
+            source: z.string(), 
+            target: z.string(), 
+            label: z.string(),
+            type: z.enum(['hierarchical', 'related', 'dependency']).describe('The type of relationship between nodes')
+          })) 
         })
       }),
       maxTokens: 4000,
-      temperature: 0.5 // Lower temperature for more consistent mind map
+      temperature: 0.5
     });
 
     console.log('Successfully generated mind map');
@@ -218,35 +257,52 @@ export async function POST(request: NextRequest) {
           ? `Focus only on pages ${pageRange.start} to ${pageRange.end} of the PDF.`
           : '';
         
-        const difficultyPrompt = `You are an expert study material creator. Generate a comprehensive set of flashcards based on the following difficulty level:
+        const difficultyPrompt = `You are an expert study material creator. Generate a comprehensive set of study materials based on the following difficulty level:
 
         ${difficulty === 'low' ? `LOW DIFFICULTY:
-        - Generate 15-25 flashcards per chunk focusing on foundational concepts
-        - Each card should cover a single, essential concept
-        - Front: Simple, direct questions or key terms
-        - Back: Clear, concise explanations with basic examples
-        - Focus on: Core terminology, main ideas, basic principles` 
+        - Generate per chunk:
+          * 15-25 flashcards focusing on foundational concepts
+          * 5-8 multiple choice questions
+          * 3-5 free response questions
+        - Each item should cover a single, essential concept
+        - Focus on: Core terminology, main ideas, basic principles
+        - MCQs: Clear questions with straightforward distractors
+        - FRQs: Direct questions with specific, measurable answers` 
         
         : difficulty === 'moderate' ? `MODERATE DIFFICULTY:
-        - Generate 25-35 flashcards per chunk with balanced depth
+        - Generate per chunk:
+          * 25-35 flashcards with balanced depth
+          * 8-12 multiple choice questions
+          * 5-8 free response questions
         - Mix of basic and intermediate concepts
-        - Front: Combination of terms, concepts, and application questions
-        - Back: Detailed explanations with examples and relationships
-        - Focus on: Key concepts, supporting details, relationships between ideas`
+        - Focus on: Key concepts, supporting details, relationships between ideas
+        - MCQs: Include application and analysis questions
+        - FRQs: Questions requiring explanation and examples`
         
         : `HIGH DIFFICULTY:
-        - Generate 35-45 flashcards per chunk for comprehensive coverage
+        - Generate per chunk:
+          * 35-45 flashcards for comprehensive coverage
+          * 12-15 multiple choice questions
+          * 8-12 free response questions
         - Include basic, intermediate, and advanced concepts
-        - Front: Complex scenarios, analytical questions, and interconnected concepts
-        - Back: In-depth explanations with examples, edge cases, and connections
-        - Focus on: Deep understanding, nuanced details, practical applications, and theoretical foundations`}
+        - Focus on: Deep understanding, nuanced details, practical applications
+        - MCQs: Complex scenarios with nuanced answer choices
+        - FRQs: Questions requiring synthesis and evaluation`}
 
         IMPORTANT GUIDELINES:
         1. Focus on the content in this section of the document
-        2. Each flashcard must be self-contained and valuable on its own
+        2. Each item must be self-contained and valuable on its own
         3. Ensure progressive difficulty within the selected level
         4. Include practical examples and real-world applications where relevant
         5. Break down complex topics into digestible chunks
+        6. For MCQs:
+           - All options should be plausible
+           - Avoid obvious incorrect answers
+           - Include clear explanations for correct answers
+        7. For FRQs:
+           - Provide multiple acceptable answers where appropriate
+           - Include clear evaluation criteria in explanations
+           - Make answers objectively assessable
         
         ${pageRangePrompt}`;
 
@@ -279,7 +335,7 @@ export async function POST(request: NextRequest) {
             where: { id: deck.id },
             data: {
               isProcessing: true,
-              error: `Processed ${successfulChunks}/${chunks.length} chunks (${chunkResults.flatMap(r => r.flashcards).length} flashcards so far)` 
+              error: `Processed ${successfulChunks}/${chunks.length} chunks (${chunkResults.flatMap(r => r.flashcards).length} flashcards, ${chunkResults.flatMap(r => r.mcqs).length} MCQs, ${chunkResults.flatMap(r => r.frqs).length} FRQs so far)` 
             }
           });
         }
@@ -293,6 +349,19 @@ export async function POST(request: NextRequest) {
 
         // Combine results
         const allFlashcards = chunkResults.flatMap(result => result.flashcards);
+        const allMCQs = chunkResults.flatMap(result => result.mcqs);
+        const allFRQs = chunkResults.flatMap(result => result.frqs);
+
+        // Function to determine difficulty level based on chunk prompts
+        // Defaults to the global difficulty setting from the request
+        const getDifficultyFromUserSelection = () => {
+          switch (difficulty) {
+            case 'low': return 'easy';
+            case 'moderate': return 'medium';
+            case 'high': return 'hard';
+            default: return 'medium';
+          }
+        };
 
         // Use the most common category
         const category = chunkResults
@@ -306,39 +375,101 @@ export async function POST(request: NextRequest) {
           .sort((a, b) => b[1] - a[1])
           .map(([cat]) => cat)[0];
 
-        // Create flashcard content for each flashcard
-        const flashcardPromises = allFlashcards.map(async (card: { front: string; back: string }, index: number) => {
-          // First create the study content
-          const studyContent = await db.studyContent.create({
-            data: {
-              studyMaterialId: studyMaterial.id,
-              type: 'flashcard',
-              flashcardContent: {
-                create: {
-                  front: card.front,
-                  back: card.back
+        // Create content for each type in parallel
+        const [flashcardContents, mcqContents, frqContents] = await Promise.all([
+          // Create flashcard content
+          Promise.all(allFlashcards.map(async (card, index) => {
+            const studyContent = await db.studyContent.create({
+              data: {
+                studyMaterialId: studyMaterial.id,
+                type: 'flashcard',
+                flashcardContent: {
+                  create: {
+                    front: card.front,
+                    back: card.back
+                  }
                 }
+              },
+              include: {
+                flashcardContent: true
               }
-            },
-            include: {
-              flashcardContent: true
-            }
-          });
+            });
 
-          // Then add it to the deck
-          await db.deckContent.create({
-            data: {
-              deckId: deck.id,
-              studyContentId: studyContent.id,
-              order: index
-            }
-          });
+            await db.deckContent.create({
+              data: {
+                deckId: deck.id,
+                studyContentId: studyContent.id,
+                order: index
+              }
+            });
 
-          return studyContent;
-        });
+            return studyContent;
+          })),
 
-        // Wait for all flashcards to be created
-        await Promise.all(flashcardPromises);
+          // Create MCQ content
+          Promise.all(allMCQs.map(async (mcq, index) => {
+            const studyContent = await db.studyContent.create({
+              data: {
+                studyMaterialId: studyMaterial.id,
+                type: 'mcq',
+                difficultyLevel: (mcq as any).difficulty || getDifficultyFromUserSelection(),
+                mcqContent: {
+                  create: {
+                    question: mcq.question,
+                    options: mcq.options,
+                    correctOptionIndex: mcq.correctOptionIndex,
+                    explanation: mcq.explanation
+                  }
+                }
+              },
+              include: {
+                mcqContent: true
+              }
+            });
+
+            await db.deckContent.create({
+              data: {
+                deckId: deck.id,
+                studyContentId: studyContent.id,
+                order: allFlashcards.length + index
+              }
+            });
+
+            return studyContent;
+          })),
+
+          // Create FRQ content
+          Promise.all(allFRQs.map(async (frq, index) => {
+            const studyContent = await db.studyContent.create({
+              data: {
+                studyMaterialId: studyMaterial.id,
+                type: 'frq',
+                difficultyLevel: (frq as any).difficulty || getDifficultyFromUserSelection(),
+                frqContent: {
+                  create: {
+                    question: frq.question,
+                    answers: frq.answers,
+                    caseSensitive: frq.caseSensitive,
+                    explanation: frq.explanation
+                  }
+                }
+              },
+              include: {
+                frqContent: true
+              }
+            });
+
+            await db.deckContent.create({
+              data: {
+                deckId: deck.id,
+                studyContentId: studyContent.id,
+                order: allFlashcards.length + allMCQs.length + index
+              }
+            });
+
+            return studyContent;
+          }))
+        ]);
 
         // Update study material status
         await db.studyMaterial.update({
@@ -348,7 +479,7 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        // Update deck with category and mark as not processing since flashcards are ready
+        // Update deck with category and stats
         await db.deck.update({
           where: { id: deck.id },
           data: {
@@ -362,7 +493,7 @@ export async function POST(request: NextRequest) {
         (async () => {
           try {
             console.log('Generating mind map...');
-            const mindMap = await generateMindMap(fileBuffer, aiModel);
+            const mindMap = await generateMindMap(chunkResults, aiModel);
             
             // Update deck with mind map once generated
             await db.deck.update({

@@ -6,7 +6,7 @@ import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@cl
 
 export function Header() {
   const pathname = usePathname()
-  const showHeader = !pathname?.includes('/deck/configure') && !pathname?.includes('/session')
+  const showHeader = !pathname?.includes('/deck/configure') && !pathname?.includes('/session') && !pathname?.includes('/quiz')
 
   if (!showHeader) return null
 

@@ -228,6 +228,10 @@ export default function DeckPage() {
                 <BookOpen className="h-4 w-4" />
                 Start Studying
               </Button>
+              <Button size="lg" onClick={() => router.push(`/deck/${deckId}/quiz`)} className="gap-2 cursor-pointer">
+                <BookOpen className="h-4 w-4" />
+                Start Quiz
+              </Button>
             </div>
           </div>
 
