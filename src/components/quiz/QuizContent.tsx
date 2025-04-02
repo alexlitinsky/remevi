@@ -34,7 +34,7 @@ function MCQAnswerSection({
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {question.options.map((option, index) => {
         // Check if this option is selected (comparing strings)
         const isSelected = selectedAnswer === option;
@@ -46,37 +46,39 @@ function MCQAnswerSection({
             key={index}
             onClick={() => !disabled && onSelect(option)}
             className={cn(
-              "w-full p-4 text-left rounded-lg border-2 transition-all relative transform hover:scale-[1.02] hover:shadow-md",
+              "w-full p-4 text-left rounded-xl border-2 transition-all relative hover:scale-[1.01] hover:shadow-md",
               isSelected
-                ? "border-primary bg-primary/5 text-primary ring-2 ring-primary ring-opacity-70 shadow-md"
-                : "border-muted hover:border-primary hover:bg-accent",
-              disabled && "opacity-70 pointer-events-none"
+                ? "border-primary bg-gradient-to-br from-primary/10 to-primary/5 text-primary ring-1 ring-primary/50 shadow-md"
+                : "border-muted/50 hover:border-primary/50 bg-card/50 hover:bg-accent/50 backdrop-blur-sm",
+              disabled && "opacity-80 pointer-events-none"
             )}
             disabled={disabled}
             data-selected={isSelected ? "true" : "false"}
             data-index={index}
             data-option={option}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {/* Letter indicator */}
               <kbd className={cn(
-                "inline-flex h-6 w-6 items-center justify-center rounded-md border text-sm font-medium",
+                "inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium",
                 isSelected 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-muted text-muted-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm" 
+                  : "bg-muted/70 text-muted-foreground border border-muted"
               )}>
                 {optionLetter}
               </kbd>
               <span className={cn(
-                isSelected && "font-medium text-primary"
+                "text-base",
+                isSelected && "font-medium"
               )}>{option}</span>
             </div>
           </button>
         );
       })}
       {!disabled && (
-        <div className="text-xs text-muted-foreground mt-2">
-          Tip: Press <kbd className="px-1 py-0.5 rounded border bg-muted font-mono">A</kbd> - <kbd className="px-1 py-0.5 rounded border bg-muted font-mono">D</kbd> to select options
+        <div className="text-xs text-muted-foreground mt-2 pl-2">
+          Press <kbd className="px-1.5 py-0.5 mx-1 rounded border bg-muted/70 font-mono text-xs">A</kbd> - 
+          <kbd className="px-1.5 py-0.5 mx-1 rounded border bg-muted/70 font-mono text-xs">D</kbd> to select options
         </div>
       )}
     </div>
@@ -98,15 +100,22 @@ const FRQAnswerSection = React.forwardRef<HTMLInputElement, FRQAnswerSectionProp
 
     return (
       <div className="space-y-4">
-        <Input
-          ref={ref}
-          type="text"
-          placeholder="Type your answer..."
-          value={answer}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full"
-          disabled={disabled}
-        />
+        <div className="relative">
+          <Input
+            ref={ref}
+            type="text"
+            placeholder="Type your answer..."
+            value={answer}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full px-4 py-6 text-base rounded-xl border-2 border-muted/50 focus-visible:border-primary/50 bg-card/50 backdrop-blur-sm"
+            disabled={disabled}
+          />
+        </div>
+        {!disabled && (
+          <div className="text-xs text-muted-foreground mt-2 pl-2">
+            Press <kbd className="px-1.5 py-0.5 mx-1 rounded border bg-muted/70 font-mono text-xs">Enter</kbd> to submit your answer
+          </div>
+        )}
       </div>
     );
   }
@@ -124,7 +133,8 @@ export function QuizContent() {
     toggleHint,
     actions: { togglePause },
     logAnalytics,
-    nextQuestion
+    nextQuestion,
+    endQuiz
   } = useQuizStore();
 
   // Enhanced debugging - log more detailed information about the current state
@@ -171,14 +181,63 @@ export function QuizContent() {
     });
   }, []);
   
-  const proceedToNextQuestion = () => {
+  const proceedToNextQuestion = async () => {
+    const state = useQuizStore.getState();
+    const isLastQuestion = state.progress.currentQuestionIndex === state.questions.all.length - 1;
+    
+    // Debug the answered questions state before proceeding
+    console.log('[QuizContent] Before proceeding to next question:', {
+      currentIndex: state.progress.currentQuestionIndex,
+      totalQuestions: state.questions.all.length,
+      answeredCount: Object.keys(state.questions.answered).length,
+      isLastQuestion,
+      currentQuestionId: currentQuestion?.id,
+      hasAnswerResult: !!answerResult
+    });
+    
     // Reset UI state
     setAnswerResult(null);
     setSelectedOption("");
     setInteractionStartTime(Date.now());
     
-    // Advance to next question
-    nextQuestion();
+    if (isLastQuestion) {
+      // On the last question, immediately switch to results view before API call
+      console.log('[QuizContent] Last question answered, showing results immediately');
+      
+      // Immediately set UI to results view
+      useQuizStore.setState(state => ({
+        activeSession: {
+          ...state.activeSession,
+          status: 'completed',
+          endTime: Date.now()
+        },
+        ui: {
+          ...state.ui,
+          view: 'results',
+          isLoading: false,
+        }
+      }));
+      
+      // Then attempt to end quiz in the background
+      try {
+        await state.endQuiz();
+        console.log('[QuizContent] Quiz ended successfully via API');
+        
+        // Check the final state after API call
+        const finalState = useQuizStore.getState();
+        console.log('[QuizContent] Final quiz state after API call:', {
+          view: finalState.ui.view,
+          status: finalState.activeSession.status,
+          answeredCount: Object.keys(finalState.questions.answered).length
+        });
+      } catch (error) {
+        console.error('[QuizContent] Error ending quiz:', error);
+        // UI is already showing results, so no need to update again
+      }
+    } else {
+      // Otherwise advance to next question
+      nextQuestion();
+    }
   };
   
   // Extract deck ID from URL path on the client side only
@@ -274,6 +333,20 @@ export function QuizContent() {
     }
   }, [error]);
 
+  // Monitor when the quiz is restarted and reset component state
+  useEffect(() => {
+    if (currentQuestion) {
+      // When the question changes (especially during restarts),
+      // reset local state variables
+      setSelectedOption("");
+      setAnswerResult(null);
+      setInteractionStartTime(Date.now());
+      setError(null);
+      
+      console.log('[QuizContent] Question reset/restart detected:', currentQuestion.id);
+    }
+  }, [currentQuestion?.id]);
+
   const handleSubmit = async () => {
     if (!currentQuestion || !selectedOption) {
       console.log('[QuizContent] Cannot submit - missing question or answer', {
@@ -285,8 +358,11 @@ export function QuizContent() {
     }
 
     try {
-      // Set submitting state to show loading spinner ONLY in the button
+      // Set submitting state to show loading spinner ONLY in the button, not the whole UI
       setIsSubmitting(true);
+      
+      // Store current question locally to prevent it from disappearing during submission
+      const questionBeingAnswered = currentQuestion;
       
       const timeTaken = calculateTimeTaken();
       
@@ -378,15 +454,12 @@ export function QuizContent() {
     // Don't process if paused or submitting
     if (isPaused || isSubmitting) return;
     
-    // Prevent browser shortcuts for specific keys (a, b, c, d, etc.)
+    // Prevent defaults for keyboard shortcuts that might trigger browser actions or extensions
     const key = e.key.toLowerCase();
-    if (['a', 'b', 'c', 'd', 'f', 'h', 'j', 'k', ' '].includes(key)) {
-      // These keys often trigger browser shortcuts (find, history, bookmarks, etc.)
-      // Only prevent if we're in an MCQ question or showing answer feedback
-      if ((currentQuestion?.type === 'mcq' || answerResult) && e.target === document.body) {
-        e.preventDefault();
-        console.log('🛡️ Preventing browser default for key:', key);
-      }
+    // Always prevent default for letter keys and special keys during quiz
+    if (currentQuestion && /^[a-z]$/.test(key) || ['enter', ' ', 'escape'].includes(key)) {
+      e.preventDefault();
+      console.log('🛡️ Preventing browser default for key:', key);
     }
     
     console.log('🎹 Key pressed:', e.key, 'Key code:', e.keyCode, 'Code:', e.code, 'Target:', e.target);
@@ -456,18 +529,23 @@ export function QuizContent() {
     return () => window.removeEventListener('keydown', handleKeyboardShortcuts, true);
   }, [handleKeyboardShortcuts]);
 
-  // Only show loading state when the questions haven't loaded yet
+  // Only show loading state when isLoading is true and there's no current question
   if (isLoading && !currentQuestion) {
     console.log('[QuizContent] Rendering loading state - initial load');
     return (
-      <Card className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-muted rounded w-3/4"></div>
-          <div className="h-4 bg-muted rounded w-1/2"></div>
-          <div className="space-y-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-12 bg-muted rounded"></div>
-            ))}
+      <Card className="p-6 border-2 border-primary/10 shadow-md rounded-xl overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 pointer-events-none" aria-hidden="true" />
+        <div className="relative z-10">
+          <div className="animate-pulse space-y-5">
+            <div className="h-5 bg-muted rounded-full w-1/5"></div>
+            <div className="h-6 bg-muted rounded-full w-3/4"></div>
+            <div className="h-4 bg-muted rounded-full w-1/2"></div>
+            <div className="space-y-3 mt-8">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-14 bg-muted/70 rounded-xl"></div>
+              ))}
+            </div>
+            <div className="h-14 bg-muted/70 rounded-xl mt-4"></div>
           </div>
         </div>
       </Card>
@@ -477,14 +555,17 @@ export function QuizContent() {
   if (error) {
     console.error('[QuizContent] Rendering error state:', error);
     return (
-      <Card className="p-6">
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center text-destructive">
-            <AlertCircle className="h-8 w-8" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Error Loading Quiz</h3>
-            <p className="text-sm text-muted-foreground">{error}</p>
+      <Card className="p-6 border-2 border-destructive/30 shadow-md rounded-xl overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-destructive/10 via-background to-destructive/5 pointer-events-none" aria-hidden="true" />
+        <div className="relative z-10">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center text-destructive">
+              <AlertCircle className="h-10 w-10" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Error Loading Quiz</h3>
+              <p className="text-muted-foreground">{error}</p>
+            </div>
           </div>
         </div>
       </Card>
@@ -494,21 +575,27 @@ export function QuizContent() {
   if (!currentQuestion) {
     console.error('[QuizContent] No current question available to render');
     return (
-      <Card className="p-6">
-        <div className="flex flex-col items-center justify-center space-y-4 py-8">
-          <h3 className="text-xl font-medium">No Questions Available</h3>
-          {errorState && (
-            <Alert variant="destructive" className="mt-2">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{errorState}</AlertDescription>
-            </Alert>
-          )}
-          <p className="text-muted-foreground text-center">
-            We couldn't find any questions for this quiz. Try generating some questions first.
-          </p>
-          <Button onClick={generateAndStartQuiz}>
-            Generate Questions
-          </Button>
+      <Card className="p-8 border-2 border-primary/10 shadow-md rounded-xl overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 pointer-events-none" aria-hidden="true" />
+        <div className="relative z-10">
+          <div className="flex flex-col items-center justify-center space-y-5 py-4">
+            <h3 className="text-xl font-medium">No Questions Available</h3>
+            {errorState && (
+              <Alert variant="destructive" className="mt-2 border-2 border-destructive/30">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{errorState}</AlertDescription>
+              </Alert>
+            )}
+            <p className="text-muted-foreground text-center">
+              We couldn't find any questions for this quiz. Try generating some questions first.
+            </p>
+            <Button 
+              onClick={generateAndStartQuiz}
+              className="mt-4 py-6 px-8 text-base font-medium rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 text-primary-foreground border-2 border-primary/20 shadow-md"
+            >
+              Generate Questions
+            </Button>
+          </div>
         </div>
       </Card>
     );
@@ -516,17 +603,17 @@ export function QuizContent() {
 
   return (
     <div>
-      <Card className="p-6">
-        <div className="space-y-6">
-          {/* Question - Always visible */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">
-              {currentQuestion.question}
-            </h3>
-            {/* Topic tag */}
-            <div className="inline-block px-2 py-1 rounded-full bg-primary/10 text-primary text-xs">
+      <Card className="p-6 border-2 border-primary/10 shadow-md rounded-xl overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 pointer-events-none" aria-hidden="true" />
+        <div className="relative z-10 space-y-6">
+          {/* Question */}
+          <div className="space-y-3">
+            <div className="inline-block px-2 py-1 mb-2 rounded-full bg-primary/10 text-primary text-xs">
               {currentQuestion.topic}
             </div>
+            <h3 className="text-xl font-semibold">
+              {currentQuestion.question}
+            </h3>
             <AnimatePresence>
               {showHint && currentQuestion.hint && (
                 <motion.p
@@ -564,22 +651,22 @@ export function QuizContent() {
           {/* Feedback Section (only appears after submission) */}
           {answerResult && (
             <div className={cn(
-              "p-4 rounded-lg border mb-4",
+              "p-6 rounded-xl border-2 mb-4 backdrop-blur-sm",
               answerResult.isCorrect 
-                ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-900" 
-                : "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900"
+                ? "bg-green-50/90 border-green-200 dark:bg-green-950/50 dark:border-green-800" 
+                : "bg-red-50/90 border-red-200 dark:bg-red-950/50 dark:border-red-800"
             )}>
-              <div className="flex items-center gap-2 font-medium mb-2">
+              <div className="flex items-center gap-2 font-semibold mb-3 text-lg">
                 {answerResult.isCorrect ? (
                   <>
-                    <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span className="text-green-600 dark:text-green-400">Correct!</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     <span className="text-red-600 dark:text-red-400">Incorrect</span>
@@ -588,20 +675,20 @@ export function QuizContent() {
               </div>
               
               {currentQuestion.type === 'mcq' && !answerResult.isCorrect && (
-                <div className="mb-2 text-sm">
-                  <span className="font-medium">Correct answer: </span>
+                <div className="mb-3 p-3 bg-background/80 rounded-lg border border-muted">
+                  <span className="font-medium block mb-1">Correct answer:</span>
                   {(currentQuestion as MCQQuestion).options[(currentQuestion as MCQQuestion).correctOptionIndex]}
                 </div>
               )}
               
               {answerResult.explanation && (
-                <div className="text-sm text-slate-700 dark:text-slate-300">
-                  <span className="font-medium">Explanation: </span>
+                <div className="text-sm text-slate-700 dark:text-slate-300 p-3 bg-background/80 rounded-lg border border-muted">
+                  <span className="font-medium block mb-1">Explanation:</span>
                   {answerResult.explanation}
                 </div>
               )}
               
-              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center">
+              <div className="mt-4 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center">
                 Press <kbd className="mx-1 px-1.5 py-0.5 rounded border bg-muted font-mono">Space</kbd> or <kbd className="mx-1 px-1.5 py-0.5 rounded border bg-muted font-mono">Enter</kbd> to continue
               </div>
             </div>
@@ -611,10 +698,10 @@ export function QuizContent() {
           {!answerResult ? (
             <Button
               className={cn(
-                "w-full relative",
+                "w-full relative py-6 text-base font-medium rounded-xl",
                 selectedOption 
-                  ? "bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-primary" 
-                  : "bg-muted text-muted-foreground"
+                  ? "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 text-primary-foreground border-2 border-primary/20 shadow-md" 
+                  : "bg-muted/70 text-muted-foreground border-2 border-muted/30"
               )}
               onClick={handleSubmit}
               disabled={!selectedOption || isSubmitting}
@@ -626,19 +713,49 @@ export function QuizContent() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Evaluating...
+                  <span className="animate-pulse">Evaluating Answer...</span>
                 </div>
               ) : (
                 'Submit Answer'
               )}
             </Button>
           ) : (
-            <Button 
-              className="w-full" 
-              onClick={proceedToNextQuestion}
-            >
-              Next Question
-            </Button>
+            <>
+            {useQuizStore.getState().progress.currentQuestionIndex === 
+             useQuizStore.getState().questions.all.length - 1 ? (
+              <Button 
+                className="w-full py-6 text-base font-medium rounded-xl bg-gradient-to-r from-secondary to-primary hover:from-secondary/95 hover:to-primary/95 text-primary-foreground border-2 border-primary/20 shadow-md" 
+                onClick={() => {
+                  // Immediately set view to results before any async operations
+                  console.log('[QuizContent] View Results button clicked, forcing results view');
+                  useQuizStore.setState(state => ({
+                    activeSession: {
+                      ...state.activeSession,
+                      status: 'completed',
+                      endTime: Date.now()
+                    },
+                    ui: {
+                      ...state.ui,
+                      view: 'results',
+                      isLoading: false,
+                    }
+                  }));
+                  
+                  // Then try to properly end the quiz
+                  proceedToNextQuestion();
+                }}
+              >
+                View Results
+              </Button>
+            ) : (
+              <Button 
+                className="w-full py-6 text-base font-medium rounded-xl bg-gradient-to-r from-primary/90 to-secondary/90 hover:from-primary hover:to-secondary text-primary-foreground border-2 border-primary/20 shadow-md" 
+                onClick={proceedToNextQuestion}
+              >
+                Next Question
+              </Button>
+            )}
+            </>
           )}
         </div>
       </Card>

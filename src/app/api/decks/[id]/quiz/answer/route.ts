@@ -3,7 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { openai4oResponsesProvider } from "@/lib/ai/providers";
+import { openai4oMiniResponsesProvider } from "@/lib/ai/providers";
 
 async function gradeFRQAnswer(userAnswer: string, correctAnswers: string[], question: string): Promise<{isCorrect: boolean; confidence: number}> {
   const prompt = `Grade this free response answer for correctness. Question: "${question}"
@@ -11,7 +11,7 @@ Correct answer(s): ${correctAnswers.join(" OR ")}
 Student answer: "${userAnswer}"`;
 
   const result = await generateObject({
-    model: openai4oResponsesProvider,
+    model: openai4oMiniResponsesProvider,
     messages: [{ role: "user", content: prompt }],
     schema: z.object({
       isCorrect: z.boolean().describe("Whether the answer is correct"),

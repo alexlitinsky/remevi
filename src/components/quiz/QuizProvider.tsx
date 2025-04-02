@@ -23,10 +23,12 @@ export function QuizProvider({
     activeSession,
     cleanupSession,
     checkForExistingSession,
+    checkAndAutoRestart,
   } = useQuizStore();
 
   const { toast } = useToast();
 
+  // Recovery for error sessions
   useEffect(() => {
     // Only try to recover if there's an error session
     if (activeSession.status === 'error') {
@@ -39,6 +41,19 @@ export function QuizProvider({
       });
     }
   }, [activeSession.status, recoverSession, toast]);
+
+  // Auto-restart completed quizzes when navigating back
+  useEffect(() => {
+    // Check if we need to auto-restart when returning to a completed quiz
+    const didAutoRestart = checkAndAutoRestart();
+    
+    if (didAutoRestart) {
+      toast({
+        title: "Quiz Restarted",
+        description: "Starting a new quiz with the same settings.",
+      });
+    }
+  }, [checkAndAutoRestart, toast]);
 
   // Handle beforeunload to save session state
   useEffect(() => {

@@ -4,6 +4,7 @@ import { QuizProvider } from '@/components/quiz/QuizProvider';
 import { db } from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Quiz',
@@ -38,7 +39,9 @@ export default async function QuizPage({ params }: { params: { id: string } }) {
     <div className="container max-w-4xl mx-auto py-6 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{deck.title}</h1>
+          <Link href={`/deck/${awaitedParams.id}`} className="text-2xl font-bold tracking-tight hover:text-primary transition-colors cursor-pointer">
+            {deck.title}
+          </Link>
           <p className="text-sm text-muted-foreground">
             Test your knowledge with interactive questions
           </p>

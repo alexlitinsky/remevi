@@ -62,7 +62,7 @@ model UserProgress {
   userId         String    @unique
   points         Int       @default(0)
   streak         Int       @default(0)
-  totalStudyTime Int       @default(0) // in minutes
+  totalStudyTime BigInt    @default(0) // Changed from Int to BigInt to handle large values
   lastStudyDate  DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
