@@ -140,16 +140,16 @@ export function QuizConfigModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog modal open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] w-[90vw] max-w-[425px] overflow-y-auto bg-zinc-950 p-6 gap-6">
         <DialogHeader>
-          <DialogTitle>Configure Quiz</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl">Configure Quiz</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Choose your quiz settings
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="grid gap-4">
           {availableQuestions?.total === 0 && (
             <div className="flex flex-col gap-4 items-center justify-center p-4 border rounded-lg bg-muted/50">
               <p className="text-sm text-muted-foreground text-center">
@@ -166,17 +166,17 @@ export function QuizConfigModal({
 
           {(availableQuestions?.total ?? 0) > 0 && (
             <>
-              <div className="space-y-2">
-                <Label>Question Type</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="type">Question Type</Label>
                 <Select
                   value={type}
                   onValueChange={(value: QuizType) => setType(value)}
                   disabled={isLoading}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger id="type" className="w-full">
+                    <SelectValue placeholder="Select question type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-zinc-950 text-white">
                     <SelectItem value="mixed">Mixed ({availableQuestions?.total} available)</SelectItem>
                     <SelectItem value="mcq">Multiple Choice ({availableQuestions?.mcq} available)</SelectItem>
                     <SelectItem value="frq">Free Response ({availableQuestions?.frq} available)</SelectItem>
@@ -184,17 +184,17 @@ export function QuizConfigModal({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Difficulty</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="difficulty">Difficulty</Label>
                 <Select
                   value={difficulty}
                   onValueChange={(value: QuizDifficulty) => setDifficulty(value)}
                   disabled={isLoading}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger id="difficulty" className="w-full">
+                    <SelectValue placeholder="Select difficulty" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-zinc-950 text-white">
                     <SelectItem value="easy">Easy</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="hard">Hard</SelectItem>
@@ -203,18 +203,20 @@ export function QuizConfigModal({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Number of Questions</Label>
-                <div className="flex items-center gap-2">
+              <div className="grid gap-2">
+                <Label htmlFor="questions">Number of Questions</Label>
+                <div className="flex items-center gap-4">
                   <Slider
+                    id="questions"
                     value={[questionCount]}
                     onValueChange={([value]) => setQuestionCount(value)}
                     max={maxQuestions}
                     min={1}
                     step={1}
                     disabled={isLoading}
+                    className="flex-1"
                   />
-                  <span className="w-12 text-right">{questionCount}</span>
+                  <span className="w-12 text-right tabular-nums">{questionCount}</span>
                 </div>
               </div>
 

@@ -493,18 +493,22 @@ export function QuizContent() {
     if (currentQuestion.type === 'mcq' && !(isSubmitting || answerResult !== null)) {
       const mcqQuestion = currentQuestion as MCQQuestion;
       
+      // Handle both letter and number keys
+      const keyNum = parseInt(e.key);
+      const isNumberKey = !isNaN(keyNum) && keyNum > 0 && keyNum <= mcqQuestion.options.length;
+      
       // Get the key pressed (case insensitive - accept both a/A, b/B, etc.)
-      const key = e.key.toUpperCase();
+      const letterKey = e.key.toUpperCase();
+      const isLetterKey = letterKey >= 'A' && letterKey <= 'D';
       
-      console.log(`🔤 Letter key check: key=${key}`);
+      console.log(`🔤 Key check: key=${e.key}, isNumber=${isNumberKey}, isLetter=${isLetterKey}`);
       
-      // Check if it's a letter from A-D
-      if (key === 'A' || key === 'B' || key === 'C' || key === 'D') {
+      if (isNumberKey || isLetterKey) {
         e.preventDefault();
         
-        // Calculate the index based on the letter (A=0, B=1, etc.)
-        const index = key.charCodeAt(0) - 65; // ASCII: A=65, B=66, etc. => 0, 1, 2, 3
-        console.log(`🔤 Letter key ${key} pressed (index ${index})`);
+        // Calculate the index based on either number (1-based) or letter (A=0, B=1, etc.)
+        const index = isNumberKey ? keyNum - 1 : letterKey.charCodeAt(0) - 65;
+        console.log(`🔤 Key ${e.key} pressed (index ${index})`);
         
         if (index >= 0 && index < mcqQuestion.options.length) {
           console.log(`🔤 Selecting option at index ${index}: ${mcqQuestion.options[index]}`);

@@ -1,0 +1,67 @@
+<svg
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Main circle -->
+  <circle
+    cx="12"
+    cy="12"
+    r="8"
+    stroke="currentColor"
+    stroke-width="1.5"
+    class="animate-draw"
+  />
+  
+  <!-- Memory paths -->
+  <path
+    d="M8 12C8 9.79086 9.79086 8 12 8"
+    stroke="currentColor"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    class="animate-draw"
+  />
+  <path
+    d="M12 16C14.2091 16 16 14.2091 16 12"
+    stroke="currentColor"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    class="animate-draw"
+  />
+  
+  <!-- Center dot -->
+  <circle
+    cx="12"
+    cy="12"
+    r="2"
+    fill="currentColor"
+    class="animate-pulse"
+  />
+  
+  <style>
+    svg { color: #000000; }
+    .animate-draw {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: draw 2s ease forwards;
+    }
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes draw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.8;
+      }
+    }
+  </style>
+</svg> 

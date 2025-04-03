@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { QuizAnswer } from '@/types/quiz';
+import { formatQuizQuestion } from '@/lib/quiz';
 
 interface QuizSessionAnswer {
   id: string;
@@ -54,8 +55,24 @@ export async function POST(
       return new NextResponse('Session not found', { status: 404 });
     }
 
-    // Get all questions from deck content
-    const allQuestions = session.deck.deckContent.map(dc => dc.studyContent);
+    // Get all questions from deck content and format them
+    const allQuestions = session.deck.deckContent.map(dc => {
+      const content = dc.studyContent;
+      return formatQuizQuestion({
+        id: content.id,
+        question: content.mcqContent?.question || content.frqContent?.question || '',
+        hint: content.mcqContent?.explanation || content.frqContent?.explanation || '',
+        topic: content.difficultyLevel,
+        mcqContent: content.mcqContent ? {
+          ...content.mcqContent,
+          options: content.mcqContent.options as string[],
+        } : null,
+        frqContent: content.frqContent ? {
+          ...content.frqContent,
+          answers: content.frqContent.answers as string[],
+        } : null,
+      });
+    });
     
     // Format answered questions
     const answeredQuestions = session.quizAnswers.reduce<Record<string, QuizAnswer>>((acc, answer) => {
@@ -76,6 +93,7 @@ export async function POST(
     const currentQuestion = allQuestions[currentIndex] || null;
     
     return NextResponse.json({
+      allQuestions,
       currentQuestion,
       currentIndex,
       answeredQuestions,

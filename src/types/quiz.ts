@@ -5,26 +5,35 @@ export interface QuizQuestion {
   id: string;
   type: 'mcq' | 'frq';
   topic: string;
-  difficulty: QuizDifficulty;
   hint?: string;
 }
 
-// MCQ specific question
-export interface MCQQuestion extends QuizQuestion {
-  type: 'mcq';
+// Quiz configuration
+export interface QuizConfig {
+  deckId: string;
+  type: 'mcq' | 'frq' | 'mixed';
+  questionCount: number;
+}
+
+// Base question interface
+export interface BaseQuestion {
+  id: string;
   question: string;
+  hint: string;
+  topic: string;
+}
+
+// MCQ specific question
+export interface MCQQuestion extends BaseQuestion {
+  type: 'mcq';
   options: string[];
   correctOptionIndex: number;
-  explanation?: string;
 }
 
 // FRQ specific question
-export interface FRQQuestion extends QuizQuestion {
+export interface FRQQuestion extends BaseQuestion {
   type: 'frq';
-  question: string;
   answers: string[];
-  caseSensitive: boolean;
-  explanation?: string;
 }
 
 // Quiz session from API
@@ -47,8 +56,8 @@ export interface QuizAnswer {
   questionId: string;
   userAnswer: string;
   isCorrect: boolean;
-  timeTaken: number;
   pointsEarned: number;
+  timeTaken: number;
   skipped?: boolean;
 }
 
@@ -84,13 +93,74 @@ export interface EndQuizResponse {
 
 export interface Achievement {
   id: string;
-  name: string;
+  title: string;
   description: string;
-  category: 'beginner' | 'intermediate' | 'expert' | 'speed' | 'accuracy' | 'dedication';
-  type: 'milestone' | 'special' | 'secret';
-  pointsAwarded: number;
   shown?: boolean;
 }
+
+export interface ProgressData {
+  currentQuestionIndex: number;
+  totalQuestions: number;
+  score: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  streak: number;
+  topicPerformance: Record<string, {
+    correct: number;
+    total: number;
+  }>;
+}
+
+export interface TimingData {
+  startTime: number | null;
+  pausedAt: number | null;
+  totalPausedTime: number;
+  totalTime: number;
+  timePerQuestion: Record<string, number>;
+}
+
+export interface UIState {
+  view: 'quiz' | 'results' | 'review';
+  isLoading: boolean;
+  error: string | null;
+  showHint: boolean;
+  showExplanation: boolean;
+  isPaused: boolean;
+  showConfig: boolean;
+}
+
+export interface UIActions {
+  togglePause: () => void;
+  toggleConfig: () => void;
+}
+
+export interface QuizStats {
+  totalQuizzesTaken: number;
+  totalQuestionsAnswered: number;
+  totalCorrect: number;
+  totalIncorrect: number;
+  averageScore: number;
+  bestStreak: number;
+  topicStats: Record<string, {
+    attempted: number;
+    correct: number;
+    averageTime: number;
+  }>;
+  recentResults: {
+    date: number;
+    score: number;
+    accuracy: number;
+    timeSpent: number;
+  }[];
+}
+
+export type QuizAnalyticsEvent = {
+  type: 'quiz_started' | 'question_answered' | 'quiz_completed' | 'error_occurred';
+  data: {
+    timestamp: number;
+    [key: string]: any;
+  };
+};
 
 export type QuizAnalyticsEventType = 
   | 'quiz_started' 

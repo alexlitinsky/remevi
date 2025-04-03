@@ -4,6 +4,52 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
 
+const RemeviBrainLogo = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="transition-colors duration-300"
+  >
+    {/* Main circle */}
+    <circle
+      cx="12"
+      cy="12"
+      r="8"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="animate-draw"
+    />
+    
+    {/* Memory paths */}
+    <path
+      d="M8 12C8 9.79086 9.79086 8 12 8"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      className="animate-draw"
+    />
+    <path
+      d="M12 16C14.2091 16 16 14.2091 16 12"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      className="animate-draw"
+    />
+    
+    {/* Center dot */}
+    <circle
+      cx="12"
+      cy="12"
+      r="2"
+      fill="currentColor"
+      className="animate-pulse opacity-80"
+    />
+  </svg>
+);
+
 export function Header() {
   const pathname = usePathname()
   const showHeader = !pathname?.includes('/deck/configure') && !pathname?.includes('/session') && !pathname?.includes('/quiz')
@@ -16,10 +62,7 @@ export function Header() {
         href="/" 
         className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-        </svg>
+        <RemeviBrainLogo />
         <span className="font-semibold">Remevi</span>
       </Link>
       <div className="flex items-center gap-4">

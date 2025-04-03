@@ -1014,38 +1014,40 @@ export const useQuizStore = create<QuizState>()(
       // Add session recovery
       recoverSession: async () => {
         const state = get();
-        if (!state.activeSession.id || state.activeSession.status !== 'error') return;
+        console.log('[QuizStore] Attempting to recover session...', {
+          sessionId: state.activeSession.id,
+          deckId: state.activeSession.deckId,
+          status: state.activeSession.status
+        });
 
-        set({ ui: { ...state.ui, isLoading: true, error: null }});
+        // If there's no active session or no deck ID, we can't recover
+        if (!state.activeSession.id || !state.activeSession.deckId) {
+          console.log('[QuizStore] No active session to recover');
+          get().cleanupSession();
+          return;
+        }
 
         try {
-          // Get the deck ID from either the config or active session
-          const deckId = state.config?.deckId || state.activeSession.deckId;
-          
-          if (!deckId) {
-            console.error('[QuizStore] Cannot recover session - no deck ID found');
-            throw new Error('Failed to recover session - no deck ID found');
-          }
-          
-          // Try to fetch session state from API
-          const response = await fetch(`/api/decks/${deckId}/quiz/${state.activeSession.id}/recover`, {
-            method: 'POST',
+          // Fetch session state from API
+          const response = await fetch(`/api/decks/${state.activeSession.deckId}/quiz/${state.activeSession.id}/recover`, {
+            method: 'POST'
           });
 
-          if (!response.ok) throw new Error('Failed to recover session');
+          if (!response.ok) {
+            throw new Error('Failed to recover session');
+          }
 
           const data = await response.json();
-          
-          // Restore session state
-          set({
-            activeSession: {
-              ...state.activeSession,
-              status: 'active',
-            },
+          console.log('[QuizStore] Recovered session data:', data);
+
+          // Update store with recovered data
+          set(state => ({
             questions: {
               ...state.questions,
+              all: data.allQuestions || state.questions.all,
               current: data.currentQuestion,
-              answered: data.answeredQuestions,
+              answered: data.answeredQuestions || {},
+              remaining: data.allQuestions ? data.allQuestions.slice(data.currentIndex + 1) : state.questions.remaining,
             },
             progress: {
               ...state.progress,
@@ -1053,38 +1055,37 @@ export const useQuizStore = create<QuizState>()(
               score: data.score,
               correctAnswers: data.correctAnswers,
               incorrectAnswers: data.incorrectAnswers,
+              totalQuestions: data.allQuestions?.length || state.progress.totalQuestions,
+            },
+            timing: {
+              ...state.timing,
+              startTime: data.sessionStartTime,
+              totalPausedTime: data.totalPausedTime || 0,
+            },
+            activeSession: {
+              ...state.activeSession,
+              status: 'active',
             },
             ui: {
               ...state.ui,
+              view: 'quiz',
               isLoading: false,
               error: null,
-            },
-          });
+            }
+          }));
 
-          // Log recovery
-          get().logAnalytics({
-            type: 'session_recovered',
-            data: {
-              sessionId: state.activeSession.id,
-              recoveryType: 'network',
-              questionsAnswered: Object.keys(data.answeredQuestions).length,
-              timestamp: Date.now(),
-            },
-          });
+          console.log('[QuizStore] Session recovered successfully');
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          get().logAnalytics({
-            type: 'error_occurred',
-            data: {
-              sessionId: state.activeSession.id,
-              errorType: 'api',
-              errorMessage,
-              timestamp: Date.now(),
-            },
-          });
-          set({ 
-            ui: { ...state.ui, isLoading: false, error: errorMessage },
-          });
+          console.error('[QuizStore] Failed to recover session:', error);
+          // If recovery fails, clean up and prepare for new session
+          get().cleanupSession();
+          set(state => ({
+            ui: {
+              ...state.ui,
+              error: 'Failed to recover your previous session. Please start a new quiz.',
+              isLoading: false,
+            }
+          }));
         }
       },
 
