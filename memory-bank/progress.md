@@ -1,72 +1,100 @@
-# Progress Report
+# Progress
 
-## What Works
-1. Quiz Core Functionality:
-   - MCQ and FRQ question support
-   - Question generation from flashcards
-   - Session state persistence
-   - Quiz configuration and settings
+## Completed Features
 
-2. User Interface:
-   - Dark theme implementation
-   - Responsive modals and dialogs
-   - Keyboard navigation (A-D and 1-4 for MCQs)
-   - Progress tracking and timing
+### Quiz System
+✅ Basic quiz infrastructure
+  - Quiz component architecture
+  - State management with Zustand
+  - View transitions (config → quiz → results)
 
-3. Recent Improvements:
-   - Enhanced modal positioning and styling
-   - Fixed quiz config dialog centering
-   - Improved select component functionality
-   - Better question formatting and type handling
+✅ Quiz Configuration
+  - Quiz type selection (mixed, MCQ, FRQ)
+  - Fixed question count (10)
+  - Start quiz functionality
 
-## What's Left to Build
-1. Enhanced Analytics:
-   - Detailed performance tracking
-   - Learning pattern analysis
-   - Progress visualization
+✅ Question Display
+  - Question rendering
+  - Answer input handling
+  - Progress tracking
 
-2. UI Refinements:
-   - Additional keyboard shortcuts
-   - Animation improvements
-   - Loading state indicators
+✅ Results View
+  - Score calculation
+  - Answer review
+  - Restart functionality
 
-3. Quiz Features:
-   - Advanced question filtering
-   - Custom quiz templates
-   - Performance insights
+## In Progress
 
-## Current Status
-1. Core Features:
-   - ✅ Basic quiz functionality
-   - ✅ MCQ/FRQ support
-   - ✅ Session persistence
-   - ✅ Configuration options
-   - ⏳ Advanced analytics
+### Quiz Enhancement
+🔄 Question Generation
+  - API route setup
+  - OpenAI integration
+  - Question validation
 
-2. UI/UX:
-   - ✅ Dark theme
-   - ✅ Keyboard navigation
-   - ✅ Modal positioning
-   - ⏳ Animation system
-   - ⏳ Loading states
+🔄 User Experience
+  - Progress indicators
+  - Loading states
+  - Error handling
 
-3. Technical Debt:
-   - Need to improve error handling
-   - Consider optimizing state management
-   - Review component composition
+## Planned Features
 
-## Evolution of Decisions
-1. UI/UX:
-   - Moved to fixed positioning for modals
-   - Added number key support alongside letters
-   - Enhanced dark theme compatibility
+### Short Term
+📋 Question Count Configuration
+  - Dynamic question count selection
+  - Available questions check
+  - Validation
 
-2. Architecture:
-   - Improved question type handling
-   - Better session state management
-   - More robust quiz recovery system
+📋 Quiz History
+  - Save quiz results
+  - View past attempts
+  - Progress tracking
 
-3. Future Considerations:
-   - May need to implement custom modal system
-   - Consider adding quiz templates
-   - Plan for analytics integration 
+### Medium Term
+📋 Analytics
+  - Performance metrics
+  - Topic mastery
+  - Time tracking
+
+📋 Advanced Features
+  - Spaced repetition
+  - Difficulty adjustment
+  - Custom quiz templates
+
+## Known Issues
+
+### Bugs
+1. ⚠️ Loading state management in QuizConfigModal
+2. ⚠️ Error handling in quiz store
+
+### Technical Debt
+1. 🔧 Type definitions need refinement
+2. 🔧 Test coverage needed
+3. 🔧 API route documentation
+
+## Recent Changes
+
+### Latest Updates
+1. Simplified quiz component architecture
+2. Removed modal behavior from QuizConfigModal
+3. Integrated with deck quiz page
+4. Removed QuizProvider in favor of direct state management
+
+### Impact
+- Improved code maintainability
+- Simplified state management
+- Better user experience
+- Reduced complexity
+
+## Next Steps
+
+### Immediate
+1. Fix loading state management
+2. Implement question generation
+3. Add progress indicators
+4. Enhance error handling
+
+### Future
+1. Add quiz history
+2. Implement analytics
+3. Add spaced repetition
+4. Create custom templates 

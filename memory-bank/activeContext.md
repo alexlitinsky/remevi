@@ -1,29 +1,59 @@
 # Active Context
 
-## Current Focus
-- Quiz application UI and functionality improvements
-- Modal styling and positioning fixes
-- MCQ answer selection system updates
+## Current Focus: Quiz Implementation
 
-## Recent Changes
-1. MCQ Answer Selection:
-   - Updated to support both letter (A-D) and number (1-4) key selection
-   - Fixed keyboard event handling for number keys
+### Quiz Component Architecture
+The quiz system has been simplified into a clean, state-driven architecture:
 
-2. Quiz Config Modal:
-   - Improved modal positioning with fixed centering
-   - Enhanced styling for better dark theme compatibility
-   - Added responsive width constraints
-   - Fixed select component functionality
-   - Current styling uses:
-     ```css
-     fixed inset-0 m-auto h-fit max-h-[90vh] w-[90vw] max-w-[425px] overflow-y-auto bg-background p-6 gap-6
-     ```
+1. **Main Components**:
+   - `Quiz`: Root component managing view states
+   - `QuizConfigModal`: Configuration UI for quiz setup
+   - `QuizQuestion`: Question display and answer handling
+   - `QuizResults`: Final results and statistics
 
-3. Quiz Session Recovery:
-   - Updated question formatting to handle MCQ and FRQ content
-   - Fixed state restoration for quiz sessions
-   - Improved handling of question properties (topic, hint, etc.)
+2. **State Management**:
+   - Using `useQuizStore` for centralized state
+   - Views: 'config' | 'quiz' | 'results'
+   - Handles quiz type selection, question progression, and scoring
+
+3. **Quiz Flow**:
+   ```mermaid
+   graph LR
+   A[Config] --> B[Questions]
+   B --> C[Results]
+   C --> A
+   ```
+
+### Recent Changes
+- Simplified QuizConfigModal to be a card-based component
+- Removed dialog/modal behavior in favor of direct rendering
+- Integrated quiz components into the deck quiz page
+- Removed QuizProvider and QuizLayout in favor of simpler architecture
+
+### Active Decisions
+1. Fixed question count at 10 for initial implementation
+2. Using radio group for quiz type selection (mixed, MCQ, FRQ)
+3. Immediate feedback on answers
+4. Simple, focused UI with clear progression
+
+### Next Steps
+1. Implement question generation API
+2. Add question count configuration
+3. Consider adding quiz history
+4. Add progress indicators
+5. Implement quiz analytics
+
+### Technical Patterns
+- Client-side state management with Zustand
+- Server-side data fetching for deck info
+- Progressive enhancement with immediate feedback
+- Responsive design with Tailwind CSS
+
+### User Experience Goals
+- Simple, intuitive quiz setup
+- Clear feedback on progress
+- Engaging question-answer flow
+- Comprehensive results view
 
 ## Active Decisions
 1. Modal Design:

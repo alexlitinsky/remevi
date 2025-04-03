@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
-import { QuizLayout } from '@/components/quiz/QuizLayout';
-import { QuizProvider } from '@/components/quiz/QuizProvider';
+import { Quiz } from '@/components/quiz/Quiz';
 import { db } from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
@@ -48,9 +47,7 @@ export default async function QuizPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      <QuizProvider deckId={awaitedParams.id}>
-        <QuizLayout className="mt-6" />
-      </QuizProvider>
+      <Quiz deckId={awaitedParams.id} />
     </div>
   );
 } 

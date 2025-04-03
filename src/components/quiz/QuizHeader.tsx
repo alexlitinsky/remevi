@@ -4,16 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { PauseIcon, PlayIcon, TimerIcon, Settings } from "lucide-react";
+import { Settings, TimerIcon } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 
 export function QuizHeader() {
   const {
     questions,
-    progress: { currentQuestionIndex, totalQuestions },
-    timing: { startTime, totalPausedTime, pausedAt },
-    ui: { isPaused },
-    actions: { togglePause, toggleConfig }
+    currentQuestionIndex,
+    startTime,
+    status,
+    progress,
+    isLoading,
   } = useQuizStore();
 
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -26,23 +27,19 @@ export function QuizHeader() {
       intervalRef.current = null;
     }
 
-    // Don't start timer if no start time or quiz is paused
-    if (!startTime || isPaused) {
-      // If paused, keep the last elapsed time
-      if (isPaused && pausedAt && startTime) {
-        setElapsedTime(pausedAt - startTime - totalPausedTime);
-      }
+    // Don't start timer if no start time or quiz is not active
+    if (!startTime || status !== 'active') {
       return;
     }
 
     // Calculate initial elapsed time
-    const initialElapsed = Date.now() - startTime - totalPausedTime;
+    const initialElapsed = Date.now() - startTime;
     setElapsedTime(initialElapsed);
 
     // Start interval for updating elapsed time
     intervalRef.current = setInterval(() => {
       const now = Date.now();
-      const elapsed = now - startTime - totalPausedTime;
+      const elapsed = now - startTime;
       setElapsedTime(elapsed);
     }, 1000);
 
@@ -52,16 +49,16 @@ export function QuizHeader() {
         intervalRef.current = null;
       }
     };
-  }, [startTime, totalPausedTime, isPaused, pausedAt]);
+  }, [startTime, status]);
 
-  const progressPercentage = (currentQuestionIndex / totalQuestions) * 100;
+  const progressPercentage = (progress.answeredQuestions / progress.totalQuestions) * 100;
 
   return (
     <div className="space-y-4 mb-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium">
-            Question {currentQuestionIndex + 1} of {totalQuestions}
+            Question {currentQuestionIndex + 1} of {questions.length}
           </span>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <TimerIcon className="h-4 w-4" />
@@ -72,44 +69,25 @@ export function QuizHeader() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={toggleConfig}
             className="relative"
+            disabled={isLoading || status !== 'active'}
           >
             <Settings className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={togglePause}
-            className="relative"
-          >
-            <motion.div
-              initial={false}
-              animate={{ scale: isPaused ? 1 : 0, opacity: isPaused ? 1 : 0 }}
-              className="absolute"
-            >
-              <PlayIcon className="h-4 w-4" />
-            </motion.div>
-            <motion.div
-              initial={false}
-              animate={{ scale: isPaused ? 0 : 1, opacity: isPaused ? 0 : 1 }}
-              className="absolute"
-            >
-              <PauseIcon className="h-4 w-4" />
-            </motion.div>
           </Button>
         </div>
       </div>
       <Progress value={progressPercentage} className="h-2" />
-      {isPaused && (
+      {status !== 'active' && status !== 'idle' && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           className="bg-muted p-4 rounded-lg text-center"
         >
-          <p className="text-sm font-medium">Quiz Paused</p>
-          <p className="text-xs text-muted-foreground">Press ESC or click the button to resume</p>
+          <p className="text-sm font-medium">Quiz {status === 'completed' ? 'Completed' : 'Not Started'}</p>
+          <p className="text-xs text-muted-foreground">
+            {status === 'completed' ? 'View your results below' : 'Start the quiz to begin'}
+          </p>
         </motion.div>
       )}
     </div>

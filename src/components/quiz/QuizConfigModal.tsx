@@ -1,137 +1,37 @@
 'use client'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { QuizType, QuizDifficulty, useQuizStore } from "@/stores/useQuizStore";
+import { Card } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { useQuizStore, QuizType } from "@/stores/useQuizStore";
 import { useToast } from "@/components/ui/use-toast";
+import { motion } from "framer-motion";
+import { IconBrain, IconAbc, IconPencil } from "@tabler/icons-react";
 
 interface QuizConfigModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (config: {
-    type: QuizType;
-    difficulty: QuizDifficulty;
-    questionCount: number;
-  }) => void;
-  defaultValues?: {
-    type: QuizType;
-    difficulty: QuizDifficulty;
-    questionCount: number;
-  };
   deckId: string;
 }
 
-interface AvailableQuestions {
-  mcq: number;
-  frq: number;
-  total: number;
-}
-
-export function QuizConfigModal({
-  open,
-  onOpenChange,
-  onSubmit,
-  defaultValues = {
-    type: 'mixed',
-    difficulty: 'all',
-    questionCount: 10
-  },
-  deckId
-}: QuizConfigModalProps) {
-  const [type, setType] = useState<QuizType>(defaultValues.type);
-  const [difficulty, setDifficulty] = useState<QuizDifficulty>(defaultValues.difficulty);
-  const [questionCount, setQuestionCount] = useState(defaultValues.questionCount);
-  const [maxQuestions, setMaxQuestions] = useState(50);
-  const [availableQuestions, setAvailableQuestions] = useState<AvailableQuestions | null>(null);
-  const { ui: { isLoading }, actions: { setIsLoading } } = useQuizStore();
+export function QuizConfigModal({ deckId }: QuizConfigModalProps) {
+  const startQuiz = useQuizStore(state => state.startQuiz);
+  const [quizType, setQuizType] = useState<QuizType>('mixed');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchAvailableQuestions = async () => {
-      try {
-        const response = await fetch(`/api/decks/${deckId}/quiz/available-questions`);
-        if (response.ok) {
-          const data = await response.json();
-          setAvailableQuestions(data);
-          // Set max questions based on type
-          if (type === 'mcq') {
-            setMaxQuestions(data.mcq);
-          } else if (type === 'frq') {
-            setMaxQuestions(data.frq);
-          } else {
-            setMaxQuestions(data.total);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching available questions:', error);
-      }
-    };
-
-    if (open && deckId) {
-      fetchAvailableQuestions();
-    }
-  }, [open, deckId, type]);
-
-  // Update max questions when type changes
-  useEffect(() => {
-    if (availableQuestions) {
-      if (type === 'mcq') {
-        setMaxQuestions(availableQuestions.mcq);
-      } else if (type === 'frq') {
-        setMaxQuestions(availableQuestions.frq);
-      } else {
-        setMaxQuestions(availableQuestions.total);
-      }
-      // Adjust question count if it exceeds new max
-      setQuestionCount(prev => Math.min(prev, maxQuestions));
-    }
-  }, [type, availableQuestions]);
-
-  const handleGenerateQuestions = async () => {
+  const handleStartQuiz = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const response = await fetch(`/api/decks/${deckId}/quiz/generate-questions`, {
-        method: 'POST'
+      await startQuiz({
+        deckId,
+        type: quizType,
+        questionCount: 10
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate questions');
-      }
-
-      const data = await response.json();
-      toast({
-        title: 'Questions Generated',
-        description: `Created ${data.mcqCount} MCQs and ${data.frqCount} FRQs from your flashcards.`
-      });
-
-      // Refresh available questions
-      const availableResponse = await fetch(`/api/decks/${deckId}/quiz/available-questions`);
-      if (availableResponse.ok) {
-        const availableData = await availableResponse.json();
-        setAvailableQuestions(availableData);
-        // Update max questions based on type
-        if (type === 'mcq') {
-          setMaxQuestions(availableData.mcq);
-        } else if (type === 'frq') {
-          setMaxQuestions(availableData.frq);
-        } else {
-          setMaxQuestions(availableData.total);
-        }
-      }
     } catch (error) {
-      console.error('Error generating questions:', error);
+      console.error('Failed to start quiz:', error);
       toast({
         title: 'Error',
-        description: 'Failed to generate questions. Please try again.',
+        description: 'Failed to start quiz. Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -140,102 +40,118 @@ export function QuizConfigModal({
   };
 
   return (
-    <Dialog modal open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] w-[90vw] max-w-[425px] overflow-y-auto bg-zinc-950 p-6 gap-6">
-        <DialogHeader>
-          <DialogTitle className="text-xl">Configure Quiz</DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            Choose your quiz settings
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4">
-          {availableQuestions?.total === 0 && (
-            <div className="flex flex-col gap-4 items-center justify-center p-4 border rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground text-center">
-                No questions available. Generate some from your flashcards to start the quiz.
-              </p>
-              <Button 
-                onClick={handleGenerateQuestions}
-                disabled={isLoading}
+    <div className="fixed inset-0 bg-background backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="w-full max-w-md"
+      >
+        <Card className="relative overflow-hidden border-0 shadow-2xl">
+          {/* Background gradient decoration */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
+          
+          {/* Content */}
+          <div className="relative p-8 space-y-8">
+            <div className="text-center space-y-2">
+              <motion.h2 
+                className="text-3xl font-bold"
+                initial={{ y: -20 }}
+                animate={{ y: 0 }}
+                transition={{ delay: 0.1 }}
               >
-                {isLoading ? 'Generating...' : 'Generate Questions'}
-              </Button>
+                Quiz Configuration
+              </motion.h2>
+              <p className="text-muted-foreground">
+                Choose your preferred question type to begin
+              </p>
             </div>
-          )}
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Question Type</h3>
+              <RadioGroup 
+                value={quizType} 
+                onValueChange={(value) => setQuizType(value as QuizType)}
+                className="grid gap-3"
+              >
+                {[
+                  {
+                    id: 'mixed',
+                    icon: IconBrain,
+                    title: 'Mixed',
+                    description: 'MCQ & Free Response Questions'
+                  },
+                  {
+                    id: 'mcq',
+                    icon: IconAbc,
+                    title: 'Multiple Choice',
+                    description: 'Test your knowledge with options'
+                  },
+                  {
+                    id: 'frq',
+                    icon: IconPencil,
+                    title: 'Free Response',
+                    description: 'Write your answers freely'
+                  }
+                ].map((option, index) => (
+                  <motion.div
+                    key={option.id}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: index * 0.1 + 0.2 }}
+                  >
+                    <Label
+                      htmlFor={option.id}
+                      className={`
+                        flex items-center space-x-3 p-4 cursor-pointer
+                        rounded-xl transition-all duration-200
+                        ${quizType === option.id 
+                          ? 'bg-primary/10 border-primary shadow-sm' 
+                          : 'bg-card hover:bg-accent/50 border-border'
+                        }
+                        border-2
+                      `}
+                    >
+                      <RadioGroupItem value={option.id} id={option.id} />
+                      <option.icon className={`
+                        w-5 h-5 transition-colors duration-200
+                        ${quizType === option.id ? 'text-primary' : 'text-muted-foreground'}
+                      `} />
+                      <div>
+                        <div className="font-medium">{option.title}</div>
+                        <span className="text-sm text-muted-foreground">{option.description}</span>
+                      </div>
+                    </Label>
+                  </motion.div>
+                ))}
+              </RadioGroup>
+            </div>
 
-          {(availableQuestions?.total ?? 0) > 0 && (
-            <>
-              <div className="grid gap-2">
-                <Label htmlFor="type">Question Type</Label>
-                <Select
-                  value={type}
-                  onValueChange={(value: QuizType) => setType(value)}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger id="type" className="w-full">
-                    <SelectValue placeholder="Select question type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 text-white">
-                    <SelectItem value="mixed">Mixed ({availableQuestions?.total} available)</SelectItem>
-                    <SelectItem value="mcq">Multiple Choice ({availableQuestions?.mcq} available)</SelectItem>
-                    <SelectItem value="frq">Free Response ({availableQuestions?.frq} available)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="difficulty">Difficulty</Label>
-                <Select
-                  value={difficulty}
-                  onValueChange={(value: QuizDifficulty) => setDifficulty(value)}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger id="difficulty" className="w-full">
-                    <SelectValue placeholder="Select difficulty" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 text-white">
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                    <SelectItem value="all">All Levels</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="questions">Number of Questions</Label>
-                <div className="flex items-center gap-4">
-                  <Slider
-                    id="questions"
-                    value={[questionCount]}
-                    onValueChange={([value]) => setQuestionCount(value)}
-                    max={maxQuestions}
-                    min={1}
-                    step={1}
-                    disabled={isLoading}
-                    className="flex-1"
-                  />
-                  <span className="w-12 text-right tabular-nums">{questionCount}</span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleGenerateQuestions}
-                  disabled={isLoading}
-                >
-                  Generate More Questions
-                </Button>
-                <Button onClick={() => onSubmit({ type, difficulty, questionCount })} disabled={isLoading}>
-                  Start Quiz
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <Button 
+                onClick={handleStartQuiz} 
+                disabled={isLoading}
+                className="w-full h-12 text-lg font-medium shadow-lg cursor-pointer"
+                size="lg"
+              >
+                {isLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-5 h-5 border-t-2 border-b-2 border-current rounded-full animate-spin" />
+                    <span>Starting Quiz...</span>
+                  </div>
+                ) : (
+                  'Start Quiz'
+                )}
+              </Button>
+            </motion.div>
+          </div>
+        </Card>
+      </motion.div>
+    </div>
   );
 }

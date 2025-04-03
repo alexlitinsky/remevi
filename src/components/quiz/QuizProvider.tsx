@@ -1,8 +1,9 @@
 'use client';
 
 import { useQuizStore } from "@/stores/useQuizStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface QuizProviderProps {
   children: React.ReactNode;
@@ -24,38 +25,58 @@ export function QuizProvider({
     cleanupSession,
     checkForExistingSession,
     checkAndAutoRestart,
+    ui: { isLoading, error },
+    actions: { setIsLoading }
   } = useQuizStore();
 
   const { toast } = useToast();
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Recovery for error sessions
+  // Initialize or recover session
   useEffect(() => {
-    // Only try to recover if there's an error session
-    if (activeSession.status === 'error') {
-      recoverSession().catch((err) => {
+    const initializeQuiz = async () => {
+      try {
+        setIsLoading(true);
+        console.log('[QuizProvider] Initializing quiz with deckId:', deckId);
+        
+        // Force cleanup and wait for it to complete
+        console.log('[QuizProvider] Forcing session cleanup');
+        cleanupSession();
+        
+        // Small delay to ensure cleanup is complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Start fresh quiz
+        console.log('[QuizProvider] Starting fresh quiz');
+        const success = await startQuiz({
+          deckId,
+          type: quizType,
+          questionCount
+        });
+        
+        if (!success) {
+          throw new Error('Failed to start quiz');
+        }
+        
+      } catch (error) {
+        console.error('[QuizProvider] Initialization error:', error);
         toast({
-          title: "Error recovering session",
-          description: "Failed to recover your quiz session. Please try starting a new quiz.",
+          title: "Error",
+          description: "Failed to start quiz. Please try again.",
           variant: "destructive"
         });
-      });
-    }
-  }, [activeSession.status, recoverSession, toast]);
+      } finally {
+        setIsLoading(false);
+        setIsInitialized(true);
+      }
+    };
 
-  // Auto-restart completed quizzes when navigating back
-  useEffect(() => {
-    // Check if we need to auto-restart when returning to a completed quiz
-    const didAutoRestart = checkAndAutoRestart();
-    
-    if (didAutoRestart) {
-      toast({
-        title: "Quiz Restarted",
-        description: "Starting a new quiz with the same settings.",
-      });
+    if (!isInitialized) {
+      initializeQuiz();
     }
-  }, [checkAndAutoRestart, toast]);
+  }, [deckId, quizType, questionCount, isInitialized]);
 
-  // Handle beforeunload to save session state
+  // Handle navigation events
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (activeSession.status === 'active') {
@@ -64,77 +85,65 @@ export function QuizProvider({
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [activeSession.status]);
-
-  // Cleanup session on unmount if not completed
-  useEffect(() => {
-    return () => {
-      if (activeSession.status === 'active' || activeSession.status === 'paused') {
-        cleanupSession();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && activeSession.status === 'active') {
+        // Auto-save progress when tab becomes hidden
+        const state = useQuizStore.getState();
+        state.actions.togglePause();
       }
     };
-  }, [activeSession.status, cleanupSession]);
 
-  // Auto-start quiz on mount if no active session
-  useEffect(() => {
-    const autoStartQuiz = async () => {
-      if (!checkForExistingSession()) {
-        console.log('[QuizProvider] Auto-starting quiz');
-        try {
-          await startQuiz({
-            deckId,
-            type: quizType,
-            questionCount
-          });
-        } catch (err) {
-          console.error('Error auto-starting quiz:', err);
-          toast({
-            title: "Error starting quiz",
-            description: "Could not start quiz. Trying to generate questions...",
-            variant: "destructive"
-          });
-          
-          try {
-            // Try to generate questions and start quiz again
-            const response = await fetch(`/api/decks/${deckId}/quiz/generate-questions`, {
-              method: 'POST'
-            });
-            
-            if (response.ok) {
-              // Wait for questions to be generated
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              
-              // Try to start quiz again
-              await startQuiz({
-                deckId,
-                type: quizType,
-                questionCount
-              });
-            } else {
-              throw new Error("Failed to generate questions");
-            }
-          } catch (genErr) {
-            console.error('Error generating questions:', genErr);
-            toast({
-              title: "Error generating questions",
-              description: "Could not generate questions from your flashcards.",
-              variant: "destructive"
-            });
-          }
+    const handlePopState = (e: PopStateEvent) => {
+      if (activeSession.status === 'active') {
+        // Prevent accidental navigation
+        if (window.confirm('Are you sure you want to leave? Your progress will be saved.')) {
+          cleanupSession();
+        } else {
+          e.preventDefault();
+          window.history.pushState(null, '', window.location.href);
         }
       }
     };
-    
-    // Small delay to allow for initialization
-    const timer = setTimeout(autoStartQuiz, 300);
-    return () => clearTimeout(timer);
-  }, [deckId, quizType, questionCount, checkForExistingSession, startQuiz, toast]);
 
-  return (
-    <>
-      {children}
-    </>
-  );
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('popstate', handlePopState);
+
+    // Push initial state to prevent back navigation
+    window.history.pushState(null, '', window.location.href);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [activeSession.status, cleanupSession]);
+
+  // Show loading state
+  if (!isInitialized || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="space-y-4 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Loading quiz...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="space-y-4 text-center">
+          <p className="text-sm text-destructive">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 } 
