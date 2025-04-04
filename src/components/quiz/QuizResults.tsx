@@ -41,7 +41,7 @@ export function QuizResults() {
     incorrectAnswers,
     restartQuiz,
     setView,
-    deckId
+    config
   } = useQuizStore();
 
   const totalQuestions = questions.length;
@@ -129,7 +129,7 @@ export function QuizResults() {
             Retry Quiz
           </Button>
           <Button 
-            onClick={() => window.location.href = `/deck/${deckId}`}
+            onClick={() => window.location.href = `/deck/${config?.deckId}`}
             className="flex items-center gap-2 sm:col-span-2 bg-accent hover:bg-accent/80 cursor-pointer"
             size="lg"
           >
