@@ -180,6 +180,9 @@ export const useQuizStore = create<QuizState>()(
       // Helper to check if session is valid and in progress
       isValidSession: () => {
         const state = get();
+        const hasAnsweredCurrentQuestion = state.currentQuestion && 
+          state.answers[state.currentQuestion.id];
+          
         return Boolean(
           state.sessionId && 
           state.questions.length > 0 &&
@@ -197,10 +200,14 @@ export const useQuizStore = create<QuizState>()(
         if (get().isValidSession()) {
           // Resume existing session
           const currentQuestion = state.questions[state.currentQuestionIndex];
+          const showExplanation = currentQuestion && 
+            state.answers[currentQuestion.id] !== undefined;
+            
           set({ 
             view: 'quiz', 
             showConfig: false,
-            currentQuestion // Restore current question
+            currentQuestion,
+            showExplanation // Restore explanation state based on if current question was answered
           });
           return;
         }
@@ -383,7 +390,8 @@ export const useQuizStore = create<QuizState>()(
         correctAnswers: state.correctAnswers,
         incorrectAnswers: state.incorrectAnswers,
         view: state.view,
-        showConfig: state.showConfig
+        showConfig: state.showConfig,
+        showExplanation: state.showExplanation
       })
     }
   )
