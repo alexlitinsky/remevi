@@ -171,4 +171,134 @@ graph LR
 2. Analytics integration
 3. Mobile optimization
 4. Offline support
-5. Multi-language support 
+5. Multi-language support
+
+## State Management
+
+### Quiz Session Management
+1. Session Validation
+   ```typescript
+   isValidSession: () => {
+     return Boolean(
+       sessionId && 
+       questions.length > 0 &&
+       currentQuestionIndex < questions.length &&
+       answers && 
+       Object.keys(answers).length > 0
+     );
+   }
+   ```
+
+2. Session Persistence
+   - Use Zustand persist middleware
+   - Persist critical state:
+     - Questions and answers
+     - Current progress
+     - UI state (view, explanations)
+   - Clear session on explicit actions
+
+3. Session Recovery
+   - Validate session on quiz start
+   - Restore UI state with answers
+   - Preserve explanation visibility
+   - Handle incomplete sessions
+
+### UI/UX Patterns
+
+1. Visual Hierarchy
+   - Card-based layouts for content grouping
+   - Gradient backgrounds for primary actions
+   - Consistent button heights:
+     - Primary: h-14
+     - Secondary: h-12
+   - Visual feedback for states:
+     - Correct/incorrect answers
+     - Loading states
+     - Active states
+
+2. Interactive Elements
+   - Button States:
+     - Hover: scale(1.02)
+     - Active: scale(0.98)
+     - Loading: Custom spinner
+     - Disabled: Reduced opacity
+   - Input Fields:
+     - Clear focus states
+     - Error highlighting
+     - Multiline support where needed
+   - Navigation:
+     - Consistent back buttons
+     - Clear exit points
+     - Progress indicators
+
+3. Animations
+   - Button hover/active states
+   - Loading states
+   - View transitions
+   - Feedback animations
+   - Modal transitions
+
+## Component Architecture
+
+1. Quiz Components
+   - QuizConfigModal: Configuration and quiz start
+   - QuizQuestion: Question display and interaction
+   - QuizResults: Results display and analytics
+   - FRQAnswerSection: Free response handling
+
+2. State Flow
+   ```
+   Config -> Quiz -> Results
+      ^        |
+      |________|
+   (via settings)
+   ```
+
+3. Session Flow
+   ```
+   New Quiz -> Configure -> Start
+   Return   -> Validate -> Resume/Reset
+   Settings -> Cleanup  -> New Config
+   ```
+
+## Data Patterns
+
+1. Quiz State
+   - Core state (questions, answers)
+   - UI state (view, loading)
+   - Progress tracking
+   - Session management
+
+2. Persistence Strategy
+   - Local storage for session data
+   - API endpoints for quiz operations
+   - Error handling for network issues
+
+3. Type Safety
+   - Strong typing for quiz state
+   - Question type discrimination
+   - Answer validation
+
+## Error Handling
+
+1. Session Errors
+   - Invalid session recovery
+   - Network failures
+   - State corruption
+
+2. User Feedback
+   - Toast notifications
+   - Error boundaries
+   - Loading states
+
+## Performance Considerations
+
+1. State Updates
+   - Batch related changes
+   - Minimize persistence payload
+   - Optimize re-renders
+
+2. Session Management
+   - Clear invalid sessions
+   - Handle large answer sets
+   - Manage storage limits 
