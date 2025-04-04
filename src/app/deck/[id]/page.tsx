@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { StudyStats } from '@/components/deck/StudyStats';
+import { QuizStats } from '@/components/deck/QuizStats';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, BookOpen, Sparkles, Clock, Calendar, Trash2 } from 'lucide-react';
 import {
@@ -63,11 +64,14 @@ export default function DeckPage() {
           const deckData = await deckResponse.json();
           const statsData = await statsResponse.json();
           
+          // Filter to count only flashcards, not MCQ or FRQ
+          const flashcardCount = deckData.flashcardCount || statsData.flashcardCount || 0;
+          
           // Merge deck data with stats
           setDeck({
             ...deckData,
             dueCards: statsData.dueCards,
-            flashcardCount: statsData.totalCards,
+            flashcardCount: flashcardCount,
             totalProgress: Math.round(statsData.masteryLevel || 0),
             lastStudied: statsData.reviewsByDate 
               ? Object.keys(statsData.reviewsByDate).sort().pop()
@@ -332,6 +336,9 @@ export default function DeckPage() {
 
           {/* Study Stats Section */}
           {!deck.isProcessing && <StudyStats deckId={deckId} />}
+          
+          {/* Quiz Stats Section */}
+          {!deck.isProcessing && <QuizStats deckId={deckId} />}
         </div>
       </div>
     </main>

@@ -35,6 +35,7 @@ interface StudySessionState {
   
   // Session stats
   sessionTime: number;
+  sessionStartTime: number | null;
   sessionId: string | null;
   streak: number;
   sessionPoints: number;
@@ -75,7 +76,7 @@ interface StudySessionState {
 
 type StudySessionPersist = Pick<
   StudySessionState,
-  'deckId' | 'currentCardIndex' | 'totalPoints' | 'completedCardIds' | 'sessionId'
+  'deckId' | 'currentCardIndex' | 'totalPoints' | 'completedCardIds' | 'sessionId' | 'sessionStartTime'
 >;
 
 export const useStudySessionStore = create<StudySessionState>()(
@@ -98,6 +99,7 @@ export const useStudySessionStore = create<StudySessionState>()(
       hasSetOriginalCounts: false,
       
       sessionTime: 0,
+      sessionStartTime: null,
       sessionId: null,
       streak: 0,
       sessionPoints: 0,
@@ -131,6 +133,7 @@ export const useStudySessionStore = create<StudySessionState>()(
             cardsReviewed: 0,
             hasSetOriginalCounts: false,
             sessionTime: 0,
+            sessionStartTime: null,
             lastEarnedPoints: null,
             originalNewCount: 0,
             originalDueCount: 0,
@@ -238,10 +241,20 @@ export const useStudySessionStore = create<StudySessionState>()(
       
       // Start a study session
       startSession: async () => {
-        const { deckId } = get();
+        const { deckId, sessionStartTime } = get();
+        
+        // Calculate elapsed time if we have a previous session start time
+        let startTime = 0;
+        const now = Math.floor(Date.now() / 1000); // Current time in seconds
+        
+        if (sessionStartTime) {
+          // If resuming a session, calculate elapsed time since session started
+          startTime = now - sessionStartTime;
+        }
         
         set({ 
-          sessionTime: 0,
+          sessionTime: startTime,
+          sessionStartTime: sessionStartTime || now, // Use existing start time or set new one
           sessionPoints: 0,
           cardsReviewed: 0,
           isSessionActive: true,
@@ -374,7 +387,7 @@ export const useStudySessionStore = create<StudySessionState>()(
           if (!isLastCard) {
             setTimeout(() => {
               set({ lastEarnedPoints: null });
-            }, 3000); // Increased from 1500ms to 3000ms
+            }, 1500); // Increased from 1500ms to 3000ms
           }
           
         } catch (error) {
@@ -501,7 +514,8 @@ export const useStudySessionStore = create<StudySessionState>()(
           currentCardIndex: 0, // Reset position for next session
           sessionPoints: 0,
           lastEarnedPoints: null,
-          sessionTime: 0
+          sessionTime: 0,
+          sessionStartTime: null // Reset the session start time
         });
         
         // Clear session state from localStorage
@@ -542,12 +556,12 @@ export const useStudySessionStore = create<StudySessionState>()(
           totalPoints: 0,
           completedCardIds: [],
           lastEarnedPoints: null,
-          hasSetOriginalCounts: false
+          hasSetOriginalCounts: false,
+          sessionStartTime: null // Clear the session start time
         });
         
         localStorage.removeItem(`study-progress-${deckId}`);
         localStorage.removeItem(`session-state-${deckId}`); // Clear both storage items
-
       },
       
       // Toggle settings modal
@@ -591,7 +605,8 @@ export const useStudySessionStore = create<StudySessionState>()(
         currentCardIndex: state.currentCardIndex,
         totalPoints: state.totalPoints,
         completedCardIds: state.completedCardIds,
-        sessionId: state.sessionId
+        sessionId: state.sessionId,
+        sessionStartTime: state.sessionStartTime // Persist the session start time
       })
     }
   )

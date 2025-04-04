@@ -18,6 +18,7 @@ interface DeckStats {
   deckId: string
   deckTitle: string
   totalCards: number
+  flashcardCount: number
   cardsWithProgress: number
   newCards: number
   dueCards: number
@@ -107,7 +108,7 @@ export function StudyStats({ deckId }: StudyStatsProps) {
 
   // Calculate completion percentage
   // const completionPercentage = stats.totalCards > 0 ? Math.round((stats.cardsWithProgress / stats.totalCards) * 100) : 0
-  const completionPercentage = stats.totalCards > 0 ? Math.round(stats.masteryLevel) : 0
+  const completionPercentage = stats.flashcardCount > 0 ? Math.round(stats.masteryLevel) : 0
 
   // Format average response time
   const avgResponseTime = stats.averageResponseTime ? `${Math.round(stats.averageResponseTime / 1000)} seconds` : "N/A"
@@ -156,7 +157,7 @@ export function StudyStats({ deckId }: StudyStatsProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 title="Total Cards"
-                value={stats.totalCards.toString()}
+                value={stats.flashcardCount.toString()}
                 icon={<BarChart3 className="h-4 w-4 text-blue-500" />}
                 color="blue"
                 description="Cards in this deck"
@@ -191,25 +192,25 @@ export function StudyStats({ deckId }: StudyStatsProps) {
                   <MasteryBar
                     label="Mastered"
                     count={stats.masteryLevels.mastered}
-                    total={stats.totalCards}
+                    total={stats.flashcardCount}
                     color="bg-green-500"
                   />
                   <MasteryBar
                     label="Learning"
                     count={stats.masteryLevels.learning}
-                    total={stats.totalCards}
+                    total={stats.flashcardCount}
                     color="bg-blue-500"
                   />
                   <MasteryBar
                     label="Struggling"
                     count={stats.masteryLevels.struggling}
-                    total={stats.totalCards}
+                    total={stats.flashcardCount}
                     color="bg-orange-500"
                   />
                   <MasteryBar
                     label="New"
                     count={stats.masteryLevels.new}
-                    total={stats.totalCards}
+                    total={stats.flashcardCount}
                     color="bg-purple-500"
                   />
                 </div>
@@ -264,7 +265,7 @@ export function StudyStats({ deckId }: StudyStatsProps) {
                   </div>
                   <Progress value={completionPercentage} className="h-2" />
                   <p className="text-xs text-muted-foreground mt-2">
-                    You've made progress on {stats.cardsWithProgress} out of {stats.totalCards} cards
+                    You've made progress on {stats.cardsWithProgress} out of {stats.flashcardCount} cards
                   </p>
                 </div>
               </div>

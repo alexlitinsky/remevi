@@ -108,6 +108,7 @@ export async function GET(req: NextRequest) {
     }).reverse();
     
     let totalCards = 0;
+    let flashcardCount = 0;
     let cardsWithProgress = 0;
     let totalResponseTime = 0;
     let responseTimeCount = 0;
@@ -122,53 +123,65 @@ export async function GET(req: NextRequest) {
     // Process each card's data
     deck.deckContent.forEach(content => {
       totalCards++;
-      const interaction = content.studyContent.cardInteractions[0];
       
-      if (interaction) {
-        cardsWithProgress++;
-        masteryLevels[interaction.masteryLevel as keyof typeof masteryLevels]++;
-        
-        if (interaction.responseTime) {
-          totalResponseTime += interaction.responseTime;
-          responseTimeCount++;
-        }
-        
-        if (interaction.easeFactor) {
-          totalEaseFactor += interaction.easeFactor;
-          easeFactorCount++;
-        }
-        
-        if (interaction.streak) {
-          totalStreak += interaction.streak;
-          streakCount++;
-        }
-        
-        totalPoints += interaction.score;
-        
-        // Check if card is due - convert both dates to user timezone for comparison
-        if (interaction.dueDate) {
-          const dueDateInUserTz = new Date(interaction.dueDate.toLocaleString('en-US', { timeZone: userTimezone }));
-          dueDateInUserTz.setHours(0, 0, 0, 0);
-          if (dueDateInUserTz <= userDate) {
-            dueCards++;
-          }
-        }
-        
-        // Add to review history if reviewed in last 7 days
-        if (interaction.lastReviewed) {
-          const reviewDate = new Date(interaction.lastReviewed.toLocaleString('en-US', { timeZone: userTimezone }));
-          const formattedReviewDate = reviewDate.toLocaleDateString('en-US', { timeZone: userTimezone });
+      // Count only flashcards
+      if (content.studyContent.type === 'flashcard') {
+        flashcardCount++;
+        const interaction = content.studyContent.cardInteractions[0];
+      
+        if (interaction) {
+          cardsWithProgress++;
+          masteryLevels[interaction.masteryLevel as keyof typeof masteryLevels]++;
           
-          if (reviewsByDate[formattedReviewDate]) {
-            reviewsByDate[formattedReviewDate].total++;
-            if (interaction.difficulty) {
-              reviewsByDate[formattedReviewDate][interaction.difficulty as 'easy' | 'medium' | 'hard']++;
+          if (interaction.responseTime) {
+            totalResponseTime += interaction.responseTime;
+            responseTimeCount++;
+          }
+          
+          if (interaction.easeFactor) {
+            totalEaseFactor += interaction.easeFactor;
+            easeFactorCount++;
+          }
+          
+          if (interaction.streak) {
+            totalStreak += interaction.streak;
+            streakCount++;
+          }
+          
+          totalPoints += interaction.score;
+          
+          // Check if card is due - convert both dates to user timezone for comparison
+          if (interaction.dueDate) {
+            const dueDateInUserTz = new Date(interaction.dueDate.toLocaleString('en-US', { timeZone: userTimezone }));
+            dueDateInUserTz.setHours(0, 0, 0, 0);
+            if (dueDateInUserTz <= userDate) {
+              dueCards++;
             }
           }
+          
+          // Add to review history if reviewed in last 7 days
+          if (interaction.lastReviewed) {
+            const reviewDate = new Date(interaction.lastReviewed.toLocaleString('en-US', { timeZone: userTimezone }));
+            const formattedReviewDate = reviewDate.toLocaleDateString('en-US', { timeZone: userTimezone });
+            
+            if (reviewsByDate[formattedReviewDate]) {
+              reviewsByDate[formattedReviewDate].total++;
+              if (interaction.difficulty) {
+                reviewsByDate[formattedReviewDate][interaction.difficulty as 'easy' | 'medium' | 'hard']++;
+              }
+            }
+          }
+        } else {
+          newCards++;
+          masteryLevels.new++;
         }
       } else {
-        newCards++;
-        masteryLevels.new++;
+        // Non-flashcard content (MCQ, FRQ) - don't count in any mastery levels
+        const interaction = content.studyContent.cardInteractions[0];
+        if (interaction) {
+          // Still count points from these interactions
+          totalPoints += interaction.score;
+        }
       }
     });
     
@@ -176,6 +189,7 @@ export async function GET(req: NextRequest) {
       deckId: deck.id,
       deckTitle: deck.title,
       totalCards,
+      flashcardCount,
       cardsWithProgress,
       newCards,
       dueCards,
@@ -187,11 +201,11 @@ export async function GET(req: NextRequest) {
       masteryLevels,
       studyTime: studyTimeStats,
       // Calculate weighted mastery level
-      masteryLevel: totalCards > 0 
+      masteryLevel: flashcardCount > 0 
         ? ((masteryLevels.mastered * 100) + 
            (masteryLevels.learning * 66) + 
            (masteryLevels.struggling * 33) + 
-           (masteryLevels.new * 0)) / totalCards
+           (masteryLevels.new * 0)) / flashcardCount
         : 0
     };
     

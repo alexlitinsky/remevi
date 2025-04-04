@@ -28,77 +28,159 @@ export function MindMapModal({
   
   if (!isVisible) return null;
 
-  // Separate nodes by type for better layout
-  const mainNodes = originalNodes.filter(node => node.type === 'main');
-  const subtopicNodes = originalNodes.filter(node => node.type === 'subtopic');
-  const detailNodes = originalNodes.filter(node => node.type === 'detail');
+  // Analyze the graph structure
+  const nodeConnectionCount = originalNodes.reduce((acc, node) => {
+    acc[node.id] = connections.filter(c => c.source === node.id || c.target === node.id).length;
+    return acc;
+  }, {} as Record<string, number>);
   
-  // Calculate better positions with more spacing
-  const nodes = originalNodes.map((node, index) => {
-    // Main concepts in center
-    if (node.type === 'main') {
-      return {
-        ...node,
-        x: 500, // Center point
-        y: 400
-      };
+  // Identify central/important nodes based on connection count
+  const centralNodes = [...originalNodes].sort((a, b) => 
+    (nodeConnectionCount[b.id] || 0) - (nodeConnectionCount[a.id] || 0)
+  ).slice(0, 3).map(n => n.id);
+  
+  // Create a node type mapping that respects the original type but prioritizes centrality
+  const nodeTypeMap = originalNodes.reduce((acc, node) => {
+    if (centralNodes.includes(node.id)) {
+      acc[node.id] = 'main';
+    } else if (node.type === 'main' || node.type === 'subtopic') {
+      acc[node.id] = 'subtopic';
+    } else {
+      acc[node.id] = 'detail';
     }
-    
-    // For subtopics, create circular layout with larger radius
-    if (node.type === 'subtopic') {
-      const subtopicIndex = subtopicNodes.findIndex(n => n.id === node.id);
-      const angle = (2 * Math.PI * subtopicIndex) / subtopicNodes.length;
-      return {
-        ...node,
-        x: 500 + 250 * Math.cos(angle), // Larger radius for subtopics
-        y: 400 + 250 * Math.sin(angle)
-      };
-    }
-    
-    // For details, position them in outer ring with offset based on connections
-    const detailIndex = detailNodes.findIndex(n => n.id === node.id);
-    // Find connected node to determine position
-    const connection = connections.find(c => c.target === node.id || c.source === node.id);
-    const connectedToId = connection ? (connection.source === node.id ? connection.target : connection.source) : null;
-    const connectedNode = connectedToId ? originalNodes.find(n => n.id === connectedToId) : null;
-    const connectedType = connectedNode?.type || 'subtopic';
-    
-    // If connected to a subtopic, position relative to it
-    if (connectedType === 'subtopic') {
-      const connectedIndex = subtopicNodes.findIndex(n => n.id === connectedToId);
-      const angleBase = (2 * Math.PI * connectedIndex) / subtopicNodes.length;
-      const angleOffset = (detailIndex % 3) * 0.4 - 0.4; // Spread details around their parent
-      const angle = angleBase + angleOffset;
-      const radius = 400; // Even larger radius for details
-      
-      return {
-        ...node,
-        x: 500 + radius * Math.cos(angle),
-        y: 400 + radius * Math.sin(angle)
-      };
-    }
-    
-    // Fallback layout for unconnected details
-    const angle = (2 * Math.PI * detailIndex) / (detailNodes.length || 1);
+    return acc;
+  }, {} as Record<string, string>);
+  
+  // Group nodes by their effective type
+  const mainNodes = originalNodes.filter(node => nodeTypeMap[node.id] === 'main');
+  const subtopicNodes = originalNodes.filter(node => nodeTypeMap[node.id] === 'subtopic');
+  const detailNodes = originalNodes.filter(node => nodeTypeMap[node.id] === 'detail');
+  
+  // Build node connection map
+  const nodeConnections = originalNodes.reduce((acc, node) => {
+    acc[node.id] = connections.filter(c => c.source === node.id || c.target === node.id)
+      .map(c => c.source === node.id ? c.target : c.source);
+    return acc;
+  }, {} as Record<string, string[]>);
+  
+  // Calculate positions in stages
+  // 1. First process main nodes
+  const mainNodesWithPositions = mainNodes.map((node, index) => {
+    const angle = mainNodes.length > 1 ? (2 * Math.PI * index) / mainNodes.length : 0;
+    const radius = mainNodes.length > 1 ? 150 : 0;
     return {
       ...node,
-      x: 500 + 400 * Math.cos(angle),
-      y: 400 + 400 * Math.sin(angle)
+      x: 600 + radius * Math.cos(angle),
+      y: 400 + radius * Math.sin(angle),
+      type: nodeTypeMap[node.id]
     };
   });
 
-  // Position calculation
-  const minX = Math.min(...nodes.map(n => n.x));
-  const minY = Math.min(...nodes.map(n => n.y));
-  const maxX = Math.max(...nodes.map(n => n.x));
-  const maxY = Math.max(...nodes.map(n => n.y));
+  // 2. Process subtopic nodes
+  const subtopicNodesWithPositions = subtopicNodes.map((node) => {
+    // Find connected main node if any
+    const connectedMainNodes = nodeConnections[node.id]?.filter(id => 
+      nodeTypeMap[id] === 'main') || [];
+    
+    // If connected to a main node, position relative to it
+    if (connectedMainNodes.length > 0) {
+      const mainNodeId = connectedMainNodes[0];
+      const mainNode = mainNodesWithPositions.find(n => n.id === mainNodeId);
+      if (mainNode) {
+        // Get all subtopics connected to this main node
+        const connectedSubtopics = subtopicNodes.filter(n => 
+          nodeConnections[mainNodeId]?.includes(n.id) && 
+          nodeTypeMap[n.id] === 'subtopic');
+        
+        const subtopicIndex = connectedSubtopics.findIndex(n => n.id === node.id);
+        const totalConnected = connectedSubtopics.length;
+        
+        const arcStart = -Math.PI/2;
+        const arcLength = Math.PI;
+        const angle = arcStart + (subtopicIndex / Math.max(1, totalConnected - 1)) * arcLength;
+        
+        return {
+          ...node,
+          x: mainNode.x + 300 * Math.cos(angle),
+          y: mainNode.y + 300 * Math.sin(angle),
+          type: nodeTypeMap[node.id]
+        };
+      }
+    }
+    
+    // Fallback for unconnected subtopics
+    const subtopicIndex = subtopicNodes.findIndex(n => n.id === node.id);
+    const angle = (2 * Math.PI * subtopicIndex) / subtopicNodes.length;
+    return {
+      ...node,
+      x: 600 + 400 * Math.cos(angle),
+      y: 400 + 400 * Math.sin(angle),
+      type: nodeTypeMap[node.id]
+    };
+  });
+
+  // 3. Process detail nodes
+  const detailNodesWithPositions = detailNodes.map((node) => {
+    // All positioned nodes so far
+    const positionedNodes = [...mainNodesWithPositions, ...subtopicNodesWithPositions];
+    
+    // Find connected nodes
+    const connectedNodeIds = nodeConnections[node.id] || [];
+    // Prefer subtopic connections, then main connections
+    const subtopicConnections = connectedNodeIds.filter(id => nodeTypeMap[id] === 'subtopic');
+    const mainConnections = connectedNodeIds.filter(id => nodeTypeMap[id] === 'main');
+    
+    if (subtopicConnections.length > 0 || mainConnections.length > 0) {
+      const parentId = subtopicConnections[0] || mainConnections[0];
+      const parentNode = positionedNodes.find(n => n.id === parentId);
+      
+      if (parentNode) {
+        // Get all details connected to this parent
+        const siblings = detailNodes.filter(n => 
+          nodeConnections[parentId]?.includes(n.id));
+        
+        const detailIndex = siblings.findIndex(n => n.id === node.id);
+        const count = siblings.length;
+        
+        const arcLength = Math.PI;
+        const angle = -Math.PI/4 + (detailIndex / Math.max(1, count)) * arcLength;
+        const radius = 180;
+        
+        return {
+          ...node,
+          x: parentNode.x + radius * Math.cos(angle),
+          y: parentNode.y + radius * Math.sin(angle),
+          type: nodeTypeMap[node.id]
+        };
+      }
+    }
+    
+    // Fallback for isolated detail nodes
+    const detailIndex = detailNodes.findIndex(n => n.id === node.id);
+    const angle = (2 * Math.PI * detailIndex) / Math.max(1, detailNodes.length);
+    return {
+      ...node,
+      x: 600 + 500 * Math.cos(angle),
+      y: 400 + 500 * Math.sin(angle),
+      type: nodeTypeMap[node.id]
+    };
+  });
+
+  // Combine all nodes
+  const nodes = [...mainNodesWithPositions, ...subtopicNodesWithPositions, ...detailNodesWithPositions];
+
+  // Calculate canvas dimensions based on node positions
+  const minX = Math.min(...nodes.map(n => n.x)) - 100;
+  const minY = Math.min(...nodes.map(n => n.y)) - 100;
+  const maxX = Math.max(...nodes.map(n => n.x)) + 100;
+  const maxY = Math.max(...nodes.map(n => n.y)) + 100;
   
-  const width = maxX - minX + 200;
-  const height = maxY - minY + 200;
+  const width = Math.max(1000, maxX - minX);
+  const height = Math.max(800, maxY - minY);
   
-  // Center offset
-  const offsetX = -minX + 100;
-  const offsetY = -minY + 100;
+  // Calculate offsets to center the graph
+  const offsetX = -minX;
+  const offsetY = -minY;
   
   return (
     <motion.div
@@ -121,7 +203,7 @@ export function MindMapModal({
           </Button>
         </div>
         
-        <div className="flex-1 p-4 overflow-auto h-[calc(80vh-64px)]">
+        <div className="flex-1 p-4 overflow-auto h-[calc(80vh-64px)] custom-scrollbar">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-muted-foreground">Zoom: {Math.round(scale * 100)}%</span>
             <div className="w-48">
@@ -135,7 +217,7 @@ export function MindMapModal({
             </div>
           </div>
           
-          <div className="relative w-full h-full overflow-auto border border-zinc-800 rounded-lg bg-zinc-950 min-h-[400px]">
+          <div className="relative w-full h-full overflow-auto border border-zinc-800 rounded-lg bg-zinc-950 min-h-[400px] custom-scrollbar">
             <div style={{ 
               width: `${width}px`, 
               height: `${height}px`, 

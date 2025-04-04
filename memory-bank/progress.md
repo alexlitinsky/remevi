@@ -1,360 +1,199 @@
-# Progress
+# Project Progress
 
-## What Works
-
-### Core Features
-- User authentication and session management
-- Document upload and processing
-- Flashcard generation and study sessions
-- Progress tracking and statistics
-- Achievement system
-- Combined progress and achievements display in tabbed interface
-- Mind map generation and visualization
-- Real-time document processing with progress updates
-
-### UI Components
-- Responsive layout with motion animations
-- Progress bars and activity charts
-- Achievement cards and grid layout
-- Tabbed interface for progress and achievements
-- Study deck cards with progress indicators
-- Mind map visualization with zoom control
-- Processing status display with rainbow spinner and progress bar
+## Core Features
+- **User Authentication**: Implemented using Clerk
+- **Document Processing**: Upload and processing of various document types
+- **Flashcard Generation**: AI-based extraction of key concepts
+- **Study Sessions**: Interactive flashcard review with spaced repetition
+- **Progress Tracking**: User study activity and mastery metrics
+- **Achievement System**: Gamification elements for user engagement
+- **Mind Map Visualization**: Visual representation of document concepts
+- **Custom UI Elements**: Consistent styling across the application
+- **Quiz System**: Multiple-choice and free-response questions with scoring
+- **Quiz Statistics**: Tracking quiz performance and results
 
 ## Current Status
-
-The application has a streamlined UI that effectively combines related features:
-- Study progress and achievements are now displayed in a single card with tabs
-- Progress tracking includes comprehensive metrics and visualizations
-- Achievement system is fully integrated into the main interface
-- Weekly activity tracking provides clear study pattern insights
-- Document processing now shows real-time progress updates
-- Mind map visualization displays concept relationships with dynamic layout
+- The application provides an effective learning platform combining document processing, flashcard study, quizzes, and achievement tracking
+- Core functionality is implemented and working well
+- Session timing issues have been fixed to ensure accurate time tracking
+- Mind map visualization has been enhanced with an advanced layout algorithm
+- Quiz statistics component has been implemented to display quiz-specific metrics
+- UI refinements like custom scrollbars improve visual consistency
+- Achievement system provides motivation through gamification
+- Card counting now correctly distinguishes between flashcards and quiz questions
 
 ## Known Issues
-- Tab content might need loading states
-- Consider persistence for tab selection
-- May need additional progress metrics
-- Mind map layout could be improved for complex maps
-- Consider caching processing state for page refreshes
+- Quiz time metrics temporarily disabled while stabilizing session time calculations
+- Need loading states in tab content
+- Consider caching deck processing state for page refreshes
+- Mind map could benefit from more interactive features (zoom, pan, selection)
+- Achievement notification system needs implementation
+- Points system integration pending
+- Need to implement database tables for achievements
+- API endpoints for achievement tracking not yet created
 
-## Evolution of Decisions
+## Recent Enhancements
+1. **Session Timing Fixes**
+   - Fixed sessionId management in useStudySessionStore
+   - Added proper cleanup of sessionId when ending sessions
+   - Added checks for existing sessions when starting new ones
+   - Ensured accurate time tracking between sessions
+   - Improved backend time calculation based on session data
 
-### UI/UX Improvements
-1. Initially had separate cards for progress and achievements
-2. Combined into single card with tabs for better space efficiency
-3. Maintained all functionality while reducing vertical scrolling
-4. Enhanced user experience with motion animations
+2. **Quiz Statistics Component**
+   - Implemented QuizStats component for the study stats page
+   - Added metrics for quiz completion and accuracy
+   - Created display for recent quiz sessions
+   - Implemented 4-column layout matching the flashcard stats design
+   - Temporarily disabled time-related metrics while stabilizing time tracking
 
-### Progress Tracking
-1. Basic progress indicators
-2. Added detailed weekly activity visualization
-3. Integrated achievement tracking
-4. Combined view for comprehensive progress overview
+3. **Achievement System Improvements**
+   - Implemented upsert pattern to handle unique constraint violations
+   - Added error handling to prevent failures when creating achievements
+   - Ensured achievements can be correctly assigned to users
+   - Improved database operations to be more robust
 
-### Document Processing
-1. Initial basic loading state during processing
-2. Added detailed progress tracking with percentage
-3. Implemented stage-based progress feedback
-4. Added real-time polling updates with state preservation
-5. Fixed state management to prevent UI flipping issues
+4. **Improved Mind Map Visualization**
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved node positioning based on connection relationships
+   - Enhanced spacing between related nodes
+   - Added custom scrollbar styling matching application theme
+   - Fixed connection rendering and label placement
+   - Multi-stage positioning algorithm for better organization
 
-### Mind Map Visualization
-1. Initial implementation with static data
-2. Added dynamic position calculation for nodes
-3. Implemented circular layout with type-based node positioning
-4. Added zoom controls for better usability
-5. Fixed connection rendering between nodes
+5. **Document Processing Improvements**
+   - Fixed polling mechanism to maintain state during updates
+   - Updated progress tracking with accurate percentages and stages
+   - Improved error handling and recovery options
+   - Fixed processing state UI for better user feedback
+   - Enhanced coordination between frontend and backend data
 
-## Next Development Phase
-- Evaluate user interaction with tabbed interface
-- Consider additional progress metrics
-- Implement tab persistence
-- Add loading states for tab content
-- Monitor performance of combined interface
-- Improve mind map layout algorithms for complex relationships
-- Add more interactivity to mind map display
+6. **UI/UX Enhancements**
+   - Added custom scrollbar styling across the application
+   - Improved visual hierarchy in mind map component
+   - Enhanced node styling based on type and importance
+   - Optimized canvas size calculations for complex mind maps
+   - Added consistency in interactive elements
 
-## What's Left
+7. **Study Session Enhancements**
+   - Improved state management during document processing
+   - Fixed loading and processing states to avoid UI flickering
+   - Enhanced session initialization and state persistence
+   - Added better error handling for edge cases
+   - Fixed session time calculations for accurate tracking
 
-### Immediate Priorities
-1. Achievement System Implementation
-   - Database tables creation
-   - API endpoints development
+## Future Enhancements
+1. **Achievement System**
+   - Database schema implementation
+   - Achievement tracking logic
+   - UI notifications
    - Points system integration
-   - Flashcard achievement checks
-   - User profile achievements
 
-2. Points System
-   - Quiz points calculation
-   - Flashcard points tracking
-   - Streak management
-   - Points history
-   - Achievement progress
+2. **Mind Map Interactivity**
+   - Node selection for details view
+   - Zooming and panning controls
+   - Search functionality for finding concepts
+   - Export options (PNG, PDF)
+   - Ability to edit or customize the mind map
 
-3. Analytics
-   - Achievement tracking
-   - User progress analysis
-   - Points distribution
-   - Engagement metrics
+3. **Processing Improvements**
+   - Caching for processing state
+   - Resume processing after page refresh
+   - Processing queue for multiple documents
+   - Progress estimation improvements
 
-4. Mind Map Enhancements
-   - Improved layout algorithms
-   - Node selection and details view
-   - Animations for transitions
-   - Better handling of large maps
+4. **UI/UX Refinements**
+   - Loading states for all components
+   - Transition animations
+   - Mobile responsiveness improvements
+   - Dark/light theme toggle
+   - User preferences persistence
 
-### Future Enhancements
-1. Additional Features
-   - More achievements
-   - Advanced scoring
-   - Learning analytics
-   - Progress tracking
+5. **Quiz System Enhancements**
+   - Re-enable time tracking metrics once calculations are stabilized
+   - Add more detailed performance analytics
+   - Implement question difficulty rating
+   - Add quiz creation and sharing features
 
-2. User Experience
-   - Achievement animations
-   - Progress visualization
-   - Profile customization
-   - Social features
+## Development Timeline
+- **Phase 1**: Core functionality (Completed)
+  - User authentication
+  - Document upload and processing
+  - Basic flashcard generation
+  - Simple study sessions
 
-3. Document Processing
-   - Faster processing algorithms
-   - More detailed progress feedback
-   - Enhanced error recovery
-   - Processing optimization options
+- **Phase 2**: Enhanced study experience (Completed)
+  - Improved flashcard generation
+  - Spaced repetition algorithm
+  - Basic progress tracking
+  - Initial mind map implementation
 
-## Current Status
+- **Phase 3**: UI refinements and advanced features (Completed)
+  - Combined tabs interface
+  - Enhanced progress visualization
+  - Improved mind map layout and styling
+  - Custom UI elements like scrollbars
+  - Processing state improvements
+  - Quiz statistics component
 
-### Completed Features
-- [x] Basic quiz flow
-- [x] MCQ implementation
-- [x] FRQ implementation
-- [x] Keyboard shortcuts
-- [x] Answer feedback
-- [x] Progress tracking
-- [x] Configuration modal
-- [x] Visual design
-- [x] Session management
-- [x] Achievement badge designs
-- [x] Achievement notification component
-- [x] Quiz achievement check
-- [x] Document processing with progress updates
-- [x] Real-time polling for status updates
-- [x] Mind map visualization
-- [x] Processing state UI components
+- **Phase 4**: Gamification and engagement (Current)
+  - Achievement system
+  - Points and rewards
+  - Streak tracking
+  - Social features
+  - Session time tracking improvements
 
-### In Progress
-- [ ] Database schema implementation
-- [ ] API endpoints development
-- [ ] Points system integration
-- [ ] Flashcard achievement checks
-- [ ] User profile achievements
-- [ ] Achievement unlock animations
-- [ ] Points history tracking
-- [ ] Progress visualization
-- [ ] Mind map interactivity enhancements
-- [ ] Processing optimization for large documents
-
-### Planned
-- [ ] Social achievements
-- [ ] Advanced analytics
-- [ ] Achievement statistics
-- [ ] Profile customization
-- [ ] Social features
-- [ ] Achievement sharing
-- [ ] Advanced mind map interactions
-- [ ] Custom layout algorithms for mind maps
-- [ ] Caching for processing state
-
-## Known Issues
-1. Achievement System
-   - Database tables not implemented
-   - API endpoints missing
-   - Points system not integrated
-   - Flashcard achievements pending
-   - Progress tracking incomplete
-
-2. Technical
-   - Achievement check performance
-   - Points calculation efficiency
-   - Progress tracking accuracy
-   - Storage optimization
-   - API response times
-   - Mind map layout for complex relationships
-   - Handling very large documents during processing
-
-## Evolution of Decisions
-
-### Initial Approach
-1. Simple achievement badges
-2. Basic points system
-3. Limited achievement types
-4. Static processing states
-5. Basic mind map display
-
-### Current Implementation
-1. Modern badge design system
-2. Comprehensive achievement types
-3. Points-based progression
-4. Achievement notifications
-5. Real-time progress updates
-6. Dynamic mind map visualization
-7. Stage-based processing feedback
-
-### Future Direction
-1. Social achievement features
-2. Advanced progress tracking
-3. Achievement statistics
-4. Community engagement
-5. Interactive mind maps
-6. Optimized document processing
-7. Advanced layout algorithms
-
-### State Management
-1. Achievement persistence
-2. Points tracking
-3. Progress monitoring
-4. Streak management
-5. Processing state preservation
-6. Polling with minimal state updates
-
-### UI/UX
-1. Achievement notifications
-2. Badge display
-3. Progress visualization
-4. Points history
-5. Processing feedback animations
-6. Mind map zoom and pan controls
-7. Processing stage indicators
-
-### Architecture
-1. Achievement system
-2. Points calculation
-3. Progress tracking
-4. Data persistence
-5. Polling mechanism
-6. Dynamic visualization components
-7. Processing pipeline with stages
-
-## In Progress
-- Achievement display debugging
-- Progress tracking implementation
-- Achievement unlocking notifications
-- Integration with user actions
-- Mind map interactivity enhancements
-- Document processing optimizations
-
-## Next Milestones
-1. Fix achievement display issues
-2. Implement progress tracking
-3. Add achievement notifications
-4. Test achievement unlocking flow
-5. Improve mind map layout for complex maps
-6. Add mind map node selection functionality
-7. Optimize document processing for large files
-
-## Recent Decisions
-- Using category-based filtering for achievements
-- Implementing progress tracking per achievement
-- Adding SVG icons for visual feedback
-- Structuring achievement requirements
-- Using circular layout for mind maps
-- Dynamic node positioning based on type
-- Using polling for real-time progress updates
-- Preserving state during polling updates
+- **Phase 5**: Advanced features and optimizations (Future)
+  - Advanced mind map interactivity
+  - Mobile app version
+  - Performance optimizations
+  - Additional document formats
+  - API for third-party integrations
 
 ## Technical Debt
-- Need to implement proper progress tracking
-- Achievement unlocking animations pending
-- Missing achievement notifications
-- Need to add achievement statistics
-- Mind map layout improvements for complex relationships
-- Caching for processing state
+- Time tracking calculations need further refinement
+- Need typed API responses for better type safety
+- Consider component refactoring for better code organization
+- Improve error handling across the application
+- Address accessibility issues
+- Optimize database queries for better performance
+- Add comprehensive test coverage
 
-## Documentation Needs
-- Achievement system overview
-- Achievement unlocking conditions
-- Progress tracking implementation
-- API endpoint documentation
-- Mind map component documentation
-- Document processing pipeline documentation
+## Accomplishments
+- Successfully implemented Clerk authentication
+- Created robust document processing pipeline
+- Developed effective AI-based flashcard generation
+- Built interactive study session interface
+- Fixed session timing issues for accurate tracking
+- Implemented progress tracking system
+- Created achievement system architecture
+- Developed advanced mind map visualization
+- Enhanced UI with custom styling and components
+- Implemented quiz system with statistics tracking
 
-## Achievement System Database Schema
-- Achievement system database schema
+## Next Tasks
+1. Implement achievement database schema
+2. Create API endpoints for achievement tracking
+3. Develop achievement notification component
+4. Integrate points system with user profile
+5. Add interactive features to mind map
+6. Implement caching for processing state
+7. Add loading states to tab content
+8. Enhance mobile responsiveness
+9. Re-enable time tracking metrics once calculations are stable
+10. Optimize database operations for scalability
 
-## Achievement API Endpoints
-- Achievement API endpoints
-
-## Basic Achievement Display Components
-- Basic achievement display components
-
-## Achievement Categories and Filtering
-- Achievement categories and filtering
-
-## User Achievement Tracking
-- User achievement tracking
-
-## SVG Icons for Achievements
-- SVG icons for achievements
-
-## Achievement Seeding Script
-- Achievement seeding script
-
-# Progress Tracking
-
-## What Works
-1. Basic study deck functionality
-2. PDF processing and chunking
-3. Flashcard generation
-4. Mind map generation
-5. Processing state UI components:
-   - Rainbow spinner
-   - Stage messages
-   - Progress bar
-   - Return home button
-6. Real-time progress tracking:
-   - Polling mechanism implemented
-   - Progress percentage updates
-   - Stage-based feedback
-   - Proper error handling
-7. Mind map visualization:
-   - Dynamic node positioning
-   - Circular layout algorithm
-   - Connection rendering
-   - Zoom controls
-   - Type-based node styling
-
-## Completed
-1. Real-time progress tracking:
-   - Added polling mechanism
-   - Implemented GET handler for deck status
-   - Fixed progress percentage updates
-   - Added stage-based messaging
-   - Implemented proper error handling
-
-2. Processing state improvements:
-   - Stage tracking with clear indicators
-   - Progress percentage with accurate display
-   - Error handling with helpful messages
-   - Auto-reload on completion
-   - Rainbow spinner animation
-
-3. Mind map visualization:
-   - Dynamic node position calculation
-   - Circular layout implementation
-   - Type-based node styling
-   - Connection rendering between nodes
-   - Zoom controls for better viewing
-
-## In Progress
-1. Mind map enhancements:
-   - Improving layout for complex maps
-   - Adding node selection functionality
-   - Implementing details view for nodes
-   - Adding animations for smoother transitions
-
-2. Document processing optimization:
-   - Handling larger documents efficiently
-   - Improving error recovery
-   - Optimizing polling frequency
-   - Adding caching for processing state 
+## Recent Progress
+- Fixed session timing issues by properly managing sessionId
+- Implemented QuizStats component for tracking quiz performance
+- Added upsert pattern for handling achievement database constraints
+- Fixed document processing state management
+- Improved mind map layout algorithm
+- Implemented advanced node positioning based on connections
+- Added graph analysis for better concept organization
+- Enhanced UI with custom scrollbar styling
+- Fixed connection rendering in mind map visualization
+- Implemented multi-stage positioning algorithm for better organization
+- Added visual differentiation of nodes based on type and importance
+- Modified deck page to correctly count only flashcards in statistics 

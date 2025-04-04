@@ -128,23 +128,23 @@ export function DeckCompletionScreen({
           <motion.div variants={item} className="space-y-3">
             <Button 
               onClick={onRestartDeck}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 cursor-pointer"
             >
               Study Again
             </Button>
             
-            <Button 
+            {/* <Button 
               onClick={onSeePerformance}
               variant="outline"
-              className="w-full border-blue-500/30 text-blue-500 hover:bg-blue-500/10 py-2"
+              className="w-full border-blue-500/30 text-blue-500 hover:bg-blue-500/10 py-2 cursor-pointer"
             >
               See Performance
-            </Button>
+            </Button> */}
             
             <Button 
               onClick={onReturnToDashboard}
-              variant="ghost"
-              className="w-full hover:bg-muted py-2"
+              variant="outline"
+              className="w-full border-blue-500/30 text-blue-500 hover:bg-blue-500/10 py-2 cursor-pointer"
             >
               Return to Deck
             </Button>
@@ -152,7 +152,7 @@ export function DeckCompletionScreen({
             <Button 
               onClick={onReturnToHome}
               variant="ghost"
-              className="w-full text-muted-foreground py-2"
+              className="w-full text-muted-foreground py-2 cursor-pointer"
             >
               Return to Home
             </Button>

@@ -65,33 +65,53 @@ export async function POST(req: Request) {
       }
 
       if (isUnlocked) {
-        // Create user achievement
-        const userAchievement = await db.userAchievement.create({
-          data: {
-            userId: user.id,
-            achievementId: achievement.id,
-            notified: false
-          },
-          include: {
-            achievement: true
-          }
-        });
-
-        // Update user progress with points
-        await db.userProgress.upsert({
-          where: { userId: user.id },
-          create: {
-            userId: user.id,
-            points: achievement.pointsAwarded
-          },
-          update: {
-            points: {
-              increment: achievement.pointsAwarded
+        // Check if user already has this achievement to avoid constraint error
+        try {
+          // Use upsert instead of create to handle existing achievements
+          const userAchievement = await db.userAchievement.upsert({
+            where: {
+              userId_achievementId: {
+                userId: user.id,
+                achievementId: achievement.id,
+              },
+            },
+            update: {
+              // Just update the notified status if it already exists
+              notified: false,
+            },
+            create: {
+              userId: user.id,
+              achievementId: achievement.id,
+              notified: false
+            },
+            include: {
+              achievement: true
             }
-          }
-        });
+          });
 
-        newAchievements.push(userAchievement);
+          // Only award points if this is a new achievement (not previously awarded)
+          if (userAchievement) {
+            // Update user progress with points
+            await db.userProgress.upsert({
+              where: { userId: user.id },
+              create: {
+                userId: user.id,
+                points: achievement.pointsAwarded
+              },
+              update: {
+                points: {
+                  increment: achievement.pointsAwarded
+                }
+              }
+            });
+
+            newAchievements.push(userAchievement);
+          }
+        } catch (error) {
+          console.error(`[ACHIEVEMENTS_CHECK] Error processing achievement ${achievement.id}:`, error);
+          // Continue processing other achievements rather than failing completely
+          continue;
+        }
       }
     }
 
