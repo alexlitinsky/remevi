@@ -125,9 +125,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
-    // Check if deck exists and belongs to user before proceeding
+    // Check if deck exists and belongs to user
     const deckCheck = await db.deck.findUnique({
       where: { 
         id,
@@ -140,160 +140,120 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return new Response('Deck not found or unauthorized', { status: 404 });
     }
 
-    // First, delete all card interactions
-    try {
-      await db.cardInteraction.deleteMany({
-        where: {
-          studyContent: {
-            deckContent: {
-              some: {
-                deckId: id
-              }
-            }
-          }
-        }
-      });
-    } catch (error) {
-      console.error('Error deleting card interactions:', error);
-      // Continue even if this fails
-    }
-
-    // Delete all study sessions
-    try {
-      await db.studySession.deleteMany({
-        where: {
-          deckId: id
-        }
-      });
-    } catch (error) {
-      console.error('Error deleting study sessions:', error);
-      // Continue even if this fails
-    }
-
     // Get the deck with its content
-    let deck;
-    try {
-      deck = await db.deck.findUnique({
-        where: { id },
-        include: {
-          deckContent: {
-            include: {
-              studyContent: {
-                include: {
-                  flashcardContent: true,
-                  studyMaterial: true
-                }
+    const deck = await db.deck.findUnique({
+      where: { id },
+      include: {
+        deckContent: {
+          include: {
+            studyContent: {
+              include: {
+                studyMaterial: true,
+                QuizAnswer: true
               }
             }
           }
         }
-      });
-    } catch (error) {
-      console.error('Error fetching deck for deletion:', error);
-      return new Response('Error fetching deck details', { status: 500 });
-    }
+      }
+    });
 
     if (!deck) {
       return new Response('Deck not found', { status: 404 });
     }
 
     if (deck.userId !== user.id) {
-      return new Response('Unauthorized', { status: 403 });
+      return new Response('Unauthorized', { status: 401 });
     }
 
-    // Begin transaction to delete remaining content
-    try {
-      await db.$transaction(async (tx) => {
-        // Delete all related content in a more efficient order
-        // We'll use a simpler approach to avoid relation filter complexities
-        
-        // Delete all flashcard content first
-        for (const content of deck.deckContent) {
-          if (content.studyContent?.flashcardContent) {
-            try {
-              await tx.flashcardContent.delete({
-                where: { id: content.studyContent.flashcardContent.id }
-              });
-            } catch (error) {
-              console.error('Failed to delete flashcard content:', error);
-              // Continue with deletion even if flashcard content deletion fails
-            }
-          }
-        }
-
-        // Handle file storage for study materials
-        for (const content of deck.deckContent) {
-          if (content.studyContent?.studyMaterial) {
-            const studyMaterial = content.studyContent.studyMaterial;
-            
-            // Delete file from storage if it exists
-            if (studyMaterial.fileUrl) {
-              try {
-                await deleteFileFromStorage(studyMaterial.fileUrl);
-              } catch (error) {
-                console.error('Failed to delete file from storage:', error);
-                // Continue with deletion even if file removal fails
-              }
-            }
-            
-            // Delete the study material
-            try {
-              await tx.studyMaterial.delete({
-                where: { id: studyMaterial.id }
-              });
-            } catch (error) {
-              console.error('Failed to delete study material:', error);
-              // Continue with deletion even if deletion fails
-            }
-          }
-        }
-        
-        // Now delete study content
-        for (const content of deck.deckContent) {
-          if (content.studyContent) {
-            try {
-              await tx.studyContent.delete({
-                where: { id: content.studyContent.id }
-              });
-            } catch (error) {
-              console.error('Failed to delete study content:', error);
-              // Continue with deletion even if study content deletion fails
-            }
-          }
-        }
-
-        // Delete deck content
-        try {
-          await tx.deckContent.deleteMany({
-            where: { deckId: deck.id }
-          });
-        } catch (error) {
-          console.error('Failed to delete deck content:', error);
-          // Continue with deletion even if deck content deletion fails
-        }
-
-        // Finally, delete the deck itself
-        try {
-          await tx.deck.delete({
-            where: { id: deck.id }
-          });
-        } catch (error) {
-          console.error('Failed to delete deck:', error);
-          throw error; // Re-throw this error as deleting the deck is crucial
-        }
-      }, {
-        timeout: 30000, // Increase timeout to 30 seconds
-        maxWait: 10000, // Maximum time to wait for a transaction slot
-        isolationLevel: 'ReadCommitted' // Less strict isolation for better performance
+    // Delete everything in a transaction
+    await db.$transaction(async (tx) => {
+      // Get all study sessions and accumulate stats before deletion
+      const studySessions = await tx.studySession.findMany({
+        where: { deckId: id }
       });
-    } catch (error) {
-      console.error('Transaction failed during deck deletion:', error);
-      return new Response('Failed to delete some deck components', { status: 500 });
-    }
+
+      // Accumulate study stats
+      if (studySessions.length > 0) {
+        const totalPoints = studySessions.reduce((sum, session) => sum + (session.pointsEarned || 0), 0);
+        const totalTimeNumber = studySessions.reduce((sum, session) => sum + (session.totalTime || 0), 0);
+        
+        // Update user progress with accumulated stats
+        await tx.userProgress.upsert({
+          where: { userId: user.id },
+          create: {
+            userId: user.id,
+            points: totalPoints,
+            totalStudyTime: totalTimeNumber,
+            streak: 0
+          },
+          update: {
+            points: { increment: totalPoints },
+            totalStudyTime: { increment: totalTimeNumber }
+          }
+        });
+      }
+
+      // First delete all quiz answers
+      for (const content of deck.deckContent) {
+        if (content.studyContent.QuizAnswer.length > 0) {
+          await tx.quizAnswer.deleteMany({
+            where: { studyContentId: content.studyContentId }
+          });
+        }
+      }
+
+      // Delete deck content
+      await tx.deckContent.deleteMany({
+        where: { deckId: id }
+      });
+
+      // Get unique study materials
+      const studyMaterialIds = [...new Set(deck.deckContent.map(content => 
+        content.studyContent.studyMaterial?.id
+      ).filter(Boolean))];
+
+      // Check and delete study materials if not used by other decks
+      for (const studyMaterialId of studyMaterialIds) {
+        // Check if study material is used by other decks
+        const otherDecks = await tx.deckContent.findFirst({
+          where: {
+            studyContent: {
+              studyMaterialId
+            },
+            deckId: {
+              not: id
+            }
+          }
+        });
+
+        // If not used by other decks, delete the study material
+        if (!otherDecks && studyMaterialId) {
+          // Delete associated study content first
+          await tx.studyContent.deleteMany({
+            where: { studyMaterialId }
+          });
+
+          // Then delete the study material
+          await tx.studyMaterial.delete({
+            where: { id: studyMaterialId }
+          });
+        }
+      }
+
+      // Delete study sessions after preserving their stats
+      await tx.studySession.deleteMany({
+        where: { deckId: id }
+      });
+
+      // Finally delete the deck
+      await tx.deck.delete({
+        where: { id }
+      });
+    });
 
     return new Response('Deck deleted successfully', { status: 200 });
   } catch (error) {
     console.error('Error deleting deck:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    return new Response('Error deleting deck', { status: 500 });
   }
 }

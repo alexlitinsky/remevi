@@ -41,6 +41,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { GlobalAchievements } from '@/components/achievements/GlobalAchievements';
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
 
 interface Deck {
   id: string;
@@ -377,7 +384,7 @@ export default function Home() {
 
           {isSignedIn && (
             <>
-              {/* Study Progress Section */}
+              {/* Combined Study Progress & Achievements Section */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -388,164 +395,167 @@ export default function Home() {
                   <CardHeader className="pb-2">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
-                        <CardTitle className="text-2xl font-bold">Study Progress</CardTitle>
-                        <CardDescription>Track your learning journey</CardDescription>
+                        <CardTitle className="text-2xl font-bold">Learning Progress</CardTitle>
+                        <CardDescription>Track your learning journey and achievements</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
 
-                  <CardContent className="space-y-6">
-                    {/* Cards Reviewed */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Cards Reviewed</span>
-                        <span className="font-medium">
-                          {progress.cardsReviewed}/{progress.totalCards}
-                        </span>
-                      </div>
-                      <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
-                        <motion.div 
-                          className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(progress.cardsReviewed / progress.totalCards) * 100}%` }}
-                          transition={{ duration: 0.5, ease: "easeInOut" }}
-                        >
-                          <motion.div
-                            className="absolute inset-0 w-full h-full"
-                            style={{
-                              background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
-                              backgroundSize: "200% 100%",
-                            }}
-                            animate={{
-                              backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
-                            }}
-                            transition={{
-                              duration: 2,
-                              ease: "linear",
-                              repeat: Infinity,
-                            }}
-                          />
-                        </motion.div>
-                      </div>
-                    </div>
+                  <CardContent>
+                    <Tabs defaultValue="progress" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 mb-6">
+                        <TabsTrigger value="progress">Study Progress</TabsTrigger>
+                        <TabsTrigger value="achievements">Achievements</TabsTrigger>
+                      </TabsList>
 
-                    {/* Mastery Level */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Mastery Level</span>
-                        <span className="font-medium">{progress.masteryLevel}%</span>
-                      </div>
-                      <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
-                        <motion.div 
-                          className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${progress.masteryLevel}%` }}
-                          transition={{ duration: 0.5, ease: "easeInOut" }}
-                        >
-                          <motion.div
-                            className="absolute inset-0 w-full h-full"
-                            style={{
-                              background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
-                              backgroundSize: "200% 100%",
-                            }}
-                            animate={{
-                              backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
-                            }}
-                            transition={{
-                              duration: 2,
-                              ease: "linear",
-                              repeat: Infinity,
-                            }}
-                          />
-                        </motion.div>
-                      </div>
-                    </div>
+                      <TabsContent value="progress" className="space-y-6">
+                        {/* Cards Reviewed */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Cards Reviewed</span>
+                            <span className="font-medium">
+                              {progress.cardsReviewed}/{progress.totalCards}
+                            </span>
+                          </div>
+                          <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
+                            <motion.div 
+                              className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(progress.cardsReviewed / progress.totalCards) * 100}%` }}
+                              transition={{ duration: 0.5, ease: "easeInOut" }}
+                            >
+                              <motion.div
+                                className="absolute inset-0 w-full h-full"
+                                style={{
+                                  background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
+                                  backgroundSize: "200% 100%",
+                                }}
+                                animate={{
+                                  backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
+                                }}
+                                transition={{
+                                  duration: 2,
+                                  ease: "linear",
+                                  repeat: Infinity,
+                                }}
+                              />
+                            </motion.div>
+                          </div>
+                        </div>
 
-                    {/* Weekly Activity */}
-                    <div className="pt-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-medium">Weekly Activity</h3>
-                        <Badge variant="outline" className="text-xs">
-                          Last 7 days
-                        </Badge>
-                      </div>
+                        {/* Mastery Level */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Mastery Level</span>
+                            <span className="font-medium">{progress.masteryLevel}%</span>
+                          </div>
+                          <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
+                            <motion.div 
+                              className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${progress.masteryLevel}%` }}
+                              transition={{ duration: 0.5, ease: "easeInOut" }}
+                            >
+                              <motion.div
+                                className="absolute inset-0 w-full h-full"
+                                style={{
+                                  background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
+                                  backgroundSize: "200% 100%",
+                                }}
+                                animate={{
+                                  backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
+                                }}
+                                transition={{
+                                  duration: 2,
+                                  ease: "linear",
+                                  repeat: Infinity,
+                                }}
+                              />
+                            </motion.div>
+                          </div>
+                        </div>
 
-                      <div className="grid grid-cols-7 gap-2">
-                        {Array.from({ length: 7 }, (_, i) => {
-                          const date = new Date();
-                          date.setDate(date.getDate() - (6 - i));
-                          const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                          const value = progress.weeklyActivity[i] || 0;
-                          const maxValue = Math.max(...progress.weeklyActivity, 1);
-                          const heightPercent = (value / maxValue) * 100;
+                        {/* Weekly Activity */}
+                        <div className="pt-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-medium">Weekly Activity</h3>
+                            <Badge variant="outline" className="text-xs">
+                              Last 7 days
+                            </Badge>
+                          </div>
 
-                          return (
-                            <div key={dayName} className="flex flex-col items-center gap-2">
-                              {/* Bar container */}
-                              <div className="w-full h-[100px] flex items-end bg-muted/10 rounded-sm overflow-hidden">
-                                {/* Actual bar */}
-                                <div 
-                                  className="w-full bg-green-400"
-                                  style={{ 
-                                    height: `${heightPercent}%`,
-                                    minHeight: value > 0 ? '2px' : '0',
-                                    transition: 'height 0.5s ease-out'
-                                  }} 
-                                />
+                          <div className="grid grid-cols-7 gap-2">
+                            {Array.from({ length: 7 }, (_, i) => {
+                              const date = new Date();
+                              date.setDate(date.getDate() - (6 - i));
+                              const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                              const value = progress.weeklyActivity[i] || 0;
+                              const maxValue = Math.max(...progress.weeklyActivity, 1);
+                              const heightPercent = (value / maxValue) * 100;
+
+                              return (
+                                <div key={dayName} className="flex flex-col items-center gap-2">
+                                  {/* Bar container */}
+                                  <div className="w-full h-[100px] flex items-end bg-muted/10 rounded-sm overflow-hidden">
+                                    {/* Actual bar */}
+                                    <div 
+                                      className="w-full bg-green-400"
+                                      style={{ 
+                                        height: `${heightPercent}%`,
+                                        minHeight: value > 0 ? '2px' : '0',
+                                        transition: 'height 0.5s ease-out'
+                                      }} 
+                                    />
+                                  </div>
+
+                                  {/* Day label */}
+                                  <span className="text-xs text-muted-foreground">
+                                    {dayName}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+                          <Card className="bg-muted/30 border-primary/5">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="text-muted-foreground text-sm">Minutes Studied</div>
+                                <Clock className="h-4 w-4 text-primary/70" />
                               </div>
+                              <div className="text-2xl font-bold mt-2">{progress.minutesStudied || 0}</div>
+                            </CardContent>
+                          </Card>
 
-                              {/* Day label */}
-                              <span className="text-xs text-muted-foreground">
-                                {dayName}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                          <Card className="bg-muted/30 border-primary/5">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="text-muted-foreground text-sm">Days Streak</div>
+                                <Flame className="h-4 w-4 text-orange-500" />
+                              </div>
+                              <div className="text-2xl font-bold mt-2">{progress.currentStreak || 0}</div>
+                            </CardContent>
+                          </Card>
 
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-                      <Card className="bg-muted/30 border-primary/5">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="text-muted-foreground text-sm">Minutes Studied</div>
-                            <Clock className="h-4 w-4 text-primary/70" />
-                          </div>
-                          <div className="text-2xl font-bold mt-2">{progress.minutesStudied || 0}</div>
-                        </CardContent>
-                      </Card>
+                          <Card className="bg-muted/30 border-primary/5">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="text-muted-foreground text-sm">Total Points</div>
+                                <Trophy className="h-4 w-4 text-yellow-500" />
+                              </div>
+                              <div className="text-2xl font-bold mt-2">{progress.totalPoints || 0}</div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </TabsContent>
 
-                      {/* <Card className="bg-muted/30 border-primary/5">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="text-muted-foreground text-sm">Study Sessions</div>
-                            <BookOpen className="h-4 w-4 text-primary/70" />
-                          </div>
-                          <div className="text-2xl font-bold mt-2">{progress.studySessions || 0}</div>
-                        </CardContent>
-                      </Card> */}
-
-                      <Card className="bg-muted/30 border-primary/5">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="text-muted-foreground text-sm">Days Streak</div>
-                            <Flame className="h-4 w-4 text-orange-500" />
-                          </div>
-                          <div className="text-2xl font-bold mt-2">{progress.currentStreak || 0}</div>
-                        </CardContent>
-                      </Card>
-
-                      <Card className="bg-muted/30 border-primary/5">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="text-muted-foreground text-sm">Total Points</div>
-                            <Trophy className="h-4 w-4 text-yellow-500" />
-                          </div>
-                          <div className="text-2xl font-bold mt-2">{progress.totalPoints || 0}</div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                      <TabsContent value="achievements">
+                        <GlobalAchievements />
+                      </TabsContent>
+                    </Tabs>
                   </CardContent>
                 </Card>
               </motion.div>

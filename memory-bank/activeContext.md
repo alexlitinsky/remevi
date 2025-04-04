@@ -1,123 +1,138 @@
 # Active Context
 
 ## Current Focus
-- Quiz taking experience enhancements
-- UI/UX improvements for quiz interaction
-- Keyboard shortcuts and accessibility
-- Quiz session management and persistence
+
+The application is focused on providing a streamlined learning experience with an emphasis on progress tracking and achievement visualization. Recent changes include:
+
+- Combined Study Progress and Achievements into a single tabbed interface for better UX
+- Tabs include:
+  1. Study Progress - Shows learning metrics, activity, and stats
+  2. Achievements - Displays global achievements
 
 ## Recent Changes
-1. Quiz Session Management
-   - Added robust session persistence and recovery
-   - Implemented `isValidSession` helper to validate session state
-   - Enhanced session cleanup for new quiz starts
-   - Added proper state restoration for answered questions
-   - Improved handling of explanation state persistence
-   - Fixed session recovery after page reload/navigation
 
-2. Quiz Configuration Modal
-   - Enhanced start quiz button with gradient and animations
-   - Improved navigation button layout and styling
-   - Added brain icon to start button
-   - Increased vertical spacing for better rhythm
-   - Refined loading state visuals
-   - Added hasStarted state to control X button visibility
-   - Only shows close button after quiz has started
-   - First-time user keyboard shortcut tips
-   - Added session cleanup before starting new quiz
-
-3. Quiz Question Component
-   - Enhanced keyboard navigation
-   - Added multiline support for FRQ answers (Shift+Enter)
-   - Improved button styling and spacing
-   - Added deck title to header
-   - Removed timer placeholder
-   - Improved feedback UI with gradients and animations
-
-4. FRQ Answer Section
-   - Switched from Input to Textarea for multiline support
-   - Added keyboard shortcut hints
-   - Enhanced styling and user experience
+- Merged separate Study Progress and Achievements sections into a unified "Learning Progress" card
+- Implemented tabbed navigation using shadcn/ui Tabs components
+- Maintained all existing functionality while making the UI more compact
+- Progress tab includes:
+  - Cards reviewed progress
+  - Mastery level tracking
+  - Weekly activity visualization
+  - Key stats (Minutes studied, Streak, Total points)
 
 ## Active Decisions
-1. Session Management:
-   - Session considered valid if:
-     - Has sessionId
-     - Has questions
-     - Has at least one answer
-     - Current question index is valid
-   - Clean up session on:
-     - Starting new quiz
-     - Explicit restart
-   - Preserve session on:
-     - Page reload/navigation
-     - Quiz completion (for results view)
 
-2. Keyboard Shortcuts:
-   - Numbers 1-4 for MCQ options
-   - Enter/Space to submit
-   - Shift+Enter for new lines in FRQ
-   - Enter/Space for next question after answering
+- Using a 2-column tab layout for clear section separation
+- Maintaining motion animations for progress bars and activity charts
+- Keeping the card styling consistent with the rest of the application
+- Using descriptive tab labels for clear navigation
 
-3. UI/UX Patterns:
-   - Gradient backgrounds for primary actions
-   - Scale animations on hover/active states
-   - Consistent button heights (h-14 for primary, h-12 for secondary)
-   - Blue accent color for action buttons
-   - Animated transitions for state changes
-   - Clear visual feedback for correct/incorrect answers
+## Project Insights
 
-4. Quiz Flow:
-   - Must configure quiz before starting first time
-   - Can return to config after starting via settings
-   - Progressive disclosure of keyboard shortcuts
-   - Session recovery on return to quiz
-   - Explanation state preserved between sessions
+- Combining related features into tabbed interfaces helps reduce vertical scrolling
+- Motion animations enhance the user experience when displaying progress
+- Weekly activity visualization provides valuable insights into study patterns
+- The unified card design maintains visual hierarchy while improving space efficiency
+
+## Next Steps
+
+- Consider adding tab persistence across sessions
+- Evaluate the need for additional progress metrics
+- Monitor user interaction with the tabbed interface for potential improvements
+- Consider adding loading states for tab content
+
+## Important Patterns
+- Using Clerk for user authentication
+- Achievement categories: study, mastery, streak, points
+- Achievement data structure includes requirements and progress tracking
+- Using Prisma for database interactions
+
+## Recent Learnings
+- Achievement system structure and categories
+- Progress tracking requirements for different achievement types
+- Integration points between user actions and achievement unlocking
+
+## Current Focus
+- Achievement system implementation
+- Points system integration
+- Database schema for achievements
+- API endpoints for achievement tracking
+- UI/UX for achievement notifications
+
+## Recent Changes
+1. Achievement System Development
+   - Created achievement badge SVGs with modern design
+   - Implemented achievement notification component
+   - Added achievement check in QuizResults
+   - Designed points system for quizzes and flashcards
+
+2. Achievement Badge Design
+   - Modern, abstract achievement template
+   - Neural/learning theme
+   - Unique icons for each achievement type
+   - Consistent style with gradients and animations
+   - Created badges for all achievement types
+
+3. Points System Design
+   - Quiz points based on accuracy
+   - Flashcard points based on SRS difficulty
+   - Session tracking for streaks
+   - Points persistence in user profile
+
+## Active Decisions
+1. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+
+2. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+3. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+4. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
 
 ## Current Learnings
 1. User Experience:
-   - First-time users need guidance on keyboard shortcuts
-   - FRQ answers benefit from multiline support
-   - Visual feedback important for answer states
-   - Session persistence crucial for longer quizzes
+   - Achievement feedback importance
+   - Points system motivation
+   - Progress visualization
+   - Badge design impact
 
 2. Technical:
-   - Textarea vs Input considerations for FRQ
-   - Keyboard event handling complexity
-   - State management for quiz progress
-   - Importance of proper session cleanup
-   - Need for comprehensive state persistence
-
-## Next Steps
-1. Potential Enhancements:
-   - Timer functionality implementation
-   - More keyboard shortcuts
-   - Additional question types
-   - Enhanced progress tracking
-   - Session timeout handling
-   - Auto-save functionality
-
-2. Improvements:
-   - Mobile responsiveness review
-   - Accessibility audit
-   - Performance optimization
-   - Session recovery edge cases
-   - Error handling improvements
+   - SVG animation techniques
+   - Achievement tracking logic
+   - Points calculation methods
+   - Database schema design
 
 ## Project Insights
-1. UI Components:
-   - Shadcn components require careful styling to maintain theme consistency
-   - Modal positioning benefits from fixed + inset approach over default dialog positioning
-   - Select components need specific handling for dark theme
+1. Achievement System:
+   - Motivates user engagement
+   - Provides clear progress metrics
+   - Enhances learning experience
+   - Gamification benefits
 
-2. Quiz Logic:
-   - Question formatting needs to handle both MCQ and FRQ content types
-   - Session recovery requires careful state management
-   - Type safety is crucial for quiz state management
-   - State persistence needs to balance completeness with performance
+2. Technical Architecture:
+   - Separate achievement logic
+   - Reusable notification system
+   - Efficient points tracking
+   - Scalable achievement types
 
 ## Known Issues
-1. Modal positioning requires specific styling to maintain proper centering
-2. Select components may need additional dark theme adjustments
-3. Quiz session recovery needs robust error handling
-4. Need to handle network errors during session persistence 
+1. Need to implement database tables
+2. API endpoints not created yet
+3. Points system needs integration
+4. Achievement checks needed in flashcards 

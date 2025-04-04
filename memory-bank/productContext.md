@@ -22,44 +22,65 @@ An interactive quiz application designed to provide an engaging and efficient le
    - Clear visual hierarchy
    - Mobile responsiveness
 
+## Achievement System Goals
+1. Motivate users to engage with the learning platform regularly
+2. Provide clear feedback on learning progress
+3. Reward consistent study habits
+4. Encourage exploration of different features
+
 ## User Experience Goals
+- Clear visibility of available achievements
+- Intuitive progress tracking
+- Immediate feedback on unlocking achievements
+- Meaningful rewards for accomplishments
 
-### Quiz Taking
-1. Configuration
-   - Easy quiz type selection
-   - Clear starting point
-   - Intuitive settings
+## Achievement Categories
+1. Study Achievements
+   - Track cards studied
+   - Reward consistent study habits
+   - Encourage daily practice
 
-2. Question Navigation
-   - Smooth transitions
-   - Clear progress indication
-   - Easy answer submission
-   - Quick navigation
+2. Mastery Achievements
+   - Recognize deck creation
+   - Reward comprehensive learning
+   - Encourage content creation
 
-3. Answer Feedback
-   - Immediate response
-   - Clear correct/incorrect indication
-   - Helpful explanations
-   - Learning opportunities
+3. Streak Achievements
+   - Reward daily engagement
+   - Encourage consistent practice
+   - Track study streaks
 
-### Interaction Patterns
-1. Keyboard Navigation
-   - Number keys (1-4) for MCQ
-   - Enter/Space for submission
-   - Shift+Enter for multiline FRQ
-   - Intuitive shortcuts
+4. Points Achievements
+   - Overall progress tracking
+   - Milestone recognition
+   - Cumulative rewards
 
-2. Visual Feedback
-   - Animated transitions
-   - Clear state changes
-   - Progress indication
-   - Error states
+## User Journey
+1. Discovery
+   - Users see available achievements
+   - Clear requirements displayed
+   - Progress tracking visible
 
-3. Mobile Experience
-   - Touch-friendly interface
-   - Responsive design
-   - Mobile keyboard handling
-   - Gesture support
+2. Engagement
+   - Regular study sessions
+   - Deck creation and management
+   - Quiz participation
+
+3. Progress
+   - Achievement unlocking
+   - Points accumulation
+   - Streak maintenance
+
+4. Rewards
+   - Visual recognition
+   - Points bonuses
+   - Special badges
+
+## Feature Integration
+- Study sessions trigger achievement checks
+- Quiz completion updates progress
+- Deck creation counts towards mastery
+- Points system ties everything together
 
 ## Design Philosophy
 
@@ -130,10 +151,9 @@ An interactive quiz application designed to provide an engaging and efficient le
    - Learning paths
 
 2. Social Features
-   - Sharing
-   - Collaboration
+   - Achievement sharing
    - Leaderboards
-   - Study groups
+   - Community challenges
 
 3. Advanced Features
    - Offline support
@@ -142,44 +162,20 @@ An interactive quiz application designed to provide an engaging and efficient le
    - Advanced analytics
 
 ## Success Metrics
+1. User Engagement
+   - Daily active users
+   - Study session duration
+   - Return frequency
 
-### User Engagement
-1. Completion Rates
-   - Quiz starts
-   - Question completion
-   - Quiz completion
-   - Return rate
+2. Achievement Progress
+   - Unlock rates
+   - Popular achievements
+   - Progress distribution
 
-2. Interaction Quality
-   - Time per question
-   - Answer changes
-   - Explanation views
-   - Keyboard usage
-
-3. Learning Effectiveness
-   - Correct answers
-   - Improvement over time
-   - Topic mastery
-   - Retention rate
-
-### Technical Performance
-1. Response Times
-   - Page load
-   - Question transitions
-   - Answer submission
-   - Feedback display
-
-2. Error Rates
-   - Submission errors
-   - Navigation issues
-   - State conflicts
-   - API failures
-
-3. Accessibility
-   - Keyboard usage
-   - Screen reader compatibility
-   - Mobile usage
-   - Error recovery
+3. Learning Outcomes
+   - Study consistency
+   - Material mastery
+   - Quiz performance
 
 ## Roadmap
 

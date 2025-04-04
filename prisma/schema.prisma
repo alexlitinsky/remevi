@@ -256,7 +256,7 @@ model StudySession {
 
   // Relationships
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deck             Deck              @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  deck             Deck              @relation(fields: [deckId], references: [id])
   cardInteractions CardInteraction[]
 
   @@index([userId])

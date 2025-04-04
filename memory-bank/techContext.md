@@ -3,41 +3,168 @@
 ## Technology Stack
 
 ### Frontend
-1. Framework
-   - Next.js 14 (App Router)
-   - React 18
-   - TypeScript 5
+- Next.js 14 with App Router
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- shadcn/ui components
 
-2. Styling
-   - Tailwind CSS
-   - Shadcn/ui components
-   - CSS Modules (where needed)
+### UI Components
+```typescript
+// Core shadcn/ui components in use
+import {
+  Card,
+  Tabs,
+  Progress,
+  Badge,
+  Button
+} from "@/components/ui";
 
-3. State Management
-   - Zustand for global state
-   - React hooks for local state
-   - Server state with Next.js
+// Motion components
+import { motion, AnimatePresence } from "framer-motion";
+```
 
-4. Animation
-   - Framer Motion
-   - CSS transitions
-   - Tailwind animations
+### State Management
+- React hooks (useState, useEffect)
+- Context API for global state
+- Clerk for auth state
+- API integration for data persistence
 
-### Development Tools
-1. Package Management
-   - PNPM
-   - TypeScript
-   - ESLint
-   - Prettier
+## Development Setup
 
-2. Version Control
-   - Git
-   - GitHub
+### Required Dependencies
+```json
+{
+  "dependencies": {
+    "@clerk/nextjs": "latest",
+    "framer-motion": "latest",
+    "lucide-react": "latest",
+    "next": "14.x",
+    "react": "18.x",
+    "tailwindcss": "latest",
+    "@radix-ui/react-tabs": "latest"
+  }
+}
+```
 
-3. Development Environment
-   - VS Code
-   - Chrome DevTools
-   - React DevTools
+### Component Patterns
+
+#### Tabs Implementation
+```typescript
+<Tabs defaultValue="progress" className="w-full">
+  <TabsList className="grid w-full grid-cols-2">
+    <TabsTrigger value="progress">Study Progress</TabsTrigger>
+    <TabsTrigger value="achievements">Achievements</TabsTrigger>
+  </TabsList>
+  <TabsContent value="progress">
+    {/* Progress content */}
+  </TabsContent>
+  <TabsContent value="achievements">
+    {/* Achievements content */}
+  </TabsContent>
+</Tabs>
+```
+
+#### Motion Animations
+```typescript
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.2 }}
+>
+  {/* Animated content */}
+</motion.div>
+```
+
+## Tool Usage
+
+### Styling
+- Tailwind CSS for responsive design
+- CSS variables for theming
+- Consistent class naming
+- Modular CSS patterns
+
+### Animation
+- Framer Motion for transitions
+- CSS animations for simple effects
+- Coordinated motion sequences
+- Performance optimization
+
+## Technical Constraints
+
+### Performance
+- Optimized bundle size
+- Lazy loading where appropriate
+- Efficient state updates
+- Minimized re-renders
+
+### Accessibility
+- ARIA labels
+- Keyboard navigation
+- Focus management
+- Screen reader support
+
+### Browser Support
+- Modern browsers
+- Progressive enhancement
+- Fallback patterns
+- Responsive design
+
+## Development Patterns
+
+### Component Structure
+```typescript
+// Typical component structure
+interface ComponentProps {
+  // Props definition
+}
+
+export function Component({ ...props }: ComponentProps) {
+  // State management
+  const [state, setState] = useState();
+
+  // Effects
+  useEffect(() => {
+    // Side effects
+  }, [dependencies]);
+
+  // Event handlers
+  const handleEvent = () => {
+    // Event logic
+  };
+
+  return (
+    // JSX with Tailwind classes
+  );
+}
+```
+
+### Data Flow
+1. API calls for data
+2. State updates
+3. UI updates
+4. Animation triggers
+5. Event handling
+
+## Integration Points
+
+### API Integration
+- RESTful endpoints
+- Data validation
+- Error handling
+- Loading states
+
+### Authentication
+- Clerk integration
+- Protected routes
+- User session management
+- Auth state handling
+
+### State Management
+- Local component state
+- Global application state
+- Persistent storage
+- Cache management
 
 ## Implementation Details
 
@@ -239,4 +366,77 @@ src/
 3. Scalability
    - Code splitting
    - Lazy loading
-   - Cache management 
+   - Cache management
+
+## Achievement System Implementation
+- Next.js 14 with App Router
+- TypeScript for type safety
+- Prisma ORM for database management
+- PostgreSQL database
+- Clerk for authentication
+- Tailwind CSS for styling
+- Framer Motion for animations
+- shadcn/ui components
+
+### Database Models
+```prisma
+model Achievement {
+  id            String @id @default(cuid())
+  name          String @unique
+  description   String
+  category      String
+  type          String
+  requirements  Json
+  badgeIcon     String
+  pointsAwarded Int    @default(0)
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+  notified      Boolean  @default(false)
+  user          User     @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+}
+```
+
+### API Routes
+- `/api/achievements` - GET achievements and user progress
+- `/api/achievements/check` - POST check achievement progress
+
+### Components
+- `GlobalAchievements` - Main achievement display
+- `AchievementGrid` - Achievement card grid
+- `AchievementProgress` - Progress tracking
+- `AchievementNotification` - Unlock notifications
+
+### Authentication
+- Clerk for user management
+- Protected API routes
+- User-specific achievement tracking
+
+### State Management
+- React hooks for local state
+- API calls for data fetching
+- Clerk hooks for auth state
+
+### Styling
+- Tailwind CSS for responsive design
+- shadcn/ui for consistent UI
+- Custom SVG icons for achievements
+- Framer Motion for animations
+
+### Development Tools
+- Prisma Studio for database management
+- TypeScript for type checking
+- ESLint for code quality
+- Prettier for code formatting
+
+### Testing
+- Jest for unit tests
+- React Testing Library for components
+- API route testing
+- E2E testing with Playwright 
