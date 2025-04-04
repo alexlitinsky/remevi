@@ -2,12 +2,12 @@
 import { useQuizStore } from "@/stores/useQuizStore";
 import { useEffect, useState } from "react";
 import { QuizContent } from "./QuizContent";
-import { QuizResults } from "./QuizResults";
+import { QuizResults } from "../../quiz/QuizResults";
 import { QuizHeader } from "./QuizHeader";
 import { cn } from "@/lib/utils";
 import { Trophy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { QuizConfigModal } from "./QuizConfigModal";
+import { QuizConfigModal } from "../../quiz/QuizConfigModal";
 
 interface QuizLayoutProps {
   className?: string;

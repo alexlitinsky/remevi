@@ -1,293 +1,242 @@
 # Technical Context
 
-## Technologies Used
+## Technology Stack
 
 ### Frontend
-- Next.js 14 with App Router
-- React 18
-- TypeScript
-- Tailwind CSS
-- shadcn/ui components
-- Zustand for state management
-- Clerk for authentication
-
-### Backend
-- Next.js API routes
-- Prisma ORM
-- PostgreSQL database
-- OpenAI API integration
-
-## Development Setup
-- pnpm for package management
-- ESLint + Prettier for code quality
-- Husky for git hooks
-- Jest + React Testing Library for testing
-
-## Quiz Implementation
-
-### Components
-```typescript
-// Quiz Component Structure
-Quiz/
-  ├── Quiz.tsx              // Main container
-  ├── QuizConfigModal.tsx   // Quiz setup
-  ├── QuizQuestion.tsx      // Question display
-  └── QuizResults.tsx       // Results view
-```
-
-### State Management
-```typescript
-// Quiz Store Interface
-interface QuizState {
-  view: 'config' | 'quiz' | 'results';
-  questions: (MCQQuestion | FRQQuestion)[];
-  currentQuestionIndex: number;
-  answers: Record<number, string>;
-  score: number;
-  startQuiz: (config: QuizConfig) => Promise<void>;
-  submitAnswer: (answer: string) => void;
-  nextQuestion: () => void;
-  restartQuiz: () => void;
-}
-```
-
-### Data Models
-```typescript
-// Question Types
-interface BaseQuestion {
-  id: string;
-  question: string;
-  answer: string;
-  type: 'mcq' | 'frq';
-}
-
-interface MCQQuestion extends BaseQuestion {
-  type: 'mcq';
-  options: string[];
-}
-
-interface FRQQuestion extends BaseQuestion {
-  type: 'frq';
-}
-```
-
-## API Routes
-- `/api/decks/[id]/quiz/generate` - Generate quiz questions
-- `/api/decks/[id]/quiz/submit` - Submit quiz answers
-- `/api/decks/[id]/quiz/results` - Get quiz results
-
-## Dependencies
-```json
-{
-  "zustand": "^4.0.0",
-  "@radix-ui/react-dialog": "^1.0.0",
-  "@radix-ui/react-radio-group": "^1.0.0",
-  "@radix-ui/react-label": "^1.0.0",
-  "@radix-ui/react-toast": "^1.0.0"
-}
-```
-
-## Error Handling
-- Toast notifications for user feedback
-- Error boundaries for component crashes
-- API error handling with proper status codes
-
-## Performance Considerations
-- Client-side state management
-- Optimistic updates
-- Lazy loading of components
-- Proper error boundaries
-
-## Security
-- Authentication with Clerk
-- API route protection
-- Input validation
-- XSS prevention
-
-## Testing Strategy
-- Unit tests for components
-- Integration tests for quiz flow
-- API route testing
-- State management testing
-
-## Technology Stack
-1. Frontend:
+1. Framework
    - Next.js 14 (App Router)
-   - TypeScript
+   - React 18
+   - TypeScript 5
+
+2. Styling
    - Tailwind CSS
-   - Shadcn/ui Components
-   - Zustand (State Management)
+   - Shadcn/ui components
+   - CSS Modules (where needed)
 
-2. UI Components:
-   - Dialog (Modal system)
-   - Select (Dropdown menus)
-   - Slider (Numeric input)
-   - Button (Actions)
-   - Progress (Status indicators)
-
-3. State Management:
+3. State Management
    - Zustand for global state
    - React hooks for local state
-   - localStorage for persistence
-   - URL state for navigation
+   - Server state with Next.js
+
+4. Animation
+   - Framer Motion
+   - CSS transitions
+   - Tailwind animations
+
+### Development Tools
+1. Package Management
+   - PNPM
+   - TypeScript
+   - ESLint
+   - Prettier
+
+2. Version Control
+   - Git
+   - GitHub
+
+3. Development Environment
+   - VS Code
+   - Chrome DevTools
+   - React DevTools
+
+## Implementation Details
+
+### Component Architecture
+1. Quiz Components
+   ```typescript
+   // Quiz types
+   type QuizType = 'mcq' | 'frq' | 'mixed';
+   
+   // Question types
+   interface BaseQuestion {
+     id: string;
+     question: string;
+     type: QuizType;
+     hint?: string;
+   }
+   
+   interface MCQQuestion extends BaseQuestion {
+     type: 'mcq';
+     options: string[];
+     correctAnswer: string;
+   }
+   
+   interface FRQQuestion extends BaseQuestion {
+     type: 'frq';
+     correctAnswer: string;
+   }
+   ```
+
+2. State Management
+   ```typescript
+   // Quiz store
+   interface QuizState {
+     questions: (MCQQuestion | FRQQuestion)[];
+     currentQuestionIndex: number;
+     answers: Record<string, Answer>;
+     view: 'config' | 'quiz' | 'results';
+   }
+   ```
+
+### Key Features
+
+1. Keyboard Navigation
+   ```typescript
+   // MCQ shortcuts
+   const handleKeyPress = (e: KeyboardEvent) => {
+     if (e.key >= '1' && e.key <= '4') {
+       // Handle number keys
+     }
+     if (e.key === 'Enter' || e.key === ' ') {
+       // Handle submission
+     }
+   };
+   ```
+
+2. Animation System
+   ```typescript
+   // Framer Motion variants
+   const variants = {
+     initial: { opacity: 0, y: 20 },
+     animate: { opacity: 1, y: 0 },
+     exit: { opacity: 0, y: -20 }
+   };
+   ```
 
 ## Development Setup
-1. Package Management:
-   - pnpm (preferred)
-   - Strict dependency versioning
-   - Development scripts
 
-2. Code Organization:
-   ```
-   src/
-   ├── components/
-   │   └── quiz/
-   │       ├── QuizHeader.tsx
-   │       ├── QuizQuestion.tsx
-   │       └── QuizConfigModal.tsx
-   ├── stores/
-   │   └── useQuizStore.ts
-   ├── types/
-   │   └── quiz.ts
-   └── lib/
-       └── quiz.ts
+### Environment Requirements
+- Node.js 18+
+- PNPM 8+
+- Git
+
+### Project Structure
+```
+src/
+├── app/                 # Next.js app router
+├── components/
+│   ├── quiz/           # Quiz components
+│   └── ui/             # Shared UI components
+├── stores/             # Zustand stores
+├── types/              # TypeScript types
+├── lib/                # Utilities
+└── styles/             # Global styles
+```
+
+### Build & Deploy
+1. Development
+   ```bash
+   pnpm dev
    ```
 
-3. Styling:
-   - Tailwind CSS for utilities
-   - CSS modules for components
-   - Global styles for theme
-   - CSS variables for tokens
+2. Production
+   ```bash
+   pnpm build
+   pnpm start
+   ```
 
 ## Technical Constraints
-1. Browser Support:
-   - Modern browsers only
-   - ES6+ features
-   - CSS Grid/Flexbox
-   - Local storage
 
-2. Performance:
-   - Client-side rendering
-   - State persistence
-   - Keyboard event handling
-   - Modal rendering
+### Browser Support
+- Modern browsers (Chrome, Firefox, Safari, Edge)
+- ES6+ features
+- CSS Grid and Flexbox
 
-3. Accessibility:
+### Performance
+1. Bundle Size
+   - Component code splitting
+   - Dynamic imports
+   - Tree shaking
+
+2. Runtime
+   - Memoization
+   - Debounced events
+   - Optimized re-renders
+
+### Accessibility
+1. ARIA Support
+   - Proper roles
    - Keyboard navigation
-   - ARIA attributes
-   - Focus management
    - Screen reader support
 
-## Tool Usage
-1. Development:
-   - VS Code
-   - ESLint
-   - Prettier
-   - TypeScript
-
-2. Testing:
-   - Jest
-   - React Testing Library
-   - Cypress (planned)
-
-3. Build:
-   - Next.js build system
-   - PostCSS processing
-   - Bundle optimization
+2. Color Contrast
+   - WCAG 2.1 compliance
+   - Dark mode support
 
 ## Dependencies
-1. Core:
-   ```json
-   {
-     "next": "^14.0.0",
-     "react": "^18.0.0",
-     "typescript": "^5.0.0",
-     "tailwindcss": "^3.0.0",
-     "zustand": "^4.0.0"
-   }
-   ```
 
-2. UI:
-   ```json
-   {
-     "@radix-ui/react-dialog": "^1.0.0",
-     "@radix-ui/react-select": "^1.0.0",
-     "@radix-ui/react-slider": "^1.0.0",
-     "class-variance-authority": "^0.7.0",
-     "lucide-react": "^0.300.0"
-   }
-   ```
+### Core
+```json
+{
+  "next": "^14.0.0",
+  "react": "^18.0.0",
+  "typescript": "^5.0.0",
+  "zustand": "^4.0.0",
+  "framer-motion": "^10.0.0",
+  "tailwindcss": "^3.0.0",
+  "@shadcn/ui": "latest"
+}
+```
 
-3. Development:
-   ```json
-   {
-     "@types/react": "^18.0.0",
-     "eslint": "^8.0.0",
-     "prettier": "^3.0.0"
-   }
-   ```
+### Development
+```json
+{
+  "@types/react": "^18.0.0",
+  "@typescript-eslint/eslint-plugin": "^6.0.0",
+  "eslint": "^8.0.0",
+  "prettier": "^3.0.0"
+}
+```
 
-## Implementation Notes
-1. Modal System:
-   - Using shadcn Dialog
-   - Custom positioning
-   - Theme integration
-   - Keyboard handling
+## Tool Usage Patterns
 
-2. State Management:
+### State Management
+1. Zustand Stores
    - Atomic updates
    - Selector optimization
-   - Persistence strategy
-   - Error recovery
+   - Action creators
 
-3. Event Handling:
-   - Keyboard shortcuts
-   - Focus management
-   - Event delegation
-   - Cleanup routines
+2. React Hooks
+   - Custom hooks
+   - Memoization
+   - Effect cleanup
 
-## Current Tooling
-1. VS Code Extensions:
-   - Tailwind CSS IntelliSense
-   - ESLint
-   - Prettier
-   - TypeScript
+### Component Patterns
+1. Composition
+   - Higher-order components
+   - Render props
+   - Custom hooks
 
-2. Browser Tools:
-   - React DevTools
-   - Redux DevTools
-   - Chrome DevTools
-   - Accessibility tools
+2. Performance
+   - useMemo
+   - useCallback
+   - React.memo
 
-3. CLI Tools:
-   - pnpm
-   - next
-   - eslint
-   - tsc
+## Known Technical Limitations
+1. Browser Storage
+   - LocalStorage limits
+   - Session persistence
 
-## Development Practices
+2. Performance
+   - Animation frame drops
+   - Large state updates
 
-### Code Organization
-- Feature-based structure
-- Shared components
-- Type definitions
-- Utility functions
+3. Mobile
+   - Keyboard handling
+   - Touch interactions
 
-### Testing Strategy
-- Unit tests (Jest)
-- Integration tests
-- E2E tests (Playwright)
-- Performance monitoring
+## Future Technical Considerations
+1. Performance Monitoring
+   - Analytics integration
+   - Error tracking
+   - Performance metrics
 
-### CI/CD
-- Vercel deployment
-- GitHub Actions
-- Automated testing
-- Environment management
+2. Offline Support
+   - Service workers
+   - State persistence
+   - Sync management
 
-## Current Technical Focus
-1. Quiz session stability
-2. Timer accuracy
-3. State persistence
-4. Error handling
-5. Performance optimization 
+3. Scalability
+   - Code splitting
+   - Lazy loading
+   - Cache management 

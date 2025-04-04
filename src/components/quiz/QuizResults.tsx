@@ -15,7 +15,8 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
-  CheckCircle2
+  CheckCircle2,
+  Home
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -39,7 +40,8 @@ export function QuizResults() {
     correctAnswers,
     incorrectAnswers,
     restartQuiz,
-    setView
+    setView,
+    deckId
   } = useQuizStore();
 
   const totalQuestions = questions.length;
@@ -109,12 +111,39 @@ export function QuizResults() {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-center gap-4">
-          <Button onClick={() => setView('config')}>
+        <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:justify-center">
+          <Button 
+            onClick={() => setView('config')}
+            className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary"
+            size="lg"
+          >
+            <RefreshCw className="h-4 w-4" />
             New Quiz
           </Button>
-          <Button onClick={() => restartQuiz()}>
+          <Button 
+            onClick={() => restartQuiz()}
+            className="flex items-center gap-2 bg-secondary/10 hover:bg-secondary/20 text-secondary cursor-pointer"
+            size="lg"
+          >
+            <BarChart3 className="h-4 w-4" />
             Retry Quiz
+          </Button>
+          <Button 
+            onClick={() => window.location.href = `/deck/${deckId}`}
+            className="flex items-center gap-2 sm:col-span-2 bg-accent hover:bg-accent/80 cursor-pointer"
+            size="lg"
+          >
+            <Trophy className="h-4 w-4" />
+            Return to Deck
+          </Button>
+          <Button 
+            onClick={() => window.location.href = '/'}
+            variant="outline"
+            className="flex items-center gap-2 sm:col-span-2 cursor-pointer"
+            size="lg"
+          >
+            <Home className="h-4 w-4" />
+            Return Home
           </Button>
         </div>
       </div>

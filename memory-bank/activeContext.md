@@ -1,69 +1,76 @@
 # Active Context
 
-## Current Focus: Quiz Implementation
+## Current Focus
+- Quiz taking experience enhancements
+- UI/UX improvements for quiz interaction
+- Keyboard shortcuts and accessibility
 
-### Quiz Component Architecture
-The quiz system has been simplified into a clean, state-driven architecture:
+## Recent Changes
+1. Quiz Configuration Modal
+   - Enhanced start quiz button with gradient and animations
+   - Improved navigation button layout and styling
+   - Added brain icon to start button
+   - Increased vertical spacing for better rhythm
+   - Refined loading state visuals
+   - Added hasStarted state to control X button visibility
+   - Only shows close button after quiz has started
+   - First-time user keyboard shortcut tips
 
-1. **Main Components**:
-   - `Quiz`: Root component managing view states
-   - `QuizConfigModal`: Configuration UI for quiz setup
-   - `QuizQuestion`: Question display and answer handling
-   - `QuizResults`: Final results and statistics
+2. Quiz Question Component
+   - Enhanced keyboard navigation
+   - Added multiline support for FRQ answers (Shift+Enter)
+   - Improved button styling and spacing
+   - Added deck title to header
+   - Removed timer placeholder
+   - Improved feedback UI with gradients and animations
 
-2. **State Management**:
-   - Using `useQuizStore` for centralized state
-   - Views: 'config' | 'quiz' | 'results'
-   - Handles quiz type selection, question progression, and scoring
-
-3. **Quiz Flow**:
-   ```mermaid
-   graph LR
-   A[Config] --> B[Questions]
-   B --> C[Results]
-   C --> A
-   ```
-
-### Recent Changes
-- Simplified QuizConfigModal to be a card-based component
-- Removed dialog/modal behavior in favor of direct rendering
-- Integrated quiz components into the deck quiz page
-- Removed QuizProvider and QuizLayout in favor of simpler architecture
-
-### Active Decisions
-1. Fixed question count at 10 for initial implementation
-2. Using radio group for quiz type selection (mixed, MCQ, FRQ)
-3. Immediate feedback on answers
-4. Simple, focused UI with clear progression
-
-### Next Steps
-1. Implement question generation API
-2. Add question count configuration
-3. Consider adding quiz history
-4. Add progress indicators
-5. Implement quiz analytics
-
-### Technical Patterns
-- Client-side state management with Zustand
-- Server-side data fetching for deck info
-- Progressive enhancement with immediate feedback
-- Responsive design with Tailwind CSS
-
-### User Experience Goals
-- Simple, intuitive quiz setup
-- Clear feedback on progress
-- Engaging question-answer flow
-- Comprehensive results view
+3. FRQ Answer Section
+   - Switched from Input to Textarea for multiline support
+   - Added keyboard shortcut hints
+   - Enhanced styling and user experience
 
 ## Active Decisions
-1. Modal Design:
-   - Using fixed positioning with inset-0 for perfect centering
-   - Maintaining dark theme consistency
-   - Responsive design with 90vw width and max-width constraints
+1. Keyboard Shortcuts:
+   - Numbers 1-4 for MCQ options
+   - Enter/Space to submit
+   - Shift+Enter for new lines in FRQ
+   - Enter/Space for next question after answering
 
-2. Quiz Interaction:
-   - Supporting both letter and number key inputs for accessibility
-   - Maintaining state between sessions for better UX
+2. UI/UX Patterns:
+   - Gradient backgrounds for primary actions
+   - Scale animations on hover/active states
+   - Consistent button heights (h-14 for primary, h-12 for secondary)
+   - Blue accent color for action buttons
+   - Animated transitions for state changes
+   - Clear visual feedback for correct/incorrect answers
+
+3. Quiz Flow:
+   - Must configure quiz before starting
+   - Can return to config after starting
+   - Progressive disclosure of keyboard shortcuts
+
+## Current Learnings
+1. User Experience:
+   - First-time users need guidance on keyboard shortcuts
+   - FRQ answers benefit from multiline support
+   - Visual feedback important for answer states
+
+2. Technical:
+   - Textarea vs Input considerations for FRQ
+   - Keyboard event handling complexity
+   - State management for quiz progress
+
+## Next Steps
+1. Potential Enhancements:
+   - Timer functionality implementation
+   - More keyboard shortcuts
+   - Additional question types
+   - Enhanced progress tracking
+
+2. Improvements:
+   - Mobile responsiveness review
+   - Accessibility audit
+   - Performance optimization
 
 ## Project Insights
 1. UI Components:
@@ -75,12 +82,6 @@ The quiz system has been simplified into a clean, state-driven architecture:
    - Question formatting needs to handle both MCQ and FRQ content types
    - Session recovery requires careful state management
    - Type safety is crucial for quiz state management
-
-## Next Steps
-1. Continue monitoring and improving quiz interaction UX
-2. Consider adding keyboard shortcuts for quiz navigation
-3. Enhance quiz session analytics and progress tracking
-4. Review and optimize quiz generation performance
 
 ## Known Issues
 1. Modal positioning requires specific styling to maintain proper centering

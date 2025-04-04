@@ -86,6 +86,7 @@ interface QuizState {
   questions: (MCQQuestion | FRQQuestion)[];
   answers: Record<string, QuizAnswer>;
   sessionId: string | null;
+  deckId: string | null;
   
   // UI state
   view: QuizView;
@@ -109,6 +110,12 @@ interface QuizState {
   setView: (view: QuizView) => void;
   toggleExplanation: () => void;
   toggleConfig: () => void;
+
+  // Helper to check if session is valid and in progress
+  isValidSession: () => boolean;
+
+  // Actions
+  cleanupSession: () => void;
 }
 
 const initialProgress: ProgressData = {
@@ -159,6 +166,7 @@ export const useQuizStore = create<QuizState>()(
       questions: [],
       answers: {},
       sessionId: null,
+      deckId: null,
       view: 'config',
       isLoading: false,
       error: null,
@@ -169,8 +177,34 @@ export const useQuizStore = create<QuizState>()(
       incorrectAnswers: 0,
       showConfig: true,
 
+      // Helper to check if session is valid and in progress
+      isValidSession: () => {
+        const state = get();
+        return Boolean(
+          state.sessionId && 
+          state.questions.length > 0 &&
+          state.currentQuestionIndex < state.questions.length &&
+          state.answers && 
+          Object.keys(state.answers).length > 0 // Has at least one answer
+        );
+      },
+
       // Actions
       startQuiz: async (config) => {
+        const state = get();
+        
+        // Check for valid session first
+        if (get().isValidSession()) {
+          // Resume existing session
+          const currentQuestion = state.questions[state.currentQuestionIndex];
+          set({ 
+            view: 'quiz', 
+            showConfig: false,
+            currentQuestion // Restore current question
+          });
+          return;
+        }
+
         set({ isLoading: true, error: null });
         
         try {
@@ -192,6 +226,7 @@ export const useQuizStore = create<QuizState>()(
             questions: data.questions,
             currentQuestion: data.questions[0],
             sessionId: data.sessionId,
+            deckId: config.deckId,
             view: 'quiz',
             currentQuestionIndex: 0,
             score: 0,
@@ -280,6 +315,21 @@ export const useQuizStore = create<QuizState>()(
         });
       },
 
+      cleanupSession: () => {
+        set({
+          sessionId: null,
+          questions: [],
+          answers: {},
+          currentQuestion: null,
+          currentQuestionIndex: 0,
+          score: 0,
+          correctAnswers: 0,
+          incorrectAnswers: 0,
+          view: 'config',
+          showConfig: true
+        });
+      },
+
       endQuiz: async () => {
         const state = get();
         if (!state.sessionId) return;
@@ -298,12 +348,14 @@ export const useQuizStore = create<QuizState>()(
         }
 
         set({ view: 'results' });
+        // Don't cleanup here - let user see results
       },
 
       restartQuiz: async () => {
         const config = get().config;
         if (!config) return;
         
+        get().cleanupSession();
         await get().startQuiz(config);
       },
 
@@ -320,9 +372,18 @@ export const useQuizStore = create<QuizState>()(
     {
       name: 'quiz-storage',
       partialize: (state) => ({
+        // Persist more state for session recovery
         config: state.config,
         sessionId: state.sessionId,
-        showConfig: state.showConfig,
+        questions: state.questions,
+        answers: state.answers,
+        currentQuestionIndex: state.currentQuestionIndex,
+        currentQuestion: state.currentQuestion,
+        score: state.score,
+        correctAnswers: state.correctAnswers,
+        incorrectAnswers: state.incorrectAnswers,
+        view: state.view,
+        showConfig: state.showConfig
       })
     }
   )

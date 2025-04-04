@@ -5,10 +5,10 @@ import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-export const metadata: Metadata = {
-  title: 'Quiz',
-  description: 'Test your knowledge with interactive quizzes',
-};
+// export const metadata: Metadata = {
+//   title: 'Quiz',
+//   description: 'Test your knowledge with interactive quizzes',
+// };
 
 async function getDeck(deckId: string, userId: string) {
   const deck = await db.deck.findUnique({
@@ -36,7 +36,7 @@ export default async function QuizPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="container max-w-4xl mx-auto py-6 space-y-8">
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div>
           <Link href={`/deck/${awaitedParams.id}`} className="text-2xl font-bold tracking-tight hover:text-primary transition-colors cursor-pointer">
             {deck.title}
@@ -45,9 +45,9 @@ export default async function QuizPage({ params }: { params: { id: string } }) {
             Test your knowledge with interactive questions
           </p>
         </div>
-      </div>
+      </div> */}
 
-      <Quiz deckId={awaitedParams.id} />
+      <Quiz deckId={awaitedParams.id} deckTitle={deck.title} />
     </div>
   );
 } 

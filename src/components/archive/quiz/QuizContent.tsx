@@ -4,8 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { MCQAnswerSection } from "./MCQAnswerSection";
-import { FRQAnswerSection } from "./FRQAnswerSection";
+import { MCQAnswerSection } from "../../quiz/MCQAnswerSection";
+import { FRQAnswerSection } from "../../quiz/FRQAnswerSection";
 import { useEffect, useRef, useState } from "react";
 
 export function QuizContent() {
