@@ -246,6 +246,10 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         isProcessing: true,
         mindMap: { nodes: [], connections: [] },
+        processingProgress: 0,
+        processingStage: 'CHUNKING',
+        processedChunks: 0,
+        totalChunks: 0
       },
     });
 
@@ -310,6 +314,16 @@ export async function POST(request: NextRequest) {
         const chunks = await splitPdfIntoChunks(fileBuffer, pageRange);
         console.log(`Split PDF into ${chunks.length} chunks`);
         
+        // Update total chunks count
+        await db.deck.update({
+          where: { id: deck.id },
+          data: {
+            totalChunks: chunks.length,
+            processingProgress: 10,
+            processingStage: 'GENERATING'
+          }
+        });
+        
         // Process chunks for flashcards
         const chunkResults = [];
         const batchSize = 3;
@@ -331,10 +345,15 @@ export async function POST(request: NextRequest) {
             await new Promise(resolve => setTimeout(resolve, 2000));
           }
 
+          // Calculate progress (70% for chunk processing)
+          const progress = 10 + ((successfulChunks / chunks.length) * 70);
+
           await db.deck.update({
             where: { id: deck.id },
             data: {
               isProcessing: true,
+              processedChunks: successfulChunks,
+              processingProgress: progress,
               error: `Processed ${successfulChunks}/${chunks.length} chunks (${chunkResults.flatMap(r => r.flashcards).length} flashcards, ${chunkResults.flatMap(r => r.mcqs).length} MCQs, ${chunkResults.flatMap(r => r.frqs).length} FRQs so far)` 
             }
           });
@@ -485,7 +504,9 @@ export async function POST(request: NextRequest) {
           data: {
             category: finalCategory,
             isProcessing: false,
-            error: null
+            error: null,
+            processingProgress: 80,
+            processingStage: 'MINDMAP'
           }
         });
 
@@ -493,6 +514,17 @@ export async function POST(request: NextRequest) {
         (async () => {
           try {
             console.log('Generating mind map...');
+            
+            // Update progress to show mind map generation started
+            await db.deck.update({
+              where: { id: deck.id },
+              data: {
+                processingProgress: 85,
+                processingStage: 'MINDMAP',
+                error: 'Generating mind map...'
+              }
+            });
+            
             const mindMap = await generateMindMap(chunkResults, aiModel);
             
             // Update deck with mind map once generated
@@ -502,13 +534,23 @@ export async function POST(request: NextRequest) {
                 mindMap: {
                   nodes: mindMap.nodes,
                   connections: mindMap.connections,
-                }
+                },
+                processingProgress: 100,
+                processingStage: 'COMPLETED',
+                error: null
               }
             });
             console.log('Mind map generation completed');
           } catch (error) {
             console.error('Error generating mind map:', error);
-            // Don't mark deck as error since flashcards are already available
+            await db.deck.update({
+              where: { id: deck.id },
+              data: {
+                processingProgress: 90,
+                processingStage: 'ERROR',
+                error: 'Failed to generate mind map'
+              }
+            });
           }
         })();
 
@@ -530,6 +572,8 @@ export async function POST(request: NextRequest) {
           data: {
             error: 'Failed to generate study materials',
             isProcessing: false,
+            processingProgress: 0,
+            processingStage: 'ERROR'
           },
         });
       }

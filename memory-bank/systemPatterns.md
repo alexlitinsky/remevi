@@ -1,257 +1,187 @@
 # System Patterns
 
 ## Architecture Overview
-
-### Component Structure
 ```mermaid
 graph TD
-    Quiz --> QuizConfigModal
-    Quiz --> QuizQuestion
-    Quiz --> QuizResults
-    QuizQuestion --> FRQAnswerSection
-    QuizResults --> AchievementNotification
-    DeckCompletionScreen --> AchievementNotification
+    UI[UI Layer] --> API[API Layer]
+    API --> DB[Database]
+    API --> AI[AI Processing]
+    
+    subgraph UI Layer
+        Pages[Pages] --> Components[Components]
+        Components --> States[State Management]
+    end
+    
+    subgraph API Layer
+        Routes[API Routes] --> Controllers[Controllers]
+        Controllers --> Services[Services]
+    end
+    
+    subgraph AI Processing
+        PDF[PDF Processing] --> Chunks[Chunking]
+        Chunks --> OpenAI[OpenAI API]
+        OpenAI --> MindMap[Mind Map]
+    end
 ```
 
-### State Management
-- Using Zustand for global state
-- Key stores:
-  - useQuizStore: Manages quiz flow, questions, answers
-  - useSettingsStore: User preferences and settings
-  - useAchievementStore: Achievements and points tracking
+## Key Design Patterns
 
-### Component Patterns
+### 1. Processing State Pattern
+```typescript
+type ProcessingStage = 'CHUNKING' | 'GENERATING' | 'MINDMAP' | 'COMPLETED' | 'ERROR';
 
-#### Quiz Component
-- Root component managing quiz flow
-- Controls view state: config, quiz, results
-- Handles quiz initialization and completion
-
-#### QuizConfigModal
-- Configuration interface for quiz setup
-- Manages quiz type and settings
-- Progressive disclosure of options
-- Persists user preferences
-
-#### QuizQuestion
-- Handles both MCQ and FRQ questions
-- Keyboard navigation support
-- Immediate feedback system
-- Animated transitions
-- Progress tracking
-
-#### FRQAnswerSection
-- Specialized input for free response
-- Multiline support
-- Keyboard shortcut integration
-- Answer validation
-
-#### Achievement System
-- Achievement tracking and unlocking
-- Points calculation and persistence
-- Progress monitoring
-- Notification system
-
-#### AchievementNotification
-- Toast-style notifications
-- Badge display
-- Points earned
-- Animation system
-
-### Database Schema
-
-#### Achievements Table
-```sql
-CREATE TABLE achievements (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  badge_icon VARCHAR(255),
-  points_required INTEGER,
-  type VARCHAR(50)
-);
+interface ProcessingState {
+  progress: number;
+  stage: ProcessingStage;
+  processedChunks: number;
+  totalChunks: number;
+  error?: string;
+}
 ```
 
-#### User Achievements
-```sql
-CREATE TABLE user_achievements (
-  user_id INTEGER REFERENCES users(id),
-  achievement_id INTEGER REFERENCES achievements(id),
-  unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (user_id, achievement_id)
-);
-```
-
-### Achievement Types
-1. Quiz Achievements
-   - Quiz Novice: First quiz completion
-   - Quiz Master: 100% on 5 quizzes
-   - Perfect Streak: 10 correct in a row
-
-2. Study Achievements
-   - Study Starter: First deck review
-   - Dedicated Learner: 100 cards reviewed
-   - Consistency: 3-day streak
-
-3. Progress Achievements
-   - Weekly Warrior: 7-day streak
-   - Monthly Master: 30-day streak
-   - Knowledge Seeker: 10 decks
-   - Master of Many: 1000 points
-
-### Points System
-1. Quiz Points
-   - Based on accuracy
-   - Bonus for streaks
-   - Time factor consideration
-
-2. Flashcard Points
-   - Based on SRS difficulty
-   - Streak multipliers
-   - Session completion bonus
-
-### API Endpoints
-1. Achievement Routes
+### 2. Component Patterns
+1. State Components:
    ```typescript
-   POST /api/achievements/check
-   GET /api/achievements/user
-   POST /api/achievements/unlock
+   interface StateProps {
+     deck?: DeckData;
+     onRetry?: () => void;
+   }
    ```
 
-2. Points Routes
+2. Progress Tracking:
    ```typescript
-   POST /api/points/update
-   GET /api/points/history
-   GET /api/points/stats
+   const useProgress = (deckId: string) => {
+     const [progress, setProgress] = useState(0);
+     // Polling logic
+     return { progress, stage, error };
+   };
    ```
 
-### UI/UX Patterns
+### 3. API Patterns
+1. Route Handlers:
+   ```typescript
+   export async function GET(req: Request) {
+     try {
+       // Auth check
+       // Data fetch
+       // Response
+     } catch (error) {
+       // Error handling
+     }
+   }
+   ```
 
-#### Visual Hierarchy
-1. Card-based layouts
-2. Gradient backgrounds for primary actions
-3. Shadow effects for depth
-4. Consistent spacing
-5. Button height consistency
-   - Primary: h-14
-   - Secondary: h-12
+2. Progress Updates:
+   ```typescript
+   async function updateProgress(deckId: string, progress: number) {
+     await db.deck.update({
+       where: { id: deckId },
+       data: { processingProgress: progress }
+     });
+   }
+   ```
 
-#### Interactive Elements
-1. Button States:
-   - Default: Gradient background for primary
-   - Hover: Scale transform (1.02)
-   - Active: Scale transform (0.98)
-   - Disabled: Muted with reduced opacity
-   - Loading: Custom spinner with matching colors
+## Component Relationships
 
-2. Input Fields:
-   - Clear focus states
-   - Validation feedback
-   - Error handling
-   - Multiline support where needed
-
-#### Animations
-1. Question transitions
-2. Feedback reveals
-3. Modal interactions
-4. Progress updates
-5. Button hover/active states
-6. Loading states
-
-#### Achievement Display
-1. Notification System
-   - Toast notifications
-   - Badge preview
-   - Points earned
-   - Unlock animation
-
-2. Profile Display
-   - Achievement grid
-   - Progress tracking
-   - Points history
-   - Stats overview
-
-#### Visual Elements
-1. Badge Design
-   - Neural theme
-   - Gradient effects
-   - SVG animations
-   - Level indicators
-
-2. Progress Indicators
-   - Points counter
-   - Achievement progress
-   - Streak tracking
-   - Level system
-
-### Keyboard Navigation
-1. MCQ Questions:
-   - Numbers 1-4 for options
-   - Enter/Space to submit
-   - Enter/Space for next
-
-2. FRQ Questions:
-   - Enter to submit
-   - Shift+Enter for newlines
-   - Enter/Space for next
-
-### Data Flow
+### 1. Study Session Flow
 ```mermaid
 graph LR
-    Store[Quiz Store] --> State[Component State]
-    State --> UI[User Interface]
-    UI --> Actions[User Actions]
-    Actions --> Store
+    Page[Page] --> DeckLoader[DeckLoader]
+    DeckLoader --> ProcessingState[ProcessingState]
+    DeckLoader --> StudyState[StudyState]
+    ProcessingState --> HomeButton[HomeButton]
+    StudyState --> FlashCard[FlashCard]
 ```
 
-### Error Handling
-1. Input Validation
-   - Required fields
-   - Format checking
-   - Length limits
+### 2. Processing Flow
+```mermaid
+graph TD
+    Upload[Upload] --> Process[Process]
+    Process --> Chunk[Chunk]
+    Chunk --> Generate[Generate]
+    Generate --> MindMap[MindMap]
+    MindMap --> Complete[Complete]
+```
 
-2. State Validation
-   - Question progression
-   - Answer submission
-   - Quiz completion
+## Critical Implementation Paths
 
-3. Achievement Validation
-   - Duplicate checks
-   - Progress verification
-   - Points validation
+### 1. Document Processing
+1. Upload & Validation
+2. PDF Chunking
+3. OpenAI Processing
+4. Mind Map Generation
+5. Progress Tracking
 
-4. Points Tracking
-   - Calculation accuracy
-   - History tracking
-   - Streak validation
+### 2. Study Session
+1. Deck Loading
+2. State Determination
+3. Progress Monitoring
+4. State Transitions
+5. User Interaction
 
-### Performance Patterns
-1. Component Optimization
-   - Memoization where needed
-   - Efficient re-renders
-   - State updates batching
+## Error Handling Patterns
 
-2. Animation Performance
-   - Hardware acceleration
-   - Transition optimizations
-   - Layout stability
+### 1. API Errors
+```typescript
+interface APIError {
+  code: string;
+  message: string;
+  details?: unknown;
+}
 
-3. Achievement Checks
-   - Batch processing
-   - Caching strategies
-   - Efficient queries
+function handleAPIError(error: unknown): APIError {
+  // Error transformation logic
+}
+```
 
-4. Points Updates
-   - Atomic operations
-   - Transaction handling
-   - Cache invalidation
+### 2. UI Error States
+```typescript
+interface ErrorState {
+  type: 'processing' | 'network' | 'validation';
+  message: string;
+  retry?: () => void;
+}
+```
 
-### Accessibility Patterns
-1. Keyboard Navigation
-2. ARIA labels
-3. Focus management
-4. Color contrast
-5. Screen reader support
+## State Management
+
+### 1. Processing State
+```typescript
+const ProcessingContext = createContext<{
+  stage: ProcessingStage;
+  progress: number;
+  error?: string;
+}>(null);
+```
+
+### 2. Study Session State
+```typescript
+interface StudySessionState {
+  currentCard: number;
+  totalCards: number;
+  completed: boolean;
+}
+```
+
+## Data Flow Patterns
+
+### 1. Progress Updates
+```mermaid
+graph TD
+    API[API] --> DB[Database]
+    DB --> Poll[Polling]
+    Poll --> UI[UI Update]
+    UI --> User[User Feedback]
+```
+
+### 2. Error Propagation
+```mermaid
+graph TD
+    Error[Error] --> Handler[Error Handler]
+    Handler --> State[State Update]
+    State --> UI[UI Update]
+    UI --> User[User Feedback]
+```
 
 ## Technical Decisions
 

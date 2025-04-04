@@ -78,6 +78,47 @@ export default function DeckStudyPage() {
     };
   }, [endSession]);
 
+  // Add polling for deck updates during processing
+  useEffect(() => {
+    if (deck?.isProcessing) {
+      const pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/deck-processing/${deckId}`);
+          const updatedDeck = await response.json();
+          
+          // Only trigger full reload if processing is complete
+          if (!updatedDeck.isProcessing) {
+            setDeckId(deckId);
+            initSession();
+          } else {
+            // Just update the deck processing status without reinitializing
+            useStudySessionStore.setState(state => ({
+              ...state,
+              deck: {
+                ...state.deck!,  // Assert deck exists
+                name: state.deck?.name || '',  // Ensure required fields have defaults
+                id: state.deck?.id || '',
+                processingProgress: updatedDeck.processingProgress,
+                processingStage: updatedDeck.processingStage,
+                processedChunks: updatedDeck.processedChunks,
+                totalChunks: updatedDeck.totalChunks,
+                mindMap: updatedDeck.mindMap, // Make sure this is included
+                isProcessing: true
+              }
+            }));
+
+            console.log(`Processing: ${updatedDeck.processingProgress}% - ${updatedDeck.processingStage}`);
+
+          }
+        } catch (error) {
+          console.error('Error polling deck status:', error);
+        }
+      }, 2000);
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [deck?.isProcessing, deckId, setDeckId, initSession]);
+
   // Handle different states
   if (isLoading) {
     return <LoadingState />;
@@ -94,7 +135,7 @@ export default function DeckStudyPage() {
   }
 
   if (deck?.isProcessing) {
-    return <ProcessingState progress="Generating flashcards..." />;
+    return <ProcessingState deck={deck} />;
   }
 
   if (deckCompleted && orderedCards.length === 0) {
@@ -186,25 +227,12 @@ export default function DeckStudyPage() {
         deckId={deckId}
       />
 
-      <MindMapModal
-        isVisible={showMindMap}
-        onClose={() => toggleMindMap(false)}
-        nodes={[
-          // This is sample data. In a real app, you'd fetch the mind map data from an API
-          { id: '1', label: 'Main Concept', x: 300, y: 200 },
-          { id: '2', label: 'Related Idea 1', x: 150, y: 100 },
-          { id: '3', label: 'Related Idea 2', x: 450, y: 100 },
-          { id: '4', label: 'Subtopic 1', x: 150, y: 300 },
-          { id: '5', label: 'Subtopic 2', x: 450, y: 300 }
-        ]}
-        connections={[
-          { source: '1', target: '2' },
-          { source: '1', target: '3' },
-          { source: '1', target: '4' },
-          { source: '1', target: '5' },
-          { source: '2', target: '3', label: 'connected to' }
-        ]}
-      />
+    <MindMapModal
+      isVisible={showMindMap}
+      onClose={() => toggleMindMap(false)}
+      nodes={deck?.mindMap?.nodes || []}
+      connections={deck?.mindMap?.connections || []}
+    />
     </div>
   );
 } 

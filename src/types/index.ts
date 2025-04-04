@@ -37,4 +37,8 @@ export interface DeckData {
   is_public: boolean
   tags?: string[]
   isProcessing?: boolean
+  mindMap?: {
+    nodes: Array<{ id: string; label: string; type: 'main' | 'subtopic' | 'detail'; x?: number; y?: number }>;
+    connections: Array<{ source: string; target: string; label?: string; type: string }>;
+  };
 } 

@@ -1,217 +1,184 @@
 # Product Context
 
-## Overview
-An interactive quiz application designed to provide an engaging and efficient learning experience through multiple-choice and free-response questions.
+## Core Problem
+Users need an efficient way to study and learn from their documents (PDFs, etc.) through AI-generated flashcards and mind maps, with a smooth and informative processing experience.
 
-## Core Problems Solved
-1. Learning Efficiency
-   - Quick knowledge assessment
-   - Immediate feedback
-   - Explanation of answers
-   - Progress tracking
-
-2. User Experience
-   - Intuitive interface
-   - Keyboard navigation
-   - Visual feedback
-   - Smooth transitions
-
-3. Accessibility
-   - Keyboard support
-   - Screen reader compatibility
-   - Clear visual hierarchy
-   - Mobile responsiveness
-
-## Achievement System Goals
-1. Motivate users to engage with the learning platform regularly
-2. Provide clear feedback on learning progress
-3. Reward consistent study habits
-4. Encourage exploration of different features
+## Solution
+An AI-powered study tool that:
+1. Processes documents into digestible chunks
+2. Generates high-quality flashcards
+3. Creates mind maps for visual learning
+4. Provides real-time feedback during processing
+5. Offers an engaging study experience
 
 ## User Experience Goals
-- Clear visibility of available achievements
-- Intuitive progress tracking
-- Immediate feedback on unlocking achievements
-- Meaningful rewards for accomplishments
 
-## Achievement Categories
-1. Study Achievements
-   - Track cards studied
-   - Reward consistent study habits
-   - Encourage daily practice
+### 1. Document Processing
+- Clear progress indication
+- Informative stage messages
+- Ability to navigate away during processing
+- Error recovery options
+- Smooth transitions between states
 
-2. Mastery Achievements
-   - Recognize deck creation
-   - Reward comprehensive learning
-   - Encourage content creation
+### 2. Study Experience
+- Intuitive flashcard navigation
+- Visual progress tracking
+- Mind map integration
+- Spaced repetition
+- Performance analytics
 
-3. Streak Achievements
-   - Reward daily engagement
-   - Encourage consistent practice
-   - Track study streaks
+### 3. Processing State UX
+- Rainbow spinner for visual engagement
+- Accurate progress bar
+- Stage-specific messages
+- Error state handling
+- Home navigation option
 
-4. Points Achievements
-   - Overall progress tracking
-   - Milestone recognition
-   - Cumulative rewards
+## Feature Set
 
-## User Journey
-1. Discovery
-   - Users see available achievements
-   - Clear requirements displayed
-   - Progress tracking visible
+### 1. Core Features
+- PDF document upload
+- Automatic chunking
+- AI-powered flashcard generation
+- Mind map creation
+- Progress tracking
 
-2. Engagement
-   - Regular study sessions
-   - Deck creation and management
-   - Quiz participation
+### 2. User Interface
+- Modern, clean design
+- Responsive components
+- Loading states
+- Error handling
+- Navigation options
 
-3. Progress
-   - Achievement unlocking
-   - Points accumulation
-   - Streak maintenance
+### 3. Processing Features
+- Real-time progress updates
+- Stage-specific feedback
+- Error recovery
+- Processing cancellation
+- Auto-reload on completion
 
-4. Rewards
-   - Visual recognition
-   - Points bonuses
-   - Special badges
+## User Flow
 
-## Feature Integration
-- Study sessions trigger achievement checks
-- Quiz completion updates progress
-- Deck creation counts towards mastery
-- Points system ties everything together
+### 1. Document Upload
+1. Select document
+2. Initiate processing
+3. View progress
+4. Navigate as needed
+5. Auto-transition to study
+
+### 2. Processing Experience
+1. Initial chunking (0-10%)
+2. Flashcard generation (10-80%)
+3. Mind map creation (80-100%)
+4. Completion transition
+5. Study mode entry
+
+### 3. Study Session
+1. Review flashcards
+2. Explore mind map
+3. Track progress
+4. Complete session
+5. View performance
+
+## Success Metrics
+
+### 1. Processing
+- Time to process
+- Error rate
+- User engagement
+- Completion rate
+- Navigation patterns
+
+### 2. Study Experience
+- Session duration
+- Card completion
+- Mind map usage
+- Return rate
+- User satisfaction
+
+## Future Enhancements
+
+### 1. Processing
+- Multiple document support
+- Progress persistence
+- Advanced error recovery
+- Processing optimization
+- Batch processing
+
+### 2. Study Features
+- Custom flashcard creation
+- Mind map editing
+- Progress sharing
+- Performance analytics
+- Study scheduling
+
+## User Feedback Integration
+
+### 1. Processing Experience
+- Progress clarity
+- Stage messaging
+- Error handling
+- Navigation options
+- Performance speed
+
+### 2. Study Experience
+- Flashcard quality
+- Mind map utility
+- UI/UX satisfaction
+- Feature requests
+- Pain points
+
+## Product Roadmap
+
+### Phase 1: Core Experience
+- ✅ Basic processing
+- ✅ Flashcard generation
+- ✅ Mind map creation
+- ✅ Progress tracking
+- ✅ Study mode
+
+### Phase 2: Enhanced Processing
+- ✅ Real-time updates
+- ✅ Stage messages
+- ✅ Error handling
+- ✅ Navigation options
+- 🔄 Processing optimization
+
+### Phase 3: Advanced Features
+- 📋 Multiple documents
+- 📋 Custom flashcards
+- 📋 Mind map editing
+- 📋 Analytics dashboard
+- 📋 Study scheduling
 
 ## Design Philosophy
 
-### Visual Design
-1. Clean Interface
-   - Clear hierarchy
-   - Consistent spacing
-   - Modern aesthetics
-   - Purposeful animations
+### 1. User Interface
+- Clean and modern
+- Intuitive navigation
+- Clear feedback
+- Consistent patterns
+- Responsive design
 
-2. Feedback System
-   - Color-coded responses
-   - Animated transitions
-   - Progress indicators
-   - Loading states
+### 2. User Experience
+- Minimal friction
+- Informative feedback
+- Error recovery
+- Smooth transitions
+- Engaging interactions
 
-3. Typography
-   - Clear readability
-   - Proper hierarchy
-   - Consistent scale
-   - Responsive sizing
+## Implementation Focus
 
-### Interaction Design
-1. Progressive Disclosure
-   - Step-by-step flow
-   - Contextual information
-   - Helpful hints
-   - Keyboard shortcuts
+### Current Priority
+- Processing state improvements
+- Progress tracking accuracy
+- Error handling robustness
+- Navigation flexibility
+- Performance optimization
 
-2. Error Prevention
-   - Clear validation
-   - Helpful messages
-   - Recovery options
-   - Undo capabilities
-
-3. Accessibility
-   - Keyboard focus
-   - Screen readers
-   - Color contrast
-   - Clear labels
-
-## Feature Priorities
-
-### Current Focus
-1. Core Experience
-   - Smooth quiz flow
-   - Reliable answer handling
-   - Clear feedback
-   - Progress tracking
-
-2. User Interface
-   - Clean design
-   - Responsive layout
-   - Consistent styling
-   - Helpful animations
-
-3. Accessibility
-   - Keyboard support
-   - Screen readers
-   - Mobile support
-   - Clear feedback
-
-### Future Enhancements
-1. Learning Features
-   - Spaced repetition
-   - Progress analytics
-   - Custom quizzes
-   - Learning paths
-
-2. Social Features
-   - Achievement sharing
-   - Leaderboards
-   - Community challenges
-
-3. Advanced Features
-   - Offline support
-   - Multi-language
-   - Custom themes
-   - Advanced analytics
-
-## Success Metrics
-1. User Engagement
-   - Daily active users
-   - Study session duration
-   - Return frequency
-
-2. Achievement Progress
-   - Unlock rates
-   - Popular achievements
-   - Progress distribution
-
-3. Learning Outcomes
-   - Study consistency
-   - Material mastery
-   - Quiz performance
-
-## Roadmap
-
-### Phase 1: Core Experience
-- [x] Basic quiz flow
-- [x] MCQ support
-- [x] FRQ support
-- [x] Answer feedback
-
-### Phase 2: Enhancement
-- [ ] Timer functionality
-- [ ] Progress analytics
-- [ ] Mobile optimization
-- [ ] Performance improvements
-
-### Phase 3: Advanced Features
-- [ ] Offline support
-- [ ] Social features
-- [ ] Custom quizzes
-- [ ] Learning paths
-
-## Known Limitations
-1. Current
-   - No timer support
-   - Limited analytics
-   - Basic progress tracking
-   - Mobile experience
-
-2. Technical
-   - Browser storage limits
-   - Animation performance
-   - Mobile keyboard handling
-   - Offline capabilities
-
-3. Feature
-   - Limited question types
-   - Basic analytics
-   - No social features
-   - No custom themes 
+### Next Steps
+- Multiple document support
+- Enhanced error recovery
+- Progress persistence
+- Analytics integration
+- Study optimization 

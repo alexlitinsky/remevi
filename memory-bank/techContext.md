@@ -1,5 +1,114 @@
 # Technical Context
 
+## Tech Stack
+- Next.js 14 with App Router
+- TypeScript
+- Prisma ORM
+- Tailwind CSS
+- shadcn/ui components
+- OpenAI API for AI processing
+- PDF processing libraries
+
+## Development Setup
+- Package Manager: pnpm
+- Database: PostgreSQL
+- Authentication: Clerk
+- API Routes: Next.js API routes
+- State Management: React hooks + Server Components
+
+## Technical Constraints
+1. PDF Processing:
+   - Limited by OpenAI token limits
+   - Processing time varies with document size
+   - Chunking needed for large documents
+
+2. Real-time Updates:
+   - Currently using polling (2s interval)
+   - No WebSocket implementation yet
+   - Progress tracking through database updates
+
+3. Database Schema:
+   - Deck model includes processing fields:
+     - processingProgress: Float
+     - processingStage: Enum
+     - processedChunks: Int
+     - totalChunks: Int
+     - error: String?
+
+## Dependencies
+- Core:
+  - next: ^14.0.0
+  - react: ^18.0.0
+  - typescript: ^5.0.0
+  - prisma: ^5.0.0
+  - tailwindcss: ^3.0.0
+  - @clerk/nextjs: Latest
+  - openai: Latest
+
+- UI:
+  - @radix-ui/react-*: Latest
+  - @shadcn/ui: Latest
+  - lucide-react: Latest
+
+## Tool Usage
+1. PDF Processing:
+   - Custom chunking algorithm
+   - OpenAI for content generation
+   - Progress tracking at each stage
+
+2. Database Operations:
+   - Prisma Client for all DB operations
+   - Transaction support for atomic updates
+   - Real-time progress tracking
+
+3. UI Components:
+   - shadcn/ui for base components
+   - Custom components for specific features
+   - Tailwind for styling
+
+## API Structure
+1. `/api/generate-chunks`:
+   - Handles PDF processing
+   - Updates progress in stages
+   - Returns processing status
+
+2. `/api/deck/[id]`:
+   - GET: Fetches deck status
+   - Updates: Through separate endpoints
+
+## Error Handling
+1. Processing Errors:
+   - Stored in deck.error
+   - Displayed in UI
+   - Allows retry
+
+2. API Errors:
+   - Standard HTTP status codes
+   - Error messages in response
+   - Client-side error boundaries
+
+## Performance Considerations
+1. Processing:
+   - Batch operations where possible
+   - Progress updates at meaningful intervals
+   - Careful memory management
+
+2. UI:
+   - Optimistic updates
+   - Debounced polling
+   - Smooth progress animations
+
+## Security
+1. Authentication:
+   - Clerk for user management
+   - Protected API routes
+   - User-specific data access
+
+2. Data:
+   - Input validation
+   - SQL injection prevention
+   - Rate limiting on API routes
+
 ## Technology Stack
 
 ### Frontend

@@ -5,10 +5,10 @@ import { useState } from "react"
 import { Slider } from "@/components/ui/slider"
 
 interface MindMapModalProps {
-  isVisible: boolean
-  onClose: () => void
-  nodes: { id: string; label: string; x: number; y: number }[]
-  connections: { source: string; target: string; label?: string }[]
+  isVisible: boolean;
+  onClose: () => void;
+  nodes: { id: string; label: string; type: 'main' | 'subtopic' | 'detail' }[];
+  connections: { source: string; target: string; label?: string; type: string }[];
 }
 
 interface SettingsModalProps {
@@ -21,13 +21,72 @@ interface SettingsModalProps {
 export function MindMapModal({
   isVisible,
   onClose,
-  nodes,
+  nodes: originalNodes,
   connections
 }: MindMapModalProps) {
   const [scale, setScale] = useState(1);
   
   if (!isVisible) return null;
+
+  // Separate nodes by type for better layout
+  const mainNodes = originalNodes.filter(node => node.type === 'main');
+  const subtopicNodes = originalNodes.filter(node => node.type === 'subtopic');
+  const detailNodes = originalNodes.filter(node => node.type === 'detail');
   
+  // Calculate better positions with more spacing
+  const nodes = originalNodes.map((node, index) => {
+    // Main concepts in center
+    if (node.type === 'main') {
+      return {
+        ...node,
+        x: 500, // Center point
+        y: 400
+      };
+    }
+    
+    // For subtopics, create circular layout with larger radius
+    if (node.type === 'subtopic') {
+      const subtopicIndex = subtopicNodes.findIndex(n => n.id === node.id);
+      const angle = (2 * Math.PI * subtopicIndex) / subtopicNodes.length;
+      return {
+        ...node,
+        x: 500 + 250 * Math.cos(angle), // Larger radius for subtopics
+        y: 400 + 250 * Math.sin(angle)
+      };
+    }
+    
+    // For details, position them in outer ring with offset based on connections
+    const detailIndex = detailNodes.findIndex(n => n.id === node.id);
+    // Find connected node to determine position
+    const connection = connections.find(c => c.target === node.id || c.source === node.id);
+    const connectedToId = connection ? (connection.source === node.id ? connection.target : connection.source) : null;
+    const connectedNode = connectedToId ? originalNodes.find(n => n.id === connectedToId) : null;
+    const connectedType = connectedNode?.type || 'subtopic';
+    
+    // If connected to a subtopic, position relative to it
+    if (connectedType === 'subtopic') {
+      const connectedIndex = subtopicNodes.findIndex(n => n.id === connectedToId);
+      const angleBase = (2 * Math.PI * connectedIndex) / subtopicNodes.length;
+      const angleOffset = (detailIndex % 3) * 0.4 - 0.4; // Spread details around their parent
+      const angle = angleBase + angleOffset;
+      const radius = 400; // Even larger radius for details
+      
+      return {
+        ...node,
+        x: 500 + radius * Math.cos(angle),
+        y: 400 + radius * Math.sin(angle)
+      };
+    }
+    
+    // Fallback layout for unconnected details
+    const angle = (2 * Math.PI * detailIndex) / (detailNodes.length || 1);
+    return {
+      ...node,
+      x: 500 + 400 * Math.cos(angle),
+      y: 400 + 400 * Math.sin(angle)
+    };
+  });
+
   // Position calculation
   const minX = Math.min(...nodes.map(n => n.x));
   const minY = Math.min(...nodes.map(n => n.y));
@@ -128,7 +187,10 @@ export function MindMapModal({
               {nodes.map(node => (
                 <div
                   key={node.id}
-                  className="absolute bg-blue-600 text-white text-sm rounded-lg px-2 py-1 shadow-lg cursor-help transform -translate-x-1/2 -translate-y-1/2"
+                  className={`absolute bg-blue-600 text-white text-sm rounded-lg px-2 py-1 shadow-lg cursor-help transform -translate-x-1/2 -translate-y-1/2 ${
+                    node.type === 'main' ? 'bg-blue-700 font-bold' : 
+                    node.type === 'subtopic' ? 'bg-blue-600' : 'bg-blue-500'
+                  }`}
                   style={{
                     left: `${node.x + offsetX}px`,
                     top: `${node.y + offsetY}px`,

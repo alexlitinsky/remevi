@@ -44,13 +44,13 @@ export function FlashcardContainer({
     // Number keys for rating (only when card is flipped)
     if (showBack) {
       const responseTime = Date.now() - startTime;
-      if (e.key === 'q') {
+      if (e.key === '1') {
         onRate('again', responseTime);
-      } else if (e.key === 'w') {
+      } else if (e.key === '2') {
         onRate('hard', responseTime);
-      } else if (e.key === 'e') {
+      } else if (e.key === '3') {
         onRate('good', responseTime);
-      } else if (e.key === 'r') {
+      } else if (e.key === '4') {
         onRate('easy', responseTime);
       }
     }

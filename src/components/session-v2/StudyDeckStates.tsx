@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { AlertCircle, Clock, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { Progress } from "@/components/ui/progress";
 
 export function RainbowSpinner() {
   return (
@@ -105,16 +108,24 @@ export function LoadingState({ message = "Loading your study session..." }: { me
   );
 }
 
-export function ProcessingState({ progress }: { progress?: string }) {
-  // Extract numbers from progress string like "Processed 14/14 chunks (130 flashcards so far)"
-  const progressMatch = progress?.match(/(\d+)\/(\d+)/);
-  const current = progressMatch ? parseInt(progressMatch[1]) : 0;
-  const total = progressMatch ? parseInt(progressMatch[2]) : 0;
-  const percentage = total > 0 ? (current / total) * 100 : 0;
+export const ProcessingState = ({ deck }: { deck?: any }) => {
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Only reload if processing is complete and we're not in an error state
+    if (deck?.processingProgress === 100 && deck?.processingStage === 'COMPLETED') {
+      const timer = setTimeout(() => {
+        window.location.reload();
+      }, 2000); // Increased delay to ensure mind map is generated
+      return () => clearTimeout(timer);
+    }
+  }, [deck?.processingProgress, deck?.processingStage]);
+
+  const progress = Math.min(Math.max(0, deck?.processingProgress || 0), 100);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 flex items-center justify-center p-4">
-      <div className="max-w-md w-full text-center">
+      <div className="max-w-md w-full text-center space-y-8">
         <div className="mb-6 flex justify-center">
           <RainbowSpinner />
         </div>
@@ -131,37 +142,46 @@ export function ProcessingState({ progress }: { progress?: string }) {
             ease: "easeInOut",
           }}
         >
-          Processing Your Deck
+          {getStageMessage(deck?.processingStage, deck?.processedChunks, deck?.totalChunks)}
         </motion.h2>
-        
-        <motion.p 
-          className="text-muted-foreground mb-8"
-          animate={{
-            opacity: [0.5, 1, 0.5],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        >
-          {progress || "We're analyzing your content and creating flashcards. This may take a few minutes."}
-        </motion.p>
 
-        <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-4">
-          <motion.div
-            className="h-full bg-gradient-to-r from-primary to-primary/50"
-            initial={{ width: "0%" }}
-            animate={{ 
-              width: progress ? `${percentage}%` : "90%",
-            }}
-            transition={{ 
-              duration: progress ? 0.5 : 20, 
-              ease: "linear",
-            }}
-          />
+        <div className="space-y-4">
+          <Progress value={progress} className="w-full h-2" />
+          <p className="text-sm text-muted-foreground">
+            {progress.toFixed(0)}% Complete
+          </p>
+          {deck?.error && (
+            <p className="text-sm text-muted-foreground mt-2 italic">
+              {deck.error}
+            </p>
+          )}
         </div>
+
+        <Button
+          onClick={() => router.push('/')}
+          variant="outline"
+          className="mt-8"
+        >
+          Return to Home
+        </Button>
       </div>
     </div>
-  )
-}
+  );
+};
+
+const getStageMessage = (stage: string, processed: number, total: number) => {
+  switch (stage) {
+    case 'CHUNKING':
+      return 'Analyzing Your Document';
+    case 'GENERATING':
+      return `Creating Flashcards (${processed}/${total} sections)`;
+    case 'MINDMAP':
+      return 'Building Mind Map';
+    case 'COMPLETED':
+      return 'Almost Ready!';
+    case 'ERROR':
+      return 'Oops! Something Went Wrong';
+    default:
+      return 'Processing Your Document';
+  }
+};
