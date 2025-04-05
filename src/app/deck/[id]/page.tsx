@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { StudyStats } from '@/components/deck/StudyStats';
 import { QuizStats } from '@/components/deck/QuizStats';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Sparkles, Clock, Calendar, Trash2 } from 'lucide-react';
+import { ArrowRight, BookOpen, Sparkles, Clock, Calendar, Trash2, ArrowLeft, BarChart3 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -161,81 +161,109 @@ export default function DeckPage() {
     <main className="min-h-screen bg-gradient-to-b from-background to-background/80">
       <div className="container mx-auto px-4 py-12 md:py-16 lg:py-24">
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="text-xs font-medium px-2 py-0.5">
-                  {deck.category || 'Uncategorized'}
-                </Badge>
-                {daysSinceLastStudied !== null && daysSinceLastStudied <= 2 && (
-                  <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20 text-xs">
-                    Recently studied
-                  </Badge>
-                )}
-              </div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">{deck.title}</h1>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-muted-foreground text-sm">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  <span>Created {formattedCreatedDate}</span>
-                </div>
-                {formattedLastStudied && (
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4" />
-                    <span>Last studied {formattedLastStudied}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="lg" className="gap-2 cursor-pointer" disabled={isDeleting}>
-                    <Trash2 className="h-4 w-4" />
-                    Delete Deck
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] max-w-[400px] overflow-y-auto p-0 bg-black">
-                  <div className="px-6 pt-6">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="text-center text-2xl font-bold tracking-tight">Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription className="text-center mt-2">
-                        This action cannot be undone. This will permanently delete your deck
-                        and all associated study materials.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                  </div>
+          {/* Back Button */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => router.push('/')} 
+            className="mb-2 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
 
-                  <div className="p-6">
-                    <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
-                      <AlertDialogCancel className="sm:mt-0">Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDelete}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        disabled={isDeleting}
-                      >
-                        {isDeleting ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                            Deleting...
-                          </>
-                        ) : (
-                          'Delete Deck'
-                        )}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
+          {/* Header Section */}
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className="text-xs font-medium px-2 py-0.5">
+                    {deck.category || 'Uncategorized'}
+                  </Badge>
+                  {daysSinceLastStudied !== null && daysSinceLastStudied <= 2 && (
+                    <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20 text-xs">
+                      Recently studied
+                    </Badge>
+                  )}
+                </div>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">{deck.title}</h1>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-muted-foreground text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4" />
+                    <span>Created {formattedCreatedDate}</span>
                   </div>
-                </AlertDialogContent>
-              </AlertDialog>
-              <Button size="lg" onClick={() => router.push(`/deck/${deckId}/session-v2`)} className="gap-2 cursor-pointer">
-                <BookOpen className="h-4 w-4" />
-                Start Studying
-              </Button>
-              <Button size="lg" onClick={() => router.push(`/deck/${deckId}/quiz`)} className="gap-2 cursor-pointer">
-                <BookOpen className="h-4 w-4" />
-                Start Quiz
-              </Button>
+                  {formattedLastStudied && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-4 w-4" />
+                      <span>Last studied {formattedLastStudied}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Action Buttons - Placed in the same row as the title */}
+              <div className="flex flex-wrap gap-3 md:flex-nowrap mt-4 md:mt-0">
+                <Button 
+                  size="lg" 
+                  onClick={() => router.push(`/deck/${deckId}/session-v2`)} 
+                  className="gap-2 cursor-pointer bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Start Studying
+                </Button>
+                <Button 
+                  size="lg" 
+                  onClick={() => router.push(`/deck/${deckId}/quiz`)} 
+                  className="gap-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Start Quiz
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="lg" 
+                      className="gap-2 cursor-pointer border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive bg-red-500" 
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] max-w-[400px] overflow-y-auto p-0 bg-black">
+                    <div className="px-6 pt-6">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-center text-2xl font-bold tracking-tight">Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center mt-2">
+                          This action cannot be undone. This will permanently delete your deck
+                          and all associated study materials.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                    </div>
+
+                    <div className="p-6">
+                      <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
+                        <AlertDialogCancel className="sm:mt-0">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                              Deleting...
+                            </>
+                          ) : (
+                            'Delete Deck'
+                          )}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </div>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           </div>
 

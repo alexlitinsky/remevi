@@ -26,7 +26,7 @@ export function NoDueCardsScreen({
         <div className="space-y-2">
           <h2 className="text-2xl font-bold">No Due Cards!</h2>
           <p className="text-muted-foreground">
-            You've completed all the due cards for today. Come back tomorrow for new cards!
+            You've completed all the due cards for today. Come back later for new cards!
           </p>
         </div>
         
@@ -34,7 +34,7 @@ export function NoDueCardsScreen({
           <Button 
             variant="outline" 
             onClick={onReturnToDashboard}
-            className="space-x-2"
+            className="space-x-2 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Deck</span>
@@ -42,7 +42,7 @@ export function NoDueCardsScreen({
           
           <Button 
             onClick={onRestartDeck}
-            className="space-x-2"
+            className="space-x-2 cursor-pointer"
           >
             <RotateCcw className="h-4 w-4" />
             <span>Reset & Study Again</span>

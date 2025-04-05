@@ -149,10 +149,28 @@ export function StudyStats({ deckId }: StudyStatsProps) {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="progress">Progress</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-6 p-1 bg-muted/20">
+            <TabsTrigger 
+              value="overview"
+              className="data-[state=active]:bg-primary/15 data-[state=active]:text-blue-500 data-[state=active]:font-medium relative transition-all hover:bg-muted/60 py-2 
+              data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:h-1 data-[state=active]:after:w-full data-[state=active]:after:bg-blue-500 data-[state=active]:rounded-sm"
+            >
+              <span className="relative z-10">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="progress"
+              className="data-[state=active]:bg-primary/15 data-[state=active]:text-blue-500 data-[state=active]:font-medium relative transition-all hover:bg-muted/60 py-2 
+              data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:h-1 data-[state=active]:after:w-full data-[state=active]:after:bg-blue-500 data-[state=active]:rounded-sm"
+            >
+              <span className="relative z-10">Progress</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="history"
+              className="data-[state=active]:bg-primary/15 data-[state=active]:text-blue-500 data-[state=active]:font-medium relative transition-all hover:bg-muted/60 py-2
+              data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:h-1 data-[state=active]:after:w-full data-[state=active]:after:bg-blue-500 data-[state=active]:rounded-sm"
+            >
+              <span className="relative z-10">History</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">

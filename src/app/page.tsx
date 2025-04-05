@@ -670,7 +670,7 @@ export default function Home() {
                                     <Button 
                                       variant="ghost" 
                                       size="sm" 
-                                      className="gap-1 text-xs hover:text-destructive transition-colors cursor-pointer"
+                                      className="gap-1 text-xs text-destructive hover:text-destructive/80 transition-colors cursor-pointer bg-red-500"
                                     >
                                       <Trash2 className="h-3 w-3" />
                                       Delete
@@ -719,7 +719,7 @@ export default function Home() {
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
-                                  className="gap-1 text-xs group-hover:text-primary cursor-pointer transition-colors"
+                                  className="gap-1 text-xs group-hover:text-primary cursor-pointer transition-colors bg-blue-500"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     router.push(`/deck/${deck.id}/session-v2`);
