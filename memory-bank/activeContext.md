@@ -41,6 +41,56 @@ The application is focused on providing a streamlined learning experience with a
   - Added custom scrollbar styling for better UI integration
   - Improved spacing between related nodes for better readability
 
+1. Enhanced ProcessingState component in `StudyDeckStates.tsx`:
+   - Added rainbow spinner animation
+   - Improved progress bar visibility
+   - Added proper stage messages
+   - Fixed progress percentage display
+   - Added auto-reload on completion
+
+2. Updated progress tracking in `generate-chunks/route.ts`:
+   - Added proper stage tracking (CHUNKING -> GENERATING -> MINDMAP -> COMPLETED)
+   - Improved progress percentage calculations
+   - Added error handling and status messages
+   - Enhanced mind map generation progress tracking
+
+3. Fixed mind map display issues:
+   - Added dynamic node position calculation in MindMapModal
+   - Implemented circular layout algorithm
+   - Added visual differentiation between node types
+   - Fixed connection rendering between nodes
+   - Added zoom control for better visualization
+
+4. Improved polling mechanism in session-v2/page.tsx:
+   - Fixed state management to avoid UI flipping
+   - Added consistent error handling
+   - Improved progress updates
+   - Fixed mind map data handling
+   - Added proper reload on completion
+
+5. Enhanced mind map visualization:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis for better node positioning
+   - Improved spacing between related nodes
+   - Added custom scrollbar styling
+   - Fixed connection rendering and label placement
+   - Implemented multi-stage positioning algorithm
+   - Enhanced canvas size calculations based on node positions
+
+6. Updated StudyStats.tsx component:
+   - Modified review history tab to display new rating categories (easy, good, hard, again)
+   - Replaced old medium rating with good rating
+   - Added again rating category to track cards that need to be repeated
+   - Updated chart visualization with color-coding for each rating category:
+     - Blue for easy ratings
+     - Green for good ratings 
+     - Yellow for hard ratings
+     - Red for again ratings
+   - Enhanced tooltips to display detailed rating breakdowns for each day
+   - Added legend below the chart for better user understanding
+   - Removed floating number from the top of chart bars for cleaner visualization
+   - Improved chart responsiveness and visual hierarchy
+
 ## Active Decisions
 
 - Implementing quiz statistics with focus on accuracy and completion metrics (temporarily removing time-related stats)
@@ -84,18 +134,16 @@ The application is focused on providing a streamlined learning experience with a
 
 ## Next Steps
 
-- Consider adding tab persistence across sessions
-- Evaluate the need for additional progress metrics
-- Monitor user interaction with the tabbed interface for potential improvements
-- Consider adding loading states for tab content
-- Consider reactivating the time-related metrics in the QuizStats component once timing calculations are fully stabilized
-- For document processing and mind maps:
-  - Implement more interactive mind map features (zooming, panning, node selection)
-  - Consider improving mind map layout algorithms for better visualization
-  - Add animations for node transitions when mind map first loads
-  - Test processing with larger documents to ensure reliability
-  - Add node selection and details view for mind map exploration
-  - Consider adding search functionality for finding concepts in complex mind maps
+- Implement the achievement database schema using the design in schema.prisma
+- Create API endpoints for achievement tracking and achievement unlocking
+- Develop the achievement notification component for real-time feedback
+- Integrate the points system with the user profile
+- Add more interactive features to the mind map (zooming, panning, node selection)
+- Implement caching for processing state to handle page refreshes
+- Add loading states for tab content
+- Enhance mobile responsiveness
+- Re-enable time-related metrics in the QuizStats component once timing calculations are fully stabilized
+- Optimize database operations for better scalability
 
 ## Important Patterns
 - Session management pattern:
@@ -239,23 +287,14 @@ The application is focused on providing a streamlined learning experience with a
 - Techniques for analyzing graph structure to determine node importance
 
 ## Current Focus
+- Implementing the Achievement database schema and API endpoints for achievement tracking
+- Continuing to enhance mind map visualization with interactive features
 - Refining the QuizStats component to display relevant metrics
 - Fixing session timing issues to ensure accurate time tracking
-- Achievement system implementation
-- Points system integration
-- Database schema for achievements
-- API endpoints for achievement tracking
-- UI/UX for achievement notifications
-- Document processing improvements:
-  - Reliable progress tracking
-  - Smooth transitions between processing stages
-  - Interactive mind map visualization
-  - Error handling and recovery
-- Mind map visualization enhancements:
-  - Advanced layout algorithms for better organization
-  - Custom UI styling for better integration
-  - Improved usability with custom scrollbars
-  - Better handling of connection labels
+- Implementing caching for document processing state
+- Adding loading states to tab content
+- Optimizing database operations for better performance
+- Preparing for deploying the next version with improved user experience
 
 ## Recent Changes
 1. Session Management Improvements
@@ -276,34 +315,37 @@ The application is focused on providing a streamlined learning experience with a
    - Added achievement check in QuizResults
    - Designed points system for quizzes and flashcards
    - Implemented upsert pattern to handle duplicate constraints
+   - Database schema updated to include Achievement and UserAchievement models
 
-4. Achievement Badge Design
-   - Modern, abstract achievement template
-   - Neural/learning theme
-   - Unique icons for each achievement type
-   - Consistent style with gradients and animations
-   - Created badges for all achievement types
-
-5. Points System Design
-   - Quiz points based on accuracy
-   - Flashcard points based on SRS difficulty
-   - Session tracking for streaks
-   - Points persistence in user profile
-
-6. Document Processing Improvements
+4. Document Processing Improvements
    - Fixed polling mechanism to maintain state during updates
    - Updated mind map component to calculate node positions dynamically
    - Improved progress tracking with accurate percentages
    - Added error handling and recovery options
    - Fixed processing state UI for better user feedback
 
-7. Mind Map Visualization Enhancements
+5. Mind Map Visualization Enhancements
    - Implemented advanced hierarchical layout algorithm
    - Added graph analysis to identify central concepts
    - Improved spacing and positioning of related nodes
    - Added custom scrollbar styling to match application theme
    - Fixed connection rendering and positioning
    - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+6. Updated StudyStats.tsx component:
+   - Modified review history tab to display new rating categories (easy, good, hard, again)
+   - Replaced old medium rating with good rating
+   - Added again rating category to track cards that need to be repeated
+   - Updated chart visualization with color-coding for each rating category:
+     - Blue for easy ratings
+     - Green for good ratings 
+     - Yellow for hard ratings
+     - Red for again ratings
+   - Enhanced tooltips to display detailed rating breakdowns for each day
+   - Added legend below the chart for better user understanding
+   - Removed floating number from the top of chart bars for cleaner visualization
+   - Improved chart responsiveness and visual hierarchy
 
 ## Active Decisions
 1. Session Management:
@@ -339,6 +381,12 @@ The application is focused on providing a streamlined learning experience with a
    - Unlock animations
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Current Learnings
 1. User Experience:
@@ -433,4 +481,6904 @@ The application is focused on providing a streamlined learning experience with a
    - Added custom scrollbar styling
    - Fixed connection rendering and label placement
    - Implemented multi-stage positioning algorithm
-   - Enhanced canvas size calculations based on node positions 
+   - Enhanced canvas size calculations based on node positions
+
+6. Updated StudyStats.tsx component:
+   - Modified review history tab to display new rating categories (easy, good, hard, again)
+   - Replaced old medium rating with good rating
+   - Added again rating category to track cards that need to be repeated
+   - Updated chart visualization with color-coding for each rating category:
+     - Blue for easy ratings
+     - Green for good ratings 
+     - Yellow for hard ratings
+     - Red for again ratings
+   - Enhanced tooltips to display detailed rating breakdowns for each day
+   - Added legend below the chart for better user understanding
+   - Removed floating number from the top of chart bars for cleaner visualization
+   - Improved chart responsiveness and visual hierarchy
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type/importance
+
+4. Document Processing Improvements:
+   - Fixed polling mechanism to maintain state during updates
+   - Updated mind map component to calculate node positions dynamically
+   - Improved progress tracking with accurate percentages
+   - Added error handling and recovery options
+   - Fixed processing state UI for better user feedback
+
+5. Mind Map Visualization Enhancements:
+   - Implemented advanced hierarchical layout algorithm
+   - Added graph analysis to identify central concepts
+   - Improved spacing and positioning of related nodes
+   - Added custom scrollbar styling to match application theme
+   - Fixed connection rendering and positioning
+   - Used multi-stage node positioning for better organization
+   - Enhanced canvas size calculations based on node positions
+
+## Active Decisions
+1. Session Management:
+   - Clearing sessionId when ending sessions
+   - Checking for existing sessions before starting new ones
+   - Properly handling session time tracking
+   - Ensuring proper session isolation
+
+2. Achievement System:
+   - Achievement types and conditions
+   - Points calculation methods
+   - Badge design system
+   - Notification timing
+   - Progress tracking
+   - Using upsert pattern for database operations
+
+3. Database Schema:
+   - Achievements table
+   - User achievements junction
+   - Points tracking in user profile
+   - Streak counting system
+
+4. API Design:
+   - Achievement check endpoint
+   - User achievements endpoint
+   - Achievement unlock endpoint
+   - Points update endpoint
+
+5. UI/UX Patterns:
+   - Achievement notification style
+   - Badge display in profile
+   - Progress indicators
+   - Unlock animations
+   - Custom scrollbar styling
+   - Mind map node styling based on type

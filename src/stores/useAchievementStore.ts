@@ -35,6 +35,7 @@ interface AchievementState {
   recentUnlock: UserAchievement | null;
   isLoading: boolean;
   error: string | null;
+  lastCheckTime: number | null;
 
   // Actions
   fetchAchievements: () => Promise<void>;
@@ -56,6 +57,7 @@ export const useAchievementStore = create<AchievementState>()(
       recentUnlock: null,
       isLoading: false,
       error: null,
+      lastCheckTime: null,
 
       fetchAchievements: async () => {
         set({ isLoading: true });
@@ -76,11 +78,25 @@ export const useAchievementStore = create<AchievementState>()(
       },
 
       checkAchievements: async (context) => {
+        const currentTime = Date.now();
+        const lastCheckTime = get().lastCheckTime;
+        
+        // Prevent multiple checks within 3 seconds to avoid duplicate notifications
+        if (lastCheckTime && currentTime - lastCheckTime < 3000) {
+          console.log('Skipping achievement check - too soon since last check');
+          return;
+        }
+        
         try {
+          set({ lastCheckTime: currentTime });
+          
           const response = await fetch('/api/achievements/check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(context)
+            body: JSON.stringify({
+              ...context,
+              checkId: currentTime // Add unique checkId to prevent duplicate processing
+            })
           });
           
           if (!response.ok) {
@@ -90,10 +106,18 @@ export const useAchievementStore = create<AchievementState>()(
           const { newAchievements } = await response.json();
           
           if (newAchievements?.length) {
-            set(state => ({
-              userAchievements: [...state.userAchievements, ...newAchievements],
-              recentUnlock: newAchievements[newAchievements.length - 1]
-            }));
+            // Check if we already have this achievement to prevent duplicates
+            const existingIds = get().userAchievements.map(a => a.id);
+            const uniqueNewAchievements = newAchievements.filter(
+              (a: UserAchievement) => !existingIds.includes(a.id)
+            );
+            
+            if (uniqueNewAchievements.length > 0) {
+              set(state => ({
+                userAchievements: [...state.userAchievements, ...uniqueNewAchievements],
+                recentUnlock: uniqueNewAchievements[uniqueNewAchievements.length - 1]
+              }));
+            }
           }
         } catch (error) {
           console.error('Error checking achievements:', error);
@@ -108,6 +132,7 @@ export const useAchievementStore = create<AchievementState>()(
       // Only persist these fields
       partialize: (state) => ({
         userAchievements: state.userAchievements,
+        lastCheckTime: state.lastCheckTime
       }),
     }
   )

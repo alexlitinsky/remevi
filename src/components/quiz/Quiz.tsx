@@ -12,7 +12,20 @@ interface QuizProps {
 
 export function Quiz({ deckId, deckTitle }: QuizProps) {
   const view = useQuizStore(state => state.view);
+  const cleanupSession = useQuizStore(state => state.cleanupSession);
   const [hasStarted, setHasStarted] = useState(false);
+
+  // When the component mounts, ensure we're using the correct deckId
+  useEffect(() => {
+    const currentDeckId = useQuizStore.getState().deckId;
+    
+    // If there's a mismatch between the current deckId and the one
+    // we're supposed to be using, clean up the session
+    if (currentDeckId && currentDeckId !== deckId) {
+      console.log('Quiz component detected deck mismatch:', currentDeckId, 'vs', deckId);
+      cleanupSession();
+    }
+  }, [deckId, cleanupSession]);
 
   // Set hasStarted to true when view changes to 'quiz'
   useEffect(() => {

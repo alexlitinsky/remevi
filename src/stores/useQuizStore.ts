@@ -180,39 +180,56 @@ export const useQuizStore = create<QuizState>()(
       // Helper to check if session is valid and in progress
       isValidSession: () => {
         const state = get();
-        const hasAnsweredCurrentQuestion = state.currentQuestion && 
-          state.answers[state.currentQuestion.id];
-          
-        return Boolean(
-          state.sessionId && 
-          state.questions.length > 0 &&
-          state.currentQuestionIndex < state.questions.length &&
-          state.answers && 
-          Object.keys(state.answers).length > 0 // Has at least one answer
-        );
+        
+        // If we don't have a session ID or config, the session is invalid
+        if (!state.sessionId || !state.config) return false;
+        
+        // If there are no questions or the current index is beyond the questions array, the session is invalid
+        if (state.questions.length === 0 || state.currentQuestionIndex >= state.questions.length) return false;
+        
+        // Check if there are answers recorded (indicating session progress)
+        const hasAnswers = Object.keys(state.answers).length > 0;
+        
+        // Check if the deckId in the config matches the stored deckId
+        const isDeckMatch = state.config.deckId === state.deckId;
+        
+        return hasAnswers && isDeckMatch;
       },
 
       // Actions
       startQuiz: async (config) => {
+        // First check if we're switching decks
         const state = get();
+        const previousDeckId = state.deckId;
         
-        // Check for valid session first
-        if (get().isValidSession()) {
-          // Resume existing session
+        // If we have a previous deck ID and it's different from the current one,
+        // or if we're loading the component with a different deck, clean up
+        if (previousDeckId && previousDeckId !== config.deckId) {
+          console.log('Switching from deck', previousDeckId, 'to', config.deckId);
+          get().cleanupSession();
+        }
+        
+        // Now check if there's a valid session we can resume for this specific deck
+        if (get().isValidSession() && state.config?.deckId === config.deckId) {
+          console.log('Resuming existing quiz session for deck', config.deckId);
+          
+          // Resume the session by setting the current question and view
           const currentQuestion = state.questions[state.currentQuestionIndex];
-          const showExplanation = currentQuestion && 
-            state.answers[currentQuestion.id] !== undefined;
-            
+          const showExplanation = state.answers[currentQuestion.id] !== undefined;
+          
           set({ 
             view: 'quiz', 
             showConfig: false,
             currentQuestion,
-            showExplanation // Restore explanation state based on if current question was answered
+            showExplanation,
+            deckId: config.deckId // Make sure deckId is explicitly set
           });
           return;
         }
-
-        set({ isLoading: true, error: null });
+        
+        // If we get here, we need to start a new quiz
+        console.log('Starting new quiz for deck', config.deckId);
+        set({ isLoading: true, error: null, deckId: config.deckId });
         
         try {
           const response = await fetch(`/api/decks/${config.deckId}/quiz/start`, {
@@ -228,6 +245,7 @@ export const useQuizStore = create<QuizState>()(
           
           const data = await response.json() as StartQuizResponse;
           
+          // Update state with new quiz data
           set({
             config,
             questions: data.questions,
@@ -251,6 +269,26 @@ export const useQuizStore = create<QuizState>()(
             error: error instanceof Error ? error.message : 'Failed to start quiz' 
           });
         }
+      },
+
+      // Thoroughly clean up the session state
+      cleanupSession: () => {
+        console.log('Cleaning up quiz session');
+        set({
+          sessionId: null,
+          questions: [],
+          answers: {},
+          currentQuestion: null,
+          currentQuestionIndex: 0,
+          score: 0,
+          correctAnswers: 0,
+          incorrectAnswers: 0,
+          view: 'config',
+          showConfig: true,
+          showExplanation: false,
+          config: null,
+          deckId: null
+        });
       },
 
       submitAnswer: async (userAnswer: string) => {
@@ -322,21 +360,6 @@ export const useQuizStore = create<QuizState>()(
         });
       },
 
-      cleanupSession: () => {
-        set({
-          sessionId: null,
-          questions: [],
-          answers: {},
-          currentQuestion: null,
-          currentQuestionIndex: 0,
-          score: 0,
-          correctAnswers: 0,
-          incorrectAnswers: 0,
-          view: 'config',
-          showConfig: true
-        });
-      },
-
       endQuiz: async () => {
         const state = get();
         if (!state.sessionId) return;
@@ -391,7 +414,8 @@ export const useQuizStore = create<QuizState>()(
         incorrectAnswers: state.incorrectAnswers,
         view: state.view,
         showConfig: state.showConfig,
-        showExplanation: state.showExplanation
+        showExplanation: state.showExplanation,
+        deckId: state.deckId // Make sure we persist the deckId
       })
     }
   )

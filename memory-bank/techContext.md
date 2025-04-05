@@ -8,13 +8,15 @@
 - shadcn/ui components
 - OpenAI API for AI processing
 - PDF processing libraries
+- Framer Motion for animations
+- Clerk for authentication
 
 ## Development Setup
 - Package Manager: pnpm
 - Database: PostgreSQL
 - Authentication: Clerk
 - API Routes: Next.js API routes
-- State Management: React hooks + Server Components
+- State Management: React hooks + Context API + Custom stores
 
 ## Technical Constraints
 1. PDF Processing:
@@ -34,6 +36,9 @@
      - processedChunks: Int
      - totalChunks: Int
      - error: String?
+   - Achievement system models:
+     - Achievement: Core achievement data
+     - UserAchievement: Junction table for user achievements
 
 ## Dependencies
 - Core:
@@ -44,10 +49,11 @@
   - tailwindcss: ^3.0.0
   - @clerk/nextjs: Latest
   - openai: Latest
+  - framer-motion: Latest
 
 - UI:
   - @radix-ui/react-*: Latest
-  - @shadcn/ui: Latest
+  - shadcn/ui: Latest
   - lucide-react: Latest
 
 ## Tool Usage
@@ -55,16 +61,19 @@
    - Custom chunking algorithm
    - OpenAI for content generation
    - Progress tracking at each stage
+   - Dynamic mind map generation
 
 2. Database Operations:
    - Prisma Client for all DB operations
    - Transaction support for atomic updates
    - Real-time progress tracking
+   - Upsert pattern for constraint management
 
 3. UI Components:
    - shadcn/ui for base components
    - Custom components for specific features
    - Tailwind for styling
+   - Framer Motion for animations
 
 ## API Structure
 1. `/api/generate-chunks`:
@@ -75,6 +84,15 @@
 2. `/api/deck/[id]`:
    - GET: Fetches deck status
    - Updates: Through separate endpoints
+
+3. `/api/achievements`:
+   - GET: Retrieves all achievements and user progress
+   - POST: Admin/system updates to achievements
+
+4. `/api/achievements/check`:
+   - POST: Checks for newly unlocked achievements
+   - Handles point awards
+   - Returns newly unlocked achievements
 
 ## Error Handling
 1. Processing Errors:
@@ -87,6 +105,11 @@
    - Error messages in response
    - Client-side error boundaries
 
+3. Achievement System:
+   - Upsert pattern to prevent constraint violations
+   - Try-catch blocks to continue processing on individual failures
+   - Structured error logging
+
 ## Performance Considerations
 1. Processing:
    - Batch operations where possible
@@ -97,6 +120,11 @@
    - Optimistic updates
    - Debounced polling
    - Smooth progress animations
+
+3. Achievement System:
+   - Efficient database queries
+   - Batch achievement checks
+   - Caching unlocked achievements
 
 ## Security
 1. Authentication:
@@ -138,6 +166,7 @@ import { motion, AnimatePresence } from "framer-motion";
 - Context API for global state
 - Clerk for auth state
 - API integration for data persistence
+- Custom stores for component state
 
 ## Development Setup
 
@@ -151,7 +180,8 @@ import { motion, AnimatePresence } from "framer-motion";
     "next": "14.x",
     "react": "18.x",
     "tailwindcss": "latest",
-    "@radix-ui/react-tabs": "latest"
+    "@radix-ui/react-tabs": "latest",
+    "prisma": "latest"
   }
 }
 ```
@@ -192,6 +222,7 @@ import { motion, AnimatePresence } from "framer-motion";
 - CSS variables for theming
 - Consistent class naming
 - Modular CSS patterns
+- Custom scrollbar styling
 
 ### Animation
 - Framer Motion for transitions
@@ -277,67 +308,79 @@ export function Component({ ...props }: ComponentProps) {
 
 ## Implementation Details
 
-### Component Architecture
-1. Quiz Components
-   ```typescript
-   // Quiz types
-   type QuizType = 'mcq' | 'frq' | 'mixed';
-   
-   // Question types
-   interface BaseQuestion {
-     id: string;
-     question: string;
-     type: QuizType;
-     hint?: string;
-   }
-   
-   interface MCQQuestion extends BaseQuestion {
-     type: 'mcq';
-     options: string[];
-     correctAnswer: string;
-   }
-   
-   interface FRQQuestion extends BaseQuestion {
-     type: 'frq';
-     correctAnswer: string;
-   }
-   ```
+### Session Management
+```typescript
+// Session handling pattern
+const useStudySessionStore = create<StudySessionStore>((set, get) => ({
+  // State fields
+  sessionId: null,
+  sessionStartTime: null,
+  
+  // Actions
+  startSession: async () => {
+    const { sessionId } = get();
+    
+    // Clean up existing session if any
+    if (sessionId) {
+      await get().endSession();
+    }
+    
+    // Create new session
+    // ...
+  },
+  
+  endSession: async () => {
+    // Clean up properly
+    set({
+      sessionId: null,
+      sessionStartTime: null
+    });
+    // ...
+  }
+}));
+```
 
-2. State Management
-   ```typescript
-   // Quiz store
-   interface QuizState {
-     questions: (MCQQuestion | FRQQuestion)[];
-     currentQuestionIndex: number;
-     answers: Record<string, Answer>;
-     view: 'config' | 'quiz' | 'results';
-   }
-   ```
+### Achievement System
+```typescript
+// Achievement check endpoint
+export async function POST(req: Request) {
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
 
-### Key Features
-
-1. Keyboard Navigation
-   ```typescript
-   // MCQ shortcuts
-   const handleKeyPress = (e: KeyboardEvent) => {
-     if (e.key >= '1' && e.key <= '4') {
-       // Handle number keys
-     }
-     if (e.key === 'Enter' || e.key === ' ') {
-       // Handle submission
-     }
-   };
-   ```
-
-2. Animation System
-   ```typescript
-   // Framer Motion variants
-   const variants = {
-     initial: { opacity: 0, y: 20 },
-     animate: { opacity: 1, y: 0 },
-     exit: { opacity: 0, y: -20 }
-   };
-   ```
+    const body = await req.json();
+    const { quizScore, streakDays, cardsStudied } = body;
+    
+    // Check achievements logic
+    // ...
+    
+    // Use upsert pattern for new achievements
+    await db.userAchievement.upsert({
+      where: {
+        userId_achievementId: {
+          userId: user.id,
+          achievementId: achievement.id,
+        },
+      },
+      update: {
+        notified: false,
+      },
+      create: {
+        userId: user.id,
+        achievementId: achievement.id,
+        notified: false
+      }
+    });
+    
+    // ...
+  } catch (error) {
+    console.error('[ACHIEVEMENTS_CHECK]', error);
+    return new NextResponse('Internal Error', { status: 500 });
+  }
+}
+```
 
 ## Development Setup
 
@@ -345,18 +388,24 @@ export function Component({ ...props }: ComponentProps) {
 - Node.js 18+
 - PNPM 8+
 - Git
+- PostgreSQL
 
 ### Project Structure
 ```
 src/
 ├── app/                 # Next.js app router
+│   └── api/             # API routes
 ├── components/
-│   ├── quiz/           # Quiz components
-│   └── ui/             # Shared UI components
-├── stores/             # Zustand stores
-├── types/              # TypeScript types
-├── lib/                # Utilities
-└── styles/             # Global styles
+│   ├── achievements/    # Achievement components
+│   ├── deck/            # Deck components
+│   ├── quiz/            # Quiz components
+│   ├── session-v2/      # Study session components
+│   └── ui/              # Shared UI components
+├── hooks/               # Custom React hooks
+├── stores/              # State stores
+├── types/               # TypeScript types
+├── lib/                 # Utilities
+└── styles/              # Global styles
 ```
 
 ### Build & Deploy
@@ -407,10 +456,10 @@ src/
   "next": "^14.0.0",
   "react": "^18.0.0",
   "typescript": "^5.0.0",
-  "zustand": "^4.0.0",
   "framer-motion": "^10.0.0",
   "tailwindcss": "^3.0.0",
-  "@shadcn/ui": "latest"
+  "@clerk/nextjs": "latest",
+  "prisma": "^5.0.0"
 }
 ```
 
@@ -427,7 +476,7 @@ src/
 ## Tool Usage Patterns
 
 ### State Management
-1. Zustand Stores
+1. Custom Stores
    - Atomic updates
    - Selector optimization
    - Action creators
@@ -447,35 +496,6 @@ src/
    - useMemo
    - useCallback
    - React.memo
-
-## Known Technical Limitations
-1. Browser Storage
-   - LocalStorage limits
-   - Session persistence
-
-2. Performance
-   - Animation frame drops
-   - Large state updates
-
-3. Mobile
-   - Keyboard handling
-   - Touch interactions
-
-## Future Technical Considerations
-1. Performance Monitoring
-   - Analytics integration
-   - Error tracking
-   - Performance metrics
-
-2. Offline Support
-   - Service workers
-   - State persistence
-   - Sync management
-
-3. Scalability
-   - Code splitting
-   - Lazy loading
-   - Cache management
 
 ## Achievement System Implementation
 - Next.js 14 with App Router
@@ -509,6 +529,8 @@ model UserAchievement {
   notified      Boolean  @default(false)
   user          User     @relation(fields: [userId], references: [id])
   achievement   Achievement @relation(fields: [achievementId], references: [id])
+  
+  @@unique([userId, achievementId])
 }
 ```
 
@@ -521,31 +543,12 @@ model UserAchievement {
 - `AchievementGrid` - Achievement card grid
 - `AchievementProgress` - Progress tracking
 - `AchievementNotification` - Unlock notifications
+- `DeckAchievements` - Deck-specific achievements
 
-### Authentication
-- Clerk for user management
-- Protected API routes
-- User-specific achievement tracking
-
-### State Management
-- React hooks for local state
-- API calls for data fetching
-- Clerk hooks for auth state
-
-### Styling
-- Tailwind CSS for responsive design
-- shadcn/ui for consistent UI
-- Custom SVG icons for achievements
-- Framer Motion for animations
-
-### Development Tools
-- Prisma Studio for database management
-- TypeScript for type checking
-- ESLint for code quality
-- Prettier for code formatting
-
-### Testing
-- Jest for unit tests
-- React Testing Library for components
-- API route testing
-- E2E testing with Playwright 
+### Mind Map Visualization
+- Advanced hierarchical layout algorithm
+- Graph analysis for node importance
+- Custom scrollbar styling
+- Type-based node styling
+- Multi-stage positioning algorithm
+- Connection rendering and labeling 

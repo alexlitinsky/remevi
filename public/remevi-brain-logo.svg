@@ -1,54 +1,38 @@
 <svg
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
+  width="64"
+  height="64"
+  viewBox="0 0 64 64"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
 >
-  <!-- Main circle -->
-  <circle
-    cx="12"
-    cy="12"
-    r="8"
+  <!-- Brain Outline -->
+  <path
+    d="M20 24C16 24 12 28 12 32C12 36 16 40 20 40V44C20 47 22 48 24 48H28C30 48 32 47 32 44V40H36V44C36 47 38 48 40 48H44C46 48 48 47 48 44V40C52 40 56 36 56 32C56 28 52 24 48 24C48 21 46 20 44 20H40C38 20 36 21 36 24V28H32V24C32 21 30 20 28 20H24C22 20 20 21 20 24Z"
     stroke="currentColor"
-    stroke-width="1.5"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class="animate-draw"
   />
   
-  <!-- Memory paths -->
-  <path
-    d="M8 12C8 9.79086 9.79086 8 12 8"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-    class="animate-draw"
-  />
-  <path
-    d="M12 16C14.2091 16 16 14.2091 16 12"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-    class="animate-draw"
-  />
-  
-  <!-- Center dot -->
+  <!-- Central Spark -->
   <circle
-    cx="12"
-    cy="12"
-    r="2"
+    cx="32"
+    cy="32"
+    r="4"
     fill="currentColor"
     class="animate-pulse"
   />
   
   <style>
-    svg { color: #000000; }
+    svg { color: #4F46E5; } /* Indigo-600 */
     .animate-draw {
-      stroke-dasharray: 1000;
-      stroke-dashoffset: 1000;
+      stroke-dasharray: 800;
+      stroke-dashoffset: 800;
       animation: draw 2s ease forwards;
     }
     .animate-pulse {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      animation: pulse 2s infinite;
     }
     @keyframes draw {
       to {
@@ -58,10 +42,12 @@
     @keyframes pulse {
       0%, 100% {
         opacity: 1;
+        r: 4;
       }
       50% {
-        opacity: 0.8;
+        opacity: 0.6;
+        r: 5;
       }
     }
   </style>
-</svg> 
+</svg>

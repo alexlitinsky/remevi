@@ -122,6 +122,7 @@ export function QuizQuestion({ deckTitle, deckId }: QuizQuestionProps) {
             width={32}
             height={32}
             className="text-primary cursor-pointer"
+            onClick={() => window.location.href = '/'}
           />
           <Button
             variant="link"

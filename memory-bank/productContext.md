@@ -1,15 +1,16 @@
 # Product Context
 
 ## Core Problem
-Users need an efficient way to study and learn from their documents (PDFs, etc.) through AI-generated flashcards and mind maps, with a smooth and informative processing experience.
+Users need an efficient way to study and learn from their documents (PDFs, etc.) through AI-generated flashcards, quizzes, and mind maps, with progress tracking and achievement gamification to increase engagement and motivation.
 
 ## Solution
 An AI-powered study tool that:
 1. Processes documents into digestible chunks
-2. Generates high-quality flashcards
+2. Generates high-quality flashcards and quizzes
 3. Creates mind maps for visual learning
 4. Provides real-time feedback during processing
-5. Offers an engaging study experience
+5. Tracks progress and awards achievements
+6. Offers an engaging gamified study experience
 
 ## User Experience Goals
 
@@ -26,6 +27,7 @@ An AI-powered study tool that:
 - Mind map integration
 - Spaced repetition
 - Performance analytics
+- Achievement unlocks
 
 ### 3. Processing State UX
 - Rainbow spinner for visual engagement
@@ -34,14 +36,24 @@ An AI-powered study tool that:
 - Error state handling
 - Home navigation option
 
+### 4. Achievement System
+- Visually rewarding achievement badges
+- Real-time notifications
+- Progress tracking
+- Points accumulation
+- Category-based organization
+- Clear requirements
+
 ## Feature Set
 
 ### 1. Core Features
 - PDF document upload
 - Automatic chunking
 - AI-powered flashcard generation
+- Quiz generation
 - Mind map creation
 - Progress tracking
+- Achievement system
 
 ### 2. User Interface
 - Modern, clean design
@@ -49,6 +61,8 @@ An AI-powered study tool that:
 - Loading states
 - Error handling
 - Navigation options
+- Tabbed interfaces
+- Custom scrollbars
 
 ### 3. Processing Features
 - Real-time progress updates
@@ -56,6 +70,14 @@ An AI-powered study tool that:
 - Error recovery
 - Processing cancellation
 - Auto-reload on completion
+
+### 4. Statistics Features
+- Study progress visualization
+- Quiz performance metrics
+- Weekly activity tracking
+- Streak counting
+- Points accumulation
+- Achievement progress
 
 ## User Flow
 
@@ -75,10 +97,19 @@ An AI-powered study tool that:
 
 ### 3. Study Session
 1. Review flashcards
-2. Explore mind map
-3. Track progress
-4. Complete session
-5. View performance
+2. Complete quizzes
+3. Explore mind map
+4. Track progress
+5. Unlock achievements
+6. View performance
+
+### 4. Achievement Flow
+1. Complete study actions
+2. Trigger achievement checks
+3. Unlock achievements
+4. Receive notifications
+5. Earn points
+6. View progress
 
 ## Success Metrics
 
@@ -92,9 +123,17 @@ An AI-powered study tool that:
 ### 2. Study Experience
 - Session duration
 - Card completion
+- Quiz accuracy
 - Mind map usage
 - Return rate
 - User satisfaction
+
+### 3. Achievement System
+- Unlock rate
+- Engagement increase
+- Session frequency
+- User retention
+- Points accumulation
 
 ## Future Enhancements
 
@@ -112,6 +151,13 @@ An AI-powered study tool that:
 - Performance analytics
 - Study scheduling
 
+### 3. Achievement System
+- Social sharing
+- Leaderboards
+- Advanced badge customization
+- Special event achievements
+- Achievement paths
+
 ## User Feedback Integration
 
 ### 1. Processing Experience
@@ -128,6 +174,13 @@ An AI-powered study tool that:
 - Feature requests
 - Pain points
 
+### 3. Achievement System
+- Badge design feedback
+- Points balance
+- Achievement difficulty
+- Notification timing
+- Reward satisfaction
+
 ## Product Roadmap
 
 ### Phase 1: Core Experience
@@ -142,14 +195,21 @@ An AI-powered study tool that:
 - ✅ Stage messages
 - ✅ Error handling
 - ✅ Navigation options
-- 🔄 Processing optimization
+- ✅ Processing optimization
 
 ### Phase 3: Advanced Features
-- 📋 Multiple documents
-- 📋 Custom flashcards
-- 📋 Mind map editing
-- 📋 Analytics dashboard
-- 📋 Study scheduling
+- ✅ Quiz system
+- ✅ Statistics tracking
+- ✅ Mind map improvements
+- ✅ Achievement system design
+- 🔄 Achievement implementation
+
+### Phase 4: Engagement Features
+- 🔄 Achievement notifications
+- 🔄 Points system integration
+- 📋 Social features
+- 📋 Leaderboards
+- 📋 Deep analytics
 
 ## Design Philosophy
 
@@ -159,6 +219,7 @@ An AI-powered study tool that:
 - Clear feedback
 - Consistent patterns
 - Responsive design
+- Engaging animations
 
 ### 2. User Experience
 - Minimal friction
@@ -166,19 +227,22 @@ An AI-powered study tool that:
 - Error recovery
 - Smooth transitions
 - Engaging interactions
+- Rewarding achievements
 
 ## Implementation Focus
 
 ### Current Priority
-- Processing state improvements
-- Progress tracking accuracy
-- Error handling robustness
-- Navigation flexibility
-- Performance optimization
+- Achievement system implementation
+- Mind map interactive features
+- Session timing improvements
+- State persistence during processing
+- Mobile responsiveness
+- Component loading states
 
 ### Next Steps
-- Multiple document support
-- Enhanced error recovery
-- Progress persistence
-- Analytics integration
-- Study optimization 
+- Achievement notification system
+- Points integration with user profile
+- Enhanced mind map interactivity
+- Caching for processing state
+- Advanced error recovery
+- Analytics integration 

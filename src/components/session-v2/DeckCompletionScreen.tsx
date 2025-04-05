@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import ReactConfetti from "react-confetti"
 import { useEffect, useState } from "react"
+import { useAchievementStore } from "@/stores/useAchievementStore"
+import { AchievementNotification } from "@/components/achievements/AchievementNotification"
 
 interface DeckCompletionScreenProps {
   totalPoints: number
@@ -30,6 +32,7 @@ export function DeckCompletionScreen({
     height: typeof window !== 'undefined' ? window.innerHeight : 0
   });
   const [showConfetti, setShowConfetti] = useState(true);
+  const { checkAchievements } = useAchievementStore();
 
   useEffect(() => {
     const handleResize = () => {
@@ -49,6 +52,15 @@ export function DeckCompletionScreen({
       clearTimeout(timer);
     };
   }, []);
+
+  // Check for achievements when the component mounts
+  useEffect(() => {
+    // Check if the user has earned any achievements from this session
+    checkAchievements({
+      cardsStudied: cardsReviewed,
+      sessionType: 'study'
+    });
+  }, [checkAchievements, cardsReviewed]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -159,6 +171,9 @@ export function DeckCompletionScreen({
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Achievement notification will be shown automatically when triggered */}
+      <AchievementNotification />
     </>
   );
 } 

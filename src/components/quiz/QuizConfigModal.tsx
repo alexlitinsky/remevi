@@ -30,7 +30,7 @@ export function QuizConfigModal({ deckId, hasStarted }: QuizConfigModalProps) {
   const handleStartQuiz = async () => {
     setIsLoading(true);
     try {
-      // Clean up existing session first
+      // Force clean up existing session first
       cleanupSession();
       
       await startQuiz({

@@ -31,8 +31,9 @@ interface DeckStats {
     {
       total: number
       easy: number
-      medium: number
+      good: number
       hard: number
+      again: number
     }
   >
   masteryLevels: {
@@ -113,7 +114,7 @@ export function StudyStats({ deckId }: StudyStatsProps) {
   // Format average response time
   const avgResponseTime = stats.averageResponseTime ? `${Math.round(stats.averageResponseTime / 1000)} seconds` : "N/A"
 
-  // Get dates for review history (last 7 days)
+  // Set dates for review history (last 7 days)
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setHours(0, 0, 0, 0); // Set to start of day
@@ -123,13 +124,14 @@ export function StudyStats({ deckId }: StudyStatsProps) {
 
   // Prepare review data for chart
   const reviewData = last7Days.map((date) => {
-    const dayData = stats.reviewsByDate[date] || { total: 0, easy: 0, medium: 0, hard: 0 };
+    const dayData = stats.reviewsByDate[date] || { total: 0, easy: 0, good: 0, hard: 0, again: 0 };
     return {
       date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       count: dayData.total,
-      easy: dayData.easy,
-      medium: dayData.medium,
-      hard: dayData.hard,
+      easy: dayData.easy || 0,
+      good: dayData.good || 0,
+      hard: dayData.hard || 0,
+      again: dayData.again || 0,
     }
   });
 
@@ -361,20 +363,26 @@ export function StudyStats({ deckId }: StudyStatsProps) {
                                 <div className="w-full flex flex-col-reverse h-[200px]">
                                   {day.easy > 0 && (
                                     <div
-                                      className="w-full bg-green-500/80 rounded-t transition-all group-hover:bg-green-500"
+                                      className="w-full bg-blue-500/80 rounded-t transition-all group-hover:bg-blue-500"
                                       style={{ height: `${(day.easy / maxCount) * 180}px` }}
                                     />
                                   )}
-                                  {day.medium > 0 && (
+                                  {day.good > 0 && (
                                     <div
-                                      className="w-full bg-yellow-500/80 transition-all group-hover:bg-yellow-500"
-                                      style={{ height: `${(day.medium / maxCount) * 180}px` }}
+                                      className="w-full bg-green-500/80 transition-all group-hover:bg-green-500"
+                                      style={{ height: `${(day.good / maxCount) * 180}px` }}
                                     />
                                   )}
                                   {day.hard > 0 && (
                                     <div
-                                      className="w-full bg-red-500/80 rounded-t transition-all group-hover:bg-red-500"
+                                      className="w-full bg-yellow-500/80 transition-all group-hover:bg-yellow-500"
                                       style={{ height: `${(day.hard / maxCount) * 180}px` }}
+                                    />
+                                  )}
+                                  {day.again > 0 && (
+                                    <div
+                                      className="w-full bg-red-500/80 rounded-t transition-all group-hover:bg-red-500"
+                                      style={{ height: `${(day.again / maxCount) * 180}px` }}
                                     />
                                   )}
                                   {day.count === 0 && <div className="w-full h-4 bg-muted rounded-t" />}
@@ -397,15 +405,20 @@ export function StudyStats({ deckId }: StudyStatsProps) {
                                   </span>
                                   <span className="font-medium">{day.easy}</span>
                                   <span className="flex items-center gap-1">
-                                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                                    Medium:
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    Good:
                                   </span>
-                                  <span className="font-medium">{day.medium}</span>
+                                  <span className="font-medium">{day.good}</span>
                                   <span className="flex items-center gap-1">
-                                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                                     Hard:
                                   </span>
                                   <span className="font-medium">{day.hard}</span>
+                                  <span className="flex items-center gap-1">
+                                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                    Again:
+                                  </span>
+                                  <span className="font-medium">{day.again}</span>
                                 </div>
                               </div>
                             </TooltipContent>
@@ -423,16 +436,20 @@ export function StudyStats({ deckId }: StudyStatsProps) {
 
               <div className="flex justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                   <span className="text-xs">Easy</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-xs">Good</span>
+                </div>
+                <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <span className="text-xs">Medium</span>
+                  <span className="text-xs">Hard</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-xs">Hard</span>
+                  <span className="text-xs">Again</span>
                 </div>
               </div>
 

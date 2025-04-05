@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { AchievementGrid } from './AchievementGrid';
 import { Skeleton } from '@/components/ui/skeleton';
+import Image from 'next/image';
+import { Lock } from 'lucide-react';
 
 interface Achievement {
   id: string;
@@ -36,6 +38,7 @@ export function GlobalAchievements() {
   const { user, isSignedIn } = useUser();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchAchievements = async () => {
@@ -55,7 +58,6 @@ export function GlobalAchievements() {
         const mappedAchievements = data.achievements.map(achievement => ({
           ...achievement,
           unlocked: data.userAchievements.some(ua => ua.achievementId === achievement.id),
-          progress: 0, // We'll need to add progress calculation later
         }));
         
         console.log('Mapped achievements:', mappedAchievements);
@@ -78,6 +80,16 @@ export function GlobalAchievements() {
     }
   }, [isSignedIn, user?.id]);
 
+  // Helper function to get file-friendly name (lowercase, replace spaces with hyphens)
+  const getFileName = (name: string) => {
+    return name.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  const handleImageError = (name: string) => {
+    setImageErrors(prev => ({...prev, [name]: true}));
+    console.error(`Failed to load image for achievement: ${name}`);
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -95,5 +107,40 @@ export function GlobalAchievements() {
   console.log('Achievement categories:', achievements.map(a => a.category));
   console.log('Filtered global achievements:', globalAchievements);
 
-  return <AchievementGrid achievements={globalAchievements} />;
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {globalAchievements.map((achievement) => {
+        const fileName = getFileName(achievement.name);
+        console.log(`Achievement: ${achievement.name}, File name: ${fileName}, Unlocked: ${achievement.unlocked}`);
+        
+        return (
+          <div 
+            key={achievement.id} 
+            className={`p-4 rounded-lg ${achievement.unlocked ? 'bg-primary/5' : 'bg-muted/50'} text-center`}
+          >
+            <div className="flex justify-center mb-2">
+              {achievement.unlocked ? (
+                <Image 
+                  src={`/achievements/${fileName}.svg`} 
+                  alt={achievement.name} 
+                  width={40} 
+                  height={40} 
+                  className="text-primary"
+                  onError={() => handleImageError(achievement.name)}
+                />
+              ) : (
+                <div className="w-10 h-10 flex items-center justify-center text-muted-foreground">
+                  <Lock className="h-6 w-6" />
+                </div>
+              )}
+            </div>
+            <p className={`text-lg font-semibold ${achievement.unlocked ? 'text-primary' : 'text-muted-foreground'}`}>
+              {achievement.name}
+            </p>
+            <p className="text-sm text-muted-foreground">{achievement.description}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
 } 
