@@ -30,17 +30,6 @@ import { cn } from "@/lib/utils"
 import { Difficulty } from "@/types/difficulty"
 import { useUploadContext } from "@/contexts/UploadContext"
 
-interface UploadInfo {
-  uploadId: string
-  filePath: string
-  metadata: {
-    originalName: string
-    type: string
-    size: number
-    pageCount?: number
-  }
-}
-
 // TODO: modify these in the future
 const QUESTION_RANGES = {
   low: { description: "Brief overview with key concepts" },
@@ -114,7 +103,6 @@ export default function ConfigurePage() {
 
     setIsGenerating(true);
     setGenerationProgress(0);
-    let tempUploadSuccess = false;
     let uploadId = '';
     let filePath = '';
 
@@ -139,7 +127,6 @@ export default function ConfigurePage() {
       const uploadResult = await uploadResponse.json();
       uploadId = uploadResult.uploadId;
       filePath = uploadResult.filePath;
-      tempUploadSuccess = true;
       setGenerationProgress(50);
 
       setGenerationStep("Preparing generation...");
@@ -177,9 +164,10 @@ export default function ConfigurePage() {
       router.push(`/deck/${deckId}/session-v2`);
       setTimeout(() => clearUploadData(), 500);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error during generation process:', error);
-      toast.error(`Error: ${error.message || 'An unexpected error occurred.'}`);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+      toast.error(`Error: ${errorMessage}`);
     } finally {
       setIsGenerating(false);
       setGenerationStep('');
@@ -487,7 +475,7 @@ export default function ConfigurePage() {
                     )}
                     {pageRangeExceedsLimit && (
                       <div className="mt-2 text-sm text-red-500">
-                        Selected page range exceeds your plan's limit of {limits.maxPages} pages. Generation is disabled.
+                        Selected page range exceeds your plan&apos;s limit of {limits.maxPages} pages. Generation is disabled.
                       </div>
                     )}
                   </div>

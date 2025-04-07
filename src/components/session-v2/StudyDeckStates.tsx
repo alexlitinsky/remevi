@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { AlertCircle, Clock, XCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
@@ -108,7 +108,15 @@ export function LoadingState({ message = "Loading your study session..." }: { me
   );
 }
 
-export const ProcessingState = ({ deck }: { deck?: any }) => {
+interface ProcessingDeck {
+  processingProgress: number;
+  processingStage: string;
+  processedChunks?: number;
+  totalChunks?: number;
+  error?: string;
+}
+
+export const ProcessingState = ({ deck }: { deck?: ProcessingDeck }) => {
   const router = useRouter();
   
   useEffect(() => {
@@ -169,12 +177,14 @@ export const ProcessingState = ({ deck }: { deck?: any }) => {
   );
 };
 
-const getStageMessage = (stage: string, processed: number, total: number) => {
+const getStageMessage = (stage: string | undefined, processed: number | undefined, total: number | undefined): string => {
+  if (!stage) return 'Processing Your Document';
+  
   switch (stage) {
     case 'CHUNKING':
       return 'Analyzing Your Document';
     case 'GENERATING':
-      return `Creating Flashcards (${processed}/${total} sections)`;
+      return processed && total ? `Creating Flashcards (${processed}/${total} sections)` : 'Creating Flashcards';
     case 'MINDMAP':
       return 'Building Mind Map';
     case 'COMPLETED':

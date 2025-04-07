@@ -48,6 +48,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
+import { isCardDue } from '@/lib/srs';
 
 interface Deck {
   id: string;
@@ -78,7 +79,7 @@ interface StudyProgress {
 export default function Home() {
   const { isSignedIn } = useUser();
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessing = false;
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const router = useRouter();
@@ -234,7 +235,7 @@ export default function Home() {
     } finally {
       setIsExtractingMeta(false);
     }
-  }, [isSignedIn, router, setFile, setMetadata, limits.maxFileSize]);
+  }, [isSignedIn, router, setFile, setMetadata, limits.maxFileSize, decks.length, limits.maxDecks]);
 
   const formatFileSize = (bytes: number): string => {
     if (!bytes) return "0 B";

@@ -9,7 +9,6 @@ import { Button } from "../ui/button"
 interface FlashcardProps {
   card: Card
   isFlipped: boolean
-  onFlip: () => void
   showHint?: boolean
   isActive: boolean
   pointsEarned?: number | null
@@ -18,7 +17,6 @@ interface FlashcardProps {
 export function Flashcard({
   card,
   isFlipped,
-  onFlip,
   showHint = false,
   isActive,
   pointsEarned = null

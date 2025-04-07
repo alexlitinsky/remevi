@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
 import type { Stripe } from "stripe";
 import { useAuth } from "@clerk/nextjs";
 
@@ -40,11 +40,11 @@ interface SubscriptionProviderProps {
 }
 
 export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
-  const { userId } = useAuth();
+  const { userId, isSignedIn } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     if (!userId) {
       setSubscription(null);
       setIsLoading(false);
@@ -62,11 +62,13 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
-    fetchSubscription();
-  }, [userId]);
+    if (isSignedIn) {
+      fetchSubscription();
+    }
+  }, [isSignedIn, fetchSubscription]);
 
   return (
     <SubscriptionContext.Provider value={{ subscription, isLoading, refetch: fetchSubscription }}>

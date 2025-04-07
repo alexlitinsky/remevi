@@ -3,7 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { openai4oResponsesProvider, deepseekProvider } from "@/lib/ai/providers";
+import { deepseekProvider } from "@/lib/ai/providers";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {

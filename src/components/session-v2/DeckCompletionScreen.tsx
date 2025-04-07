@@ -7,9 +7,7 @@ import { useAchievementStore } from "@/stores/useAchievementStore"
 import { AchievementNotification } from "@/components/achievements/AchievementNotification"
 
 interface DeckCompletionScreenProps {
-  totalPoints: number
   onRestartDeck: () => void
-  onSeePerformance: () => void
   onReturnToDashboard: () => void
   onReturnToHome: () => void
   sessionTime: number
@@ -18,9 +16,7 @@ interface DeckCompletionScreenProps {
 }
 
 export function DeckCompletionScreen({
-  totalPoints,
   onRestartDeck,
-  onSeePerformance,
   onReturnToDashboard,
   onReturnToHome,
   sessionTime,
@@ -108,7 +104,7 @@ export function DeckCompletionScreen({
               <Trophy className="h-10 w-10 text-blue-500" />
             </div>
             <h1 className="text-3xl font-bold mb-2">Session Complete!</h1>
-            <p className="text-muted-foreground">Great job! You've completed this study session.</p>
+            <p className="text-muted-foreground">Great job! You&apos;ve completed this study session.</p>
           </motion.div>
           
           <motion.div variants={item} className="grid grid-cols-3 gap-4 mb-8">
@@ -144,14 +140,6 @@ export function DeckCompletionScreen({
             >
               Study Again
             </Button>
-            
-            {/* <Button 
-              onClick={onSeePerformance}
-              variant="outline"
-              className="w-full border-blue-500/30 text-blue-500 hover:bg-blue-500/10 py-2 cursor-pointer"
-            >
-              See Performance
-            </Button> */}
             
             <Button 
               onClick={onReturnToDashboard}

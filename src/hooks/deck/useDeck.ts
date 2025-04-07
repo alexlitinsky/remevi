@@ -69,7 +69,7 @@ export function useDeck(deckId: string) {
         localStorage.removeItem(`study-progress-${deckId}`);
       }
     }
-  }, [deckId]);
+  }, [deckId, orderedCards.length, setCompletedCardIds, setCurrentCardIndex, setTotalPoints]);
 
   // Save progress to localStorage whenever it changes
   useEffect(() => {
@@ -84,7 +84,7 @@ export function useDeck(deckId: string) {
         lastStudied: new Date().toISOString()
       }));
     }
-  }, [currentCardIndex, deck?.id, deck, totalPoints, completedCardIds]);
+  }, [currentCardIndex, deck?.id, deck, totalPoints, completedCardIds, orderedCards.length, setCompletedCardIds, setCurrentCardIndex, setTotalPoints]);
 
   // Fetch deck and due cards
   useEffect(() => {
@@ -176,12 +176,6 @@ export function useDeck(deckId: string) {
     setNewCardCount(prev => prev - (currentCard.isNew ? 1 : 0));
     setDueCardCount(prev => prev - (!currentCard.isNew ? 1 : 0));
 
-    // Move to next card or complete deck
-    if (!isLastCard) {
-      setShowBack(false);
-      setCurrentCardIndex(prev => prev + 1, orderedCards.length - 1);
-    }
-
     // Submit review and wait for it to complete
     const result = await submitCardReview(deck.id, currentCard.id, difficulty, responseTime);
     if (result && result.pointsEarned !== estimatedPoints) {
@@ -189,8 +183,15 @@ export function useDeck(deckId: string) {
       setTotalPoints(prev => prev + pointsDiff);
     }
 
-    // Set deck completed after review is submitted
-    if (isLastCard) {
+    // Wait a bit for the points animation to play
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Clear points and move to next card or complete deck
+    setPointsEarned(null);
+    if (!isLastCard) {
+      setShowBack(false);
+      setCurrentCardIndex(prev => prev + 1, orderedCards.length - 1);
+    } else {
       setDeckCompleted(true);
     }
   };

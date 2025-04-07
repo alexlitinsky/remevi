@@ -1,9 +1,7 @@
-import { Metadata } from 'next';
 import { Quiz } from '@/components/quiz/Quiz';
 import { db } from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 
 // export const metadata: Metadata = {
 //   title: 'Quiz',

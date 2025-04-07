@@ -68,15 +68,23 @@ export async function POST(req: NextRequest) {
     if (userProgress) {
       const lastStudyDate = userProgress.lastStudyDate;
       if (lastStudyDate) {
+        const lastStudyDay = new Date(lastStudyDate);
+        lastStudyDay.setHours(0, 0, 0, 0);
         const yesterday = new Date(userDate);
         yesterday.setDate(yesterday.getDate() - 1);
         
-        if (lastStudyDate.getTime() === userDate.getTime()) {
+        if (lastStudyDay.getTime() === userDate.getTime()) {
           // Already studied today, keep current streak
           newStreak = userProgress.streak;
-        } else if (lastStudyDate.getTime() === yesterday.getTime()) {
+        } else if (lastStudyDay.getTime() === yesterday.getTime()) {
           // Studied yesterday, increment streak
           newStreak = userProgress.streak + 1;
+        } else if (lastStudyDay.getTime() > yesterday.getTime()) {
+          // Studied today but timezone shifted, keep streak
+          newStreak = userProgress.streak;
+        } else {
+          // More than 1 day gap, reset streak to 1
+          newStreak = 1;
         }
       }
     }

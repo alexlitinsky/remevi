@@ -4,13 +4,9 @@ import {
   MCQQuestion, 
   FRQQuestion, 
   QuizAnswer, 
-  Achievement,
   StartQuizResponse,
   SubmitAnswerResponse,
-  EndQuizResponse,
-  AnswerResult
 } from '@/types/quiz';
-import { QuizAnalyticsEvent } from '@/types/api';
 
 export type QuizType = 'mcq' | 'frq' | 'mixed';
 export type QuizView = 'quiz' | 'results' | 'config';
@@ -20,27 +16,8 @@ interface QuizConfig {
   deckId: string;
   type: QuizType;
   questionCount: number;
-}
-
-interface TimingData {
-  startTime: number | null;
-  pausedAt: number | null;
-  totalPausedTime: number;
-  totalTime: number;
-  timePerQuestion: Record<string, number>;
-}
-
-interface ProgressData {
-  currentQuestionIndex: number;
-  totalQuestions: number;
-  score: number;
-  correctAnswers: number;
-  incorrectAnswers: number;
-  streak: number;
-  topicPerformance: Record<string, {
-    attempted: number;
-    correct: number;
-  }>;
+  difficulty: QuizDifficulty[];
+  timeLimit?: number;
 }
 
 export interface UIState {
@@ -52,27 +29,6 @@ export interface UIState {
   isPaused: boolean;
   showConfig: boolean;
 }
-
-interface QuizStats {
-  totalQuizzesTaken: number;
-  totalQuestionsAnswered: number;
-  totalCorrect: number;
-  totalIncorrect: number;
-  averageScore: number;
-  bestStreak: number;
-  topicStats: Record<string, {
-    attempted: number;
-    correct: number;
-    averageTime: number;
-  }>;
-  recentResults: Array<{
-    date: number;
-    score: number;
-    accuracy: number;
-    timeSpent: number;
-  }>;
-}
-
 export interface UIActions {
   setIsLoading: (isLoading: boolean) => void;
   toggleConfig: () => void;
@@ -103,7 +59,7 @@ interface QuizState {
   
   // Actions
   startQuiz: (config: QuizConfig) => Promise<void>;
-  submitAnswer: (answer: string) => Promise<AnswerResult>;
+  submitAnswer: (answer: string) => Promise<SubmitAnswerResponse>;
   nextQuestion: () => void;
   endQuiz: () => Promise<void>;
   restartQuiz: () => Promise<void>;
@@ -117,45 +73,6 @@ interface QuizState {
   // Actions
   cleanupSession: () => void;
 }
-
-const initialProgress: ProgressData = {
-  currentQuestionIndex: 0,
-  totalQuestions: 0,
-  score: 0,
-  correctAnswers: 0,
-  incorrectAnswers: 0,
-  streak: 0,
-  topicPerformance: {},
-};
-
-const initialTiming: TimingData = {
-  startTime: null,
-  pausedAt: null,
-  totalPausedTime: 0,
-  totalTime: 0,
-  timePerQuestion: {},
-};
-
-const initialUI: UIState = {
-  view: 'config',
-  isLoading: false,
-  error: null,
-  showHint: false,
-  showExplanation: false,
-  isPaused: false,
-  showConfig: true,
-};
-
-const initialStats: QuizStats = {
-  totalQuizzesTaken: 0,
-  totalQuestionsAnswered: 0,
-  totalCorrect: 0,
-  totalIncorrect: 0,
-  averageScore: 0,
-  bestStreak: 0,
-  topicStats: {},
-  recentResults: [],
-};
 
 export const useQuizStore = create<QuizState>()(
   persist(

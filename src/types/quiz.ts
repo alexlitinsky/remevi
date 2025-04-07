@@ -1,4 +1,4 @@
-import { QuizType, QuizView, QuizDifficulty } from '@/stores/useQuizStore';
+import { QuizType, QuizDifficulty } from '@/stores/useQuizStore';
 
 // Base question interface
 export interface QuizQuestion {
@@ -158,6 +158,7 @@ export type QuizAnalyticsEvent = {
   type: 'quiz_started' | 'question_answered' | 'quiz_completed' | 'error_occurred';
   data: {
     timestamp: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   };
 };

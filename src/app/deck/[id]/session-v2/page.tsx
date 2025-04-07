@@ -27,7 +27,6 @@ export default function DeckStudyPage() {
     totalCardsInDeck,
     newCardCount,
     dueCardCount,
-    completedCardIds,
     originalNewCount,
     originalDueCount,
     sessionTime,

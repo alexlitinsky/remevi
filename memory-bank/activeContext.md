@@ -2,21 +2,65 @@
 
 ## Current Focus
 
-The application is focused on providing a streamlined learning experience with an emphasis on progress tracking and achievement visualization. Recent changes include:
+The application is in Phase 4 of development, focusing on gamification and engagement features. Key areas of focus include:
 
-- Implemented proper session management to fix timing issues in flashcard and quiz sessions
-- Added a specialized QuizStats component to display quiz-related statistics
-- Fixed flashcard session ID management to ensure accurate time calculations
-- Enhanced the deck page to properly count only flashcards (excluding MCQs and FRQs)
-- Combined Study Progress and Achievements into a single tabbed interface for better UX
-- Tabs include:
-  1. Study Progress - Shows learning metrics, activity, and stats
-  2. Achievements - Displays global achievements
-- Implementing reliable document processing with progress updates and mind map generation
-- Enhancing mind map visualization with improved layout algorithms and UI refinements
+- Implementing the achievement system with database integration and real-time notifications
+- Integrating the points system with user profiles
+- Enhancing mind map interactivity with zoom, pan, and selection features
+- Optimizing document processing with state caching and improved progress tracking
+- Stabilizing session timing calculations for accurate study metrics
+- Improving mobile responsiveness and UI loading states
 
 ## Recent Changes
 
+### Achievement System Implementation
+- Defined Achievement and UserAchievement models in Prisma schema
+- Implemented upsert pattern for handling achievement constraints
+- Added error handling for achievement creation
+- Designed modern achievement badge SVGs
+- Created achievement categories and styling
+
+### Mind Map Enhancements
+- Implemented advanced hierarchical layout algorithm
+- Added graph analysis for central concept identification
+- Improved node positioning based on connections
+- Enhanced spacing and visual organization
+- Added custom scrollbar styling
+- Fixed connection rendering and label placement
+
+### Session Management
+- Fixed sessionId management in useStudySessionStore
+- Added proper session cleanup and state management
+- Improved time tracking accuracy between sessions
+- Enhanced backend time calculations
+- Temporarily disabled time-related metrics while stabilizing
+
+### UI/UX Improvements
+- Combined Study Progress and Achievements into tabbed interface
+- Added custom scrollbar styling across the application
+- Enhanced visual hierarchy in components
+- Improved loading and processing states
+- Fixed UI flickering during state transitions
+
+### Code Quality
+- Fixed linting issues:
+  - Removed unused state variables
+  - Added missing hook dependencies
+  - Cleaned up type definitions
+  - Improved callback memoization
+  - Fixed React hook warnings
+- Optimized database operations
+- Enhanced error handling
+- Improved state management patterns
+
+## Recent Changes
+
+- Fixed linting issues across the codebase:
+  - Removed unused `setIsProcessing` state variable in `page.tsx` and replaced with constant
+  - Added missing dependencies to `useCallback` hook in `page.tsx` (`decks.length`, `limits.maxDecks`)
+  - Removed unused `ActionTypes` type definition in `use-toast.ts`
+  - Wrapped `fetchSubscription` in `useCallback` with proper dependencies in `SubscriptionContext.tsx`
+  - Added missing dependencies to `useEffect` hook in `useDeck.ts`
 - Fixed session timing issues by properly clearing sessionId when ending a session
 - Implemented QuizStats component for displaying quiz-specific statistics
 - Fixed issues with achievement creation using upsert pattern to handle duplicate constraints
@@ -1926,21 +1970,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -1977,21 +2011,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2028,21 +2052,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2079,21 +2093,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2130,21 +2134,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2181,21 +2175,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2232,21 +2216,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2283,21 +2257,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2334,21 +2298,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2385,21 +2339,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2436,21 +2380,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2487,21 +2421,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2538,21 +2462,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2589,21 +2503,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2640,21 +2544,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2691,21 +2585,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2742,21 +2626,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2793,21 +2667,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2844,21 +2708,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2895,21 +2749,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2946,21 +2790,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -2997,21 +2831,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3048,21 +2872,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3099,21 +2913,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3150,21 +2954,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3201,21 +2995,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3252,21 +3036,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3303,21 +3077,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3354,21 +3118,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3405,21 +3159,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3456,21 +3200,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3507,21 +3241,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3558,21 +3282,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:
@@ -3609,21 +3323,11 @@ The application is focused on providing a streamlined learning experience with a
    - Custom scrollbar styling
    - Mind map node styling based on type/importance
 
-4. Document Processing Improvements:
-   - Fixed polling mechanism to maintain state during updates
-   - Updated mind map component to calculate node positions dynamically
-   - Improved progress tracking with accurate percentages
-   - Added error handling and recovery options
-   - Fixed processing state UI for better user feedback
-
-5. Mind Map Visualization Enhancements:
-   - Implemented advanced hierarchical layout algorithm
-   - Added graph analysis to identify central concepts
-   - Improved spacing and positioning of related nodes
-   - Added custom scrollbar styling to match application theme
-   - Fixed connection rendering and positioning
-   - Used multi-stage node positioning for better organization
-   - Enhanced canvas size calculations based on node positions
+6. Document Processing Improvements:
+   - Using polling instead of WebSockets for progress updates
+   - Structured progress stages for clear user feedback
+   - Dynamic node position calculation for mind maps
+   - Improved error handling and recovery options
 
 ## Active Decisions
 1. Session Management:

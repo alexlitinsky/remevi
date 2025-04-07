@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { isCardDue } from "@/lib/srs";
 
 export async function GET(req: NextRequest) {
   try {
@@ -99,7 +100,7 @@ export async function GET(req: NextRequest) {
     
     // Initialize review history for the last 7 days
     const reviewsByDate: Record<string, { total: number; easy: number; medium: number; hard: number }> = {};
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+    Array.from({ length: 7 }, (_, i) => {
       const date = new Date(userDate);
       date.setDate(date.getDate() - i);
       const formattedDate = date.toLocaleDateString('en-US', { timeZone: userTimezone });
@@ -150,11 +151,9 @@ export async function GET(req: NextRequest) {
           
           totalPoints += interaction.score;
           
-          // Check if card is due - convert both dates to user timezone for comparison
+          // Check if card is due using the same logic as due-cards endpoint
           if (interaction.dueDate) {
-            const dueDateInUserTz = new Date(interaction.dueDate.toLocaleString('en-US', { timeZone: userTimezone }));
-            dueDateInUserTz.setHours(0, 0, 0, 0);
-            if (dueDateInUserTz <= userDate) {
+            if (isCardDue(interaction.dueDate)) {
               dueCards++;
             }
           }

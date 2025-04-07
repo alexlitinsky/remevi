@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
+interface QuizSession {
+  id: string;
+  questionsAnswered: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  totalTime: number | null;
+  pointsEarned: number;
+}
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     console.log('🟢 [quiz/end] POST request received', { deckId: params.id });
@@ -96,7 +105,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-async function checkAchievements(userId: string, session: any) {
+async function checkAchievements(userId: string, session: QuizSession) {
   try {
     // Get achievements that should be unlocked based on this quiz
     const unlockedAchievements = [];

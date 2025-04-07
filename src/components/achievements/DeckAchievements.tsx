@@ -13,11 +13,7 @@ const categoryIcons = {
   quiz: Target,
 } as const;
 
-interface DeckAchievementsProps {
-  deckId: string;
-}
-
-export function DeckAchievements({ deckId }: DeckAchievementsProps) {
+export function DeckAchievements() {
   const { achievements, userAchievements, fetchAchievements, isLoading } = useAchievementStore();
 
   useEffect(() => {

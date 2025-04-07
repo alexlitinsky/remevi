@@ -44,6 +44,11 @@ export async function GET() {
       }
     })
 
+    // Get user progress for streak
+    const userProgress = await db.userProgress.findUnique({
+      where: { userId: user.id }
+    });
+
     // Calculate total cards and mastered cards
     const uniqueCards = new Set(cardInteractions.map(ci => ci.studyContentId))
     const totalCards = await db.studyContent.count({
@@ -83,37 +88,8 @@ export async function GET() {
     const masteryLevel = Math.round((masteryScore / totalCards) * 100) || 0;
     const cardsReviewed = uniqueCards.size;
 
-    // Calculate streak with proper date handling
-    let currentStreak = 0
-    const dateMap = new Map()
-    
-    // Map all study dates
-    studySessions.forEach(session => {
-      const dateStr = new Date(session.startTime).toISOString().split('T')[0]
-      dateMap.set(dateStr, true)
-    })
-
-    // Calculate streak
-    const todayStr = new Date().toISOString().split('T')[0]
-    const yesterdayStr = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-
-    if (dateMap.has(todayStr)) {
-      currentStreak = 1
-      let checkDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-      
-      while (dateMap.has(checkDate.toISOString().split('T')[0])) {
-        currentStreak++
-        checkDate = new Date(checkDate.getTime() - 24 * 60 * 60 * 1000)
-      }
-    } else if (dateMap.has(yesterdayStr)) {
-      currentStreak = 1
-      let checkDate = new Date(now.getTime() - 48 * 60 * 60 * 1000)
-      
-      while (dateMap.has(checkDate.toISOString().split('T')[0])) {
-        currentStreak++
-        checkDate = new Date(checkDate.getTime() - 24 * 60 * 60 * 1000)
-      }
-    }
+    // Use streak from UserProgress
+    const currentStreak = userProgress?.streak || 0;
 
     // Calculate weekly activity (cards studied per day)
     const weeklyActivity = Array.from({ length: 7 }, (_, i) => {

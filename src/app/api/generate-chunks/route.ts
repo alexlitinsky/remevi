@@ -118,7 +118,32 @@ async function processChunk(
   }
 }
 
-async function generateMindMap(chunkResults: Array<{ summary: string; flashcards: any[]; mcqs: any[]; frqs: any[] }>, aiModel: string) {
+interface ChunkResult {
+  summary: string;
+  flashcards: Array<{
+    front: string;
+    back: string;
+    topic: string;
+  }>;
+  mcqs: Array<{
+    question: string;
+    options: string[];
+    correctOptionIndex: number;
+    explanation: string;
+    topic: string;
+    difficulty: 'easy' | 'medium' | 'hard';
+  }>;
+  frqs: Array<{
+    question: string;
+    answers: string[];
+    caseSensitive: boolean;
+    explanation: string;
+    topic: string;
+    difficulty: 'easy' | 'medium' | 'hard';
+  }>;
+}
+
+async function generateMindMap(chunkResults: ChunkResult[], aiModel: string) {
   try {
     // Combine summaries and extract topics
     const summaries = chunkResults.map(r => r.summary).join('\n\n');
@@ -395,7 +420,7 @@ export async function POST(request: NextRequest) {
           .map(([cat]) => cat)[0];
 
         // Create content for each type in parallel
-        const [flashcardContents, mcqContents, frqContents] = await Promise.all([
+        const [, , ] = await Promise.all([
           // Create flashcard content
           Promise.all(allFlashcards.map(async (card, index) => {
             const studyContent = await db.studyContent.create({
@@ -431,7 +456,7 @@ export async function POST(request: NextRequest) {
               data: {
                 studyMaterialId: studyMaterial.id,
                 type: 'mcq',
-                difficultyLevel: (mcq as any).difficulty || getDifficultyFromUserSelection(),
+                difficultyLevel: mcq.difficulty || getDifficultyFromUserSelection(),
                 mcqContent: {
                   create: {
                     question: mcq.question,
@@ -463,7 +488,7 @@ export async function POST(request: NextRequest) {
               data: {
                 studyMaterialId: studyMaterial.id,
                 type: 'frq',
-                difficultyLevel: (frq as any).difficulty || getDifficultyFromUserSelection(),
+                difficultyLevel: frq.difficulty || getDifficultyFromUserSelection(),
                 frqContent: {
                   create: {
                     question: frq.question,

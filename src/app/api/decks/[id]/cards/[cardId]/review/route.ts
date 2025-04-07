@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get or create card interaction
-    let cardInteraction = await db.cardInteraction.findUnique({
+    const cardInteraction = await db.cardInteraction.findUnique({
       where: {
         userId_studyContentId: {
           userId: user.id,

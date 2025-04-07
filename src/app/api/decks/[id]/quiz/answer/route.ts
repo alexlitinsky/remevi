@@ -193,7 +193,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     });
 
     // Check for achievements
-    await checkAchievements(user.id, "quiz_answer");
+    await checkAchievements(user.id);
 
     console.log(`🟢 [answer/route] Answer processing complete, returning response`);
     return NextResponse.json({
@@ -207,7 +207,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-async function checkAchievements(userId: string, action: string) {
+interface AchievementRequirements {
+  totalQuizzes?: number;
+  totalCorrectAnswers?: number;
+}
+
+async function checkAchievements(userId: string) {
   try {
     // Get user's quiz stats
     const quizStats = await db.quizSession.aggregate({
@@ -235,7 +240,7 @@ async function checkAchievements(userId: string, action: string) {
 
     // Check each achievement
     for (const achievement of achievements) {
-      const requirements = achievement.requirements as any;
+      const requirements = achievement.requirements as AchievementRequirements;
       let unlocked = false;
 
       if (requirements.totalQuizzes && quizStats._count.id >= requirements.totalQuizzes) {

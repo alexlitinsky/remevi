@@ -4,9 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Trophy, Clock, CheckCircle, XCircle, BarChart, Brain } from "lucide-react"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { formatTime } from "@/lib/utils"
+import { Trophy, CheckCircle, BarChart, Brain } from "lucide-react"
 
 interface QuizStatsProps {
   deckId: string
@@ -16,12 +14,13 @@ interface QuizSessionSummary {
   id: string
   startTime: string
   endTime: string | null
-  totalTime: number
+  totalTime: number | null
   questionsAnswered: number
   correctAnswers: number
   incorrectAnswers: number
   accuracy: number
-  score: number
+  score: number | null
+  pointsEarned: number
 }
 
 interface QuizStatsData {
@@ -30,9 +29,9 @@ interface QuizStatsData {
   totalCorrect: number
   totalIncorrect: number
   averageAccuracy: number
-  averageScore: number
+  averageScore: number | null
   averageTimePerQuestion: number
-  bestScore: number
+  bestScore: number | null
   recentSessions: QuizSessionSummary[]
   availableQuestions: {
     mcq: number
@@ -65,26 +64,42 @@ export function QuizStats({ deckId }: QuizStatsProps) {
         }
         const sessionsData = await sessionsResponse.json()
         
+        // Log data for debugging with JSON.stringify
+        console.log('Quiz Stats Raw Data:', JSON.stringify({
+          availableData,
+          sessions: sessionsData.sessions
+        }, null, 2))
+        
         // Process the data
         const totalSessions = sessionsData.sessions.length
-        const completedSessions = sessionsData.sessions.filter((s: any) => s.endTime)
+        // Only count sessions with points as completed
+        const completedSessions = sessionsData.sessions.filter((session: QuizSessionSummary) => 
+          session.endTime !== null && session.pointsEarned > 0
+        )
         
         let totalQuestions = 0
         let totalCorrect = 0
         let totalIncorrect = 0
         let totalScore = 0
-        let totalTime = 0
         let bestScore = 0
         
-        completedSessions.forEach((session: any) => {
-          totalQuestions += session.questionsAnswered
-          totalCorrect += session.correctAnswers
-          totalIncorrect += session.incorrectAnswers
-          totalScore += session.pointsEarned
-          totalTime += (session.totalTime || 0)
+        completedSessions.forEach((session: QuizSessionSummary) => {
+          const points = session.pointsEarned || 0
+          console.log('Processing session:', {
+            id: session.id,
+            points,
+            questionsAnswered: session.questionsAnswered,
+            correctAnswers: session.correctAnswers,
+            incorrectAnswers: session.incorrectAnswers
+          })
           
-          if (session.pointsEarned > bestScore) {
-            bestScore = session.pointsEarned
+          totalQuestions += session.questionsAnswered || 0
+          totalCorrect += session.correctAnswers || 0
+          totalIncorrect += session.incorrectAnswers || 0
+          totalScore += points
+          
+          if (points > bestScore) {
+            bestScore = points
           }
         })
         
@@ -92,9 +107,20 @@ export function QuizStats({ deckId }: QuizStatsProps) {
           ? Math.round((totalCorrect / totalQuestions) * 100) 
           : 0
         
-        const averageScore = completedSessions.length > 0 
+        const averageScore = completedSessions.length > 0
           ? Math.round(totalScore / completedSessions.length) 
           : 0
+
+        console.log('Calculated stats:', {
+          totalQuestions,
+          totalCorrect,
+          totalIncorrect,
+          totalScore,
+          bestScore,
+          averageAccuracy,
+          averageScore,
+          completedSessionsCount: completedSessions.length
+        })
         
         // Calculate average time per question (commented out for now)
         /*
@@ -107,18 +133,18 @@ export function QuizStats({ deckId }: QuizStatsProps) {
         // Format recent sessions
         const recentSessions = completedSessions
           .slice(0, 5)
-          .map((session: any) => ({
+          .map((session: QuizSessionSummary) => ({
             id: session.id,
             startTime: session.startTime,
             endTime: session.endTime,
             totalTime: session.totalTime || 0,
-            questionsAnswered: session.questionsAnswered,
-            correctAnswers: session.correctAnswers,
-            incorrectAnswers: session.incorrectAnswers,
+            questionsAnswered: session.questionsAnswered || 0,
+            correctAnswers: session.correctAnswers || 0,
+            incorrectAnswers: session.incorrectAnswers || 0,
             accuracy: session.questionsAnswered > 0 
               ? Math.round((session.correctAnswers / session.questionsAnswered) * 100) 
               : 0,
-            score: session.pointsEarned
+            score: session.pointsEarned || 0
           }))
         
         setStats({
@@ -327,7 +353,7 @@ function StatCard({
           {icon}
         </div>
       </div>
-      <div className="text-2xl font-bold mb-1">{value}</div>
+      <div className="text-2xl font-bold mb-1">{value === "NaN" ? "0" : value}</div>
       <div className="text-xs text-muted-foreground">{description}</div>
     </div>
   )

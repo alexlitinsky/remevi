@@ -11,10 +11,6 @@ interface StudyDeckHeaderProps {
   deckId: string
   newCardCount: number
   dueCardCount: number
-  totalCardCount: number
-  currentCardIndex: number
-  originalNewCount: number
-  originalDueCount: number
   streak: number
   pointsEarned: number
   sessionTime: number
@@ -45,9 +41,6 @@ export function StudyDeckHeader({
   deckId,
   newCardCount,
   dueCardCount,
-  currentCardIndex,
-  originalNewCount,
-  originalDueCount,
   streak,
   pointsEarned,
   sessionTime,

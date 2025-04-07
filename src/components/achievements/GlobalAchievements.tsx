@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { AchievementGrid } from './AchievementGrid';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { Lock } from 'lucide-react';
@@ -38,7 +37,6 @@ export function GlobalAchievements() {
   const { user, isSignedIn } = useUser();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchAchievements = async () => {
@@ -85,11 +83,6 @@ export function GlobalAchievements() {
     return name.toLowerCase().replace(/\s+/g, '-');
   };
 
-  const handleImageError = (name: string) => {
-    setImageErrors(prev => ({...prev, [name]: true}));
-    console.error(`Failed to load image for achievement: ${name}`);
-  };
-
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -126,7 +119,6 @@ export function GlobalAchievements() {
                   width={40} 
                   height={40} 
                   className="text-primary"
-                  onError={() => handleImageError(achievement.name)}
                 />
               ) : (
                 <div className="w-10 h-10 flex items-center justify-center text-muted-foreground">

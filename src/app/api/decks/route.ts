@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { currentUser } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import { isCardDue } from "@/lib/srs"
 
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
@@ -34,7 +35,7 @@ interface DeckContent {
 }
 
 // GET /api/decks - Get all decks for the current user
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const user = await currentUser()
     if (!user?.id) {
@@ -59,15 +60,13 @@ export async function GET() {
           include: {
             studyContent: {
               include: {
-                flashcardContent: true,
                 cardInteractions: {
                   where: {
                     userId: user.id
                   },
                   orderBy: {
                     lastReviewed: 'desc'
-                  },
-                  take: 1
+                  }
                 }
               }
             }
@@ -86,21 +85,9 @@ export async function GET() {
       }
     })
 
-    // Transform the data to match the expected format in the frontend
-    const formattedDecks = decks.map(deck => {
-      // Count the number of flashcards in the deck
-      const flashcardCount = deck.deckContent.filter(
-        (content: DeckContent) => content.studyContent.type === 'flashcard' && content.studyContent.flashcardContent
-      ).length
-
-      // Calculate due cards
-      const now = new Date()
-      const dueCards = deck.deckContent.filter((content: DeckContent) => {
-        const interaction = content.studyContent.cardInteractions[0]
-        return interaction && new Date(interaction.dueDate) <= now
-      }).length
-
-      // Calculate mastery levels using the same logic as stats/route.ts
+    const decksWithStats = decks.map(deck => {
+      let flashcardCount = 0;
+      let dueCards = 0;
       const masteryLevels = {
         mastered: 0,
         learning: 0,
@@ -108,31 +95,41 @@ export async function GET() {
         new: 0
       };
 
-      let totalCards = 0;
-      
-      // Process each card's mastery level
       deck.deckContent.forEach(content => {
-        totalCards++;
-        const interaction = content.studyContent.cardInteractions[0];
-        
-        if (interaction) {
-          // Use the interaction's masteryLevel directly
-          masteryLevels[interaction.masteryLevel as keyof typeof masteryLevels]++;
-        } else {
-          masteryLevels.new++;
+        if (content.studyContent.type === 'flashcard') {
+          flashcardCount++;
+          const interaction = content.studyContent.cardInteractions[0];
+
+          if (interaction) {
+            // Count mastery levels
+            masteryLevels[interaction.masteryLevel as keyof typeof masteryLevels]++;
+
+            // Check if card is due
+            if (interaction.dueDate && isCardDue(interaction.dueDate)) {
+              dueCards++;
+            }
+          } else {
+            masteryLevels.new++;
+          }
         }
       });
 
-      // Calculate weighted mastery level exactly as in stats/route.ts
-      const totalProgress = totalCards > 0 
-        ? Math.round(((masteryLevels.mastered * 100) + 
-                     (masteryLevels.learning * 66) + 
-                     (masteryLevels.struggling * 33) + 
-                     (masteryLevels.new * 0)) / totalCards)
+      // Calculate weighted progress based on mastery levels
+      const totalProgress = flashcardCount > 0 
+        ? Math.round(
+            ((masteryLevels.mastered * 100) + 
+             (masteryLevels.learning * 66) + 
+             (masteryLevels.struggling * 33)) / flashcardCount
+          )
         : 0;
 
-      // Get last studied date from study sessions
-      const lastStudied = deck.studySessions[0]?.startTime
+      const lastStudied = deck.deckContent
+        .flatMap(content => content.studyContent.cardInteractions)
+        .filter(interaction => interaction?.lastReviewed)
+        .sort((a, b) => {
+          if (!a.lastReviewed || !b.lastReviewed) return 0;
+          return b.lastReviewed.getTime() - a.lastReviewed.getTime();
+        })[0]?.lastReviewed;
 
       return {
         id: deck.id,
@@ -145,11 +142,11 @@ export async function GET() {
         lastStudied: lastStudied?.toISOString(),
         dueCards,
         totalProgress,
-        tags: deck.tags.map(tag => tag.name)
+        tags: deck.tags?.map(tag => tag.name) || []
       }
     })
 
-    return NextResponse.json(formattedDecks)
+    return NextResponse.json(decksWithStats)
   } catch (error) {
     console.error("Error fetching decks:", error)
     return new NextResponse("Internal Server Error", { status: 500 })

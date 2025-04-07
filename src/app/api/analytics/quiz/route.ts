@@ -4,6 +4,39 @@ import { db } from '@/lib/db';
 import { QuizAnalyticsEvent } from '@/types/api';
 import { Prisma } from '@prisma/client';
 
+interface WhereClause {
+  userId: string;
+  eventData?: {
+    path: string[];
+    equals: string;
+  };
+}
+
+interface QuizEventData {
+  sessionId?: string;
+  score?: number;
+  accuracy?: number;
+  questionsAnswered?: number;
+  totalTime?: number;
+}
+
+interface QuestionEventData {
+  questionId?: string;
+  isCorrect?: boolean;
+  timeTaken?: number;
+  skipped?: boolean;
+  questionType?: string;
+  topic?: string;
+}
+
+interface AnalyticsRecord {
+  id: string;
+  userId: string;
+  eventType: string;
+  eventData: Prisma.JsonValue;
+  timestamp: Date;
+}
+
 // Add GET endpoint to retrieve analytics data
 export async function GET(req: NextRequest) {
   console.log('🟢 [analytics/quiz] GET request received');
@@ -22,7 +55,7 @@ export async function GET(req: NextRequest) {
     console.log('🟢 [analytics/quiz] Fetching analytics data:', { sessionId, deckId });
     
     // Filter events based on parameters
-    let whereClause: any = { userId: user.id };
+    const whereClause: WhereClause = { userId: user.id };
     
     if (sessionId) {
       whereClause.eventData = {
@@ -31,14 +64,11 @@ export async function GET(req: NextRequest) {
       };
     }
     
-    if (deckId) {
-      // If sessionId filter isn't applied, apply deckId filter
-      if (!sessionId) {
-        whereClause.eventData = {
-          path: ['deckId'],
-          equals: deckId,
-        };
-      }
+    if (deckId && !sessionId) {
+      whereClause.eventData = {
+        path: ['deckId'],
+        equals: deckId,
+      };
     }
     
     // Get all recent quiz_completed events for stats
@@ -56,24 +86,21 @@ export async function GET(req: NextRequest) {
     console.log(`🟢 [analytics/quiz] Found ${completedQuizzes.length} completed quizzes`);
     
     // Get question_answered events for the specified session if provided
-    let questionEvents: any[] = [];
-    if (sessionId) {
-      questionEvents = await db.quizAnalytics.findMany({
-        where: {
-          userId: user.id,
-          eventType: 'question_answered',
-          eventData: {
-            path: ['sessionId'],
-            equals: sessionId,
-          },
+    const questionEvents: AnalyticsRecord[] = sessionId ? await db.quizAnalytics.findMany({
+      where: {
+        userId: user.id,
+        eventType: 'question_answered',
+        eventData: {
+          path: ['sessionId'],
+          equals: sessionId,
         },
-        orderBy: {
-          timestamp: 'asc',
-        },
-      });
-      
-      console.log(`🟢 [analytics/quiz] Found ${questionEvents.length} question events for session ${sessionId}`);
-    }
+      },
+      orderBy: {
+        timestamp: 'asc',
+      },
+    }) : [];
+    
+    console.log(`🟢 [analytics/quiz] Found ${questionEvents.length} question events for session ${sessionId}`);
     
     // Get topic mastery data
     const topicMastery = await db.topicMastery.findMany({
@@ -91,7 +118,7 @@ export async function GET(req: NextRequest) {
     
     // Format the completed quizzes data for the frontend
     const formattedQuizzes = completedQuizzes.map(quiz => {
-      const eventData = quiz.eventData as any;
+      const eventData = quiz.eventData as unknown as QuizEventData;
       return {
         sessionId: eventData.sessionId || 'unknown',
         score: eventData.score || 0,
@@ -105,7 +132,7 @@ export async function GET(req: NextRequest) {
     
     // Format question events if any
     const formattedQuestions = questionEvents.map(event => {
-      const eventData = event.eventData as any;
+      const eventData = event.eventData as unknown as QuestionEventData;
       return {
         questionId: eventData.questionId || 'unknown',
         isCorrect: eventData.isCorrect || false,

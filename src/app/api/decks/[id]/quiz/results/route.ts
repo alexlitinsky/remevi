@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   console.log('🟢 [quiz/results] GET request received for deck:', params.id);

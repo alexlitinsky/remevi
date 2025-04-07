@@ -2,37 +2,17 @@
 import { useQuizStore } from "@/stores/useQuizStore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { motion } from "framer-motion";
 import {
   Trophy,
-  Clock,
-  Target,
-  Zap,
-  Award,
   BarChart3,
-  Star,
   RefreshCw,
-  CheckCircle,
-  XCircle,
   CheckCircle2,
+  XCircle,
   Home
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/use-toast";
-import { formatTime } from '@/lib/utils';
+import { useEffect } from "react";
 import { useAchievementStore } from '@/stores/useAchievementStore';
 import { AchievementNotification } from '@/components/achievements/AchievementNotification';
-
-const categoryIcons = {
-  beginner: Trophy,
-  intermediate: Star,
-  expert: Zap,
-  speed: Clock,
-  accuracy: Target,
-  dedication: Award,
-} as const;
 
 export function QuizResults() {
   const {

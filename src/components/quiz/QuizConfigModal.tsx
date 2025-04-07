@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useQuizStore, QuizType } from "@/stores/useQuizStore";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
-import { IconBrain, IconAbc, IconPencil, IconCards, IconHome } from "@tabler/icons-react";
+import { IconBrain, IconAbc, IconPencil } from "@tabler/icons-react";
 import { X } from "lucide-react";
 
 interface QuizConfigModalProps {
@@ -198,16 +198,16 @@ export function QuizConfigModal({ deckId, hasStarted }: QuizConfigModalProps) {
                   variant="outline"
                   className="flex items-center justify-center gap-2 h-12 text-base font-medium rounded-xl hover:bg-accent/50 transition-all duration-200 cursor-pointer"
                 >
-                  <IconCards className="h-4 w-4" />
-                  Back to Deck
+                  <IconBrain className="w-5 h-5" />
+                  Return to Deck
                 </Button>
                 <Button
                   onClick={() => window.location.href = '/'}
-                  variant="ghost"
+                  variant="outline"
                   className="flex items-center justify-center gap-2 h-12 text-base font-medium rounded-xl hover:bg-accent/50 transition-all duration-200 cursor-pointer"
                 >
-                  <IconHome className="h-4 w-4" />
-                  Home
+                  <IconBrain className="w-5 h-5" />
+                  Return Home
                 </Button>
               </div>
             </motion.div>

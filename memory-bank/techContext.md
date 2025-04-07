@@ -23,11 +23,14 @@
    - Limited by OpenAI token limits
    - Processing time varies with document size
    - Chunking needed for large documents
+   - Progress tracking through polling (2s interval)
+   - State persistence during page refreshes needed
 
 2. Real-time Updates:
-   - Currently using polling (2s interval)
+   - Using polling for progress updates
    - No WebSocket implementation yet
    - Progress tracking through database updates
+   - Need caching for processing state
 
 3. Database Schema:
    - Deck model includes processing fields:
@@ -39,6 +42,8 @@
    - Achievement system models:
      - Achievement: Core achievement data
      - UserAchievement: Junction table for user achievements
+     - Points: User points tracking
+     - Streaks: User study streaks
 
 ## Dependencies
 - Core:
@@ -50,11 +55,19 @@
   - @clerk/nextjs: Latest
   - openai: Latest
   - framer-motion: Latest
+  - zustand: Latest
 
 - UI:
   - @radix-ui/react-*: Latest
   - shadcn/ui: Latest
   - lucide-react: Latest
+  - @heroicons/react: Latest
+
+- Development:
+  - eslint: Latest
+  - prettier: Latest
+  - typescript-eslint: Latest
+  - tailwindcss-animate: Latest
 
 ## Tool Usage
 1. PDF Processing:

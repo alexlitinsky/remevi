@@ -2,6 +2,14 @@ import { db } from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
+interface AchievementRequirements {
+  quizScore?: number;
+  correctAnswers?: number;
+  cardsStudied?: number;
+  streakDays?: number;
+  pointThreshold?: number;
+}
+
 export async function POST(req: Request) {
   try {
     const user = await currentUser();
@@ -35,7 +43,7 @@ export async function POST(req: Request) {
 
     // Check each achievement's requirements
     for (const achievement of availableAchievements) {
-      const requirements = achievement.requirements as any;
+      const requirements = achievement.requirements as AchievementRequirements;
       let isUnlocked = false;
 
       // Check different types of requirements

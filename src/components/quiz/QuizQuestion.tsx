@@ -1,14 +1,12 @@
 'use client'
-import { useState, ChangeEvent, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { useQuizStore } from '@/stores/useQuizStore';
 import { MCQQuestion, FRQQuestion } from '@/types/quiz';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, XCircle, Settings, Timer } from 'lucide-react';
+import { CheckCircle2, XCircle, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Progress } from '@/components/ui/progress';
 import { FRQAnswerSection } from './FRQAnswerSection';
@@ -33,6 +31,23 @@ export function QuizQuestion({ deckTitle, deckId }: QuizQuestionProps) {
     currentQuestionIndex,
     setView,
   } = useQuizStore();
+
+  const handleSubmit = useCallback(async () => {
+    if (!answer || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await submitAnswer(answer);
+    } catch (error) {
+      console.error('Failed to submit answer:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [answer, isSubmitting, submitAnswer]);
+
+  const handleNext = useCallback(() => {
+    setAnswer('');
+    nextQuestion();
+  }, [nextQuestion]);
 
   useEffect(() => {
     function handleKeyPress(e: KeyboardEvent) {
@@ -85,31 +100,13 @@ export function QuizQuestion({ deckTitle, deckId }: QuizQuestionProps) {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentQuestion, answer, isSubmitting, answers]);
+  }, [currentQuestion, answer, isSubmitting, answers, handleSubmit, handleNext]);
 
   if (!currentQuestion) return null;
 
   const currentAnswer = answers[currentQuestion.id];
   const isAnswered = !!currentAnswer;
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-
-  const handleSubmit = async () => {
-    if (!answer || isSubmitting) return;
-    
-    setIsSubmitting(true);
-    try {
-      await submitAnswer(answer);
-    } catch (error) {
-      console.error('Failed to submit answer:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNext = () => {
-    setAnswer('');
-    nextQuestion();
-  };
 
   return (
     <div className="container max-w-4xl mx-auto space-y-6">
@@ -187,7 +184,6 @@ export function QuizQuestion({ deckTitle, deckId }: QuizQuestionProps) {
                 >
                   {(currentQuestion as MCQQuestion).options.map((option, index) => {
                     const optionLetter = String.fromCharCode(65 + index);
-                    const optionNumber = index + 1;
                     return (
                       <motion.div
                         key={index}

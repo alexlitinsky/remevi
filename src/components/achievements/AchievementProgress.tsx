@@ -1,13 +1,11 @@
 'use client';
 
 import { Progress } from '@/components/ui/progress';
-import { useAchievementStore } from '@/stores/useAchievementStore';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 interface AchievementProgressProps {
-  category: string;
   currentValue: number;
   targetValue: number;
   title: string;
@@ -15,7 +13,6 @@ interface AchievementProgressProps {
 }
 
 export function AchievementProgress({
-  category,
   currentValue,
   targetValue,
   title,

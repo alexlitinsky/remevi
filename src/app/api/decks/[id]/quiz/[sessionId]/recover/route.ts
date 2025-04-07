@@ -4,16 +4,6 @@ import { db } from '@/lib/db';
 import { QuizAnswer } from '@/types/quiz';
 import { formatQuizQuestion } from '@/lib/quiz';
 
-interface QuizSessionAnswer {
-  id: string;
-  quizSessionId: string;
-  studyContentId: string;
-  userAnswer: string;
-  isCorrect: boolean;
-  pointsEarned: number;
-  timeTaken: number | null;
-}
-
 export async function POST(
   request: Request,
   { params }: { params: { id: string; sessionId: string } }
