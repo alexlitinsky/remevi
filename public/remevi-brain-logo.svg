@@ -1,53 +1,18 @@
-<svg
-  width="64"
-  height="64"
-  viewBox="0 0 64 64"
-  fill="none"
-  xmlns="http://www.w3.org/2000/svg"
->
-  <!-- Brain Outline -->
-  <path
-    d="M20 24C16 24 12 28 12 32C12 36 16 40 20 40V44C20 47 22 48 24 48H28C30 48 32 47 32 44V40H36V44C36 47 38 48 40 48H44C46 48 48 47 48 44V40C52 40 56 36 56 32C56 28 52 24 48 24C48 21 46 20 44 20H40C38 20 36 21 36 24V28H32V24C32 21 30 20 28 20H24C22 20 20 21 20 24Z"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    class="animate-draw"
-  />
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+  <!-- Dark background -->
+  <rect width="40" height="40" fill="#12121c"/>
   
-  <!-- Central Spark -->
-  <circle
-    cx="32"
-    cy="32"
-    r="4"
-    fill="currentColor"
-    class="animate-pulse"
-  />
+  <!-- Rounded square border -->
+  <rect x="4" y="4" width="32" height="32" rx="6" ry="6" fill="none" stroke="white" stroke-width="2"/>
   
-  <style>
-    svg { color: #4F46E5; } /* Indigo-600 */
-    .animate-draw {
-      stroke-dasharray: 800;
-      stroke-dashoffset: 800;
-      animation: draw 2s ease forwards;
-    }
-    .animate-pulse {
-      animation: pulse 2s infinite;
-    }
-    @keyframes draw {
-      to {
-        stroke-dashoffset: 0;
-      }
-    }
-    @keyframes pulse {
-      0%, 100% {
-        opacity: 1;
-        r: 4;
-      }
-      50% {
-        opacity: 0.6;
-        r: 5;
-      }
-    }
-  </style>
+  <!-- Checkmark with longer right branch -->
+  <path d="M17 20 L20 23 L28 10" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Circular arrow (3/4 circle with gap at top) -->
+  <path d="M20 11 C14 11 9 15 9 20 C9 25 14 30 20 30 C26 30 31 25 31 20" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- Up arrow at end of circle -->
+  <path d="M31 20 L31 13" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M28 16 L31 13 L34 16" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

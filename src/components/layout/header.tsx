@@ -1,54 +1,9 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
-
-const RemeviBrainLogo = () => (
-  <svg
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="transition-colors duration-300"
-  >
-    {/* Main circle */}
-    <circle
-      cx="12"
-      cy="12"
-      r="8"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      className="animate-draw"
-    />
-    
-    {/* Memory paths */}
-    <path
-      d="M8 12C8 9.79086 9.79086 8 12 8"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      className="animate-draw"
-    />
-    <path
-      d="M12 16C14.2091 16 16 14.2091 16 12"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      className="animate-draw"
-    />
-    
-    {/* Center dot */}
-    <circle
-      cx="12"
-      cy="12"
-      r="2"
-      fill="currentColor"
-      className="animate-pulse opacity-80"
-    />
-  </svg>
-);
 
 export function Header() {
   const pathname = usePathname()
@@ -62,18 +17,24 @@ export function Header() {
         href="/" 
         className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
       >
-        <RemeviBrainLogo />
+        <Image
+          src="/remevi-brain-logo.svg"
+          alt="Remevi Brain Logo"
+          width={24}
+          height={24}
+          className="transition-colors duration-300"
+        />
         <span className="font-semibold">Remevi</span>
       </Link>
       <div className="flex items-center gap-4">
         <SignedOut>
           <SignInButton mode="modal">
-            <button className="px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors">
+            <button className="px-4 py-2 rounded-lg text-sm font-medium text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 border border-blue-500/20 hover:border-blue-500/40">
               Sign In
             </button>
           </SignInButton>
           <SignUpButton mode="modal">
-            <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+            <button className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md">
               Sign Up
             </button>
           </SignUpButton>

@@ -10,6 +10,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { Toaster } from "sonner";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { UploadProvider } from "@/contexts/UploadContext";
+import { FeedbackButton } from "@/components/layout/FeedbackButton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,6 +45,7 @@ export default async function RootLayout({
             <UploadProvider>
               <Header />
               {children}
+              <FeedbackButton />
               {user && <PricingButton subscription={subscription} />}
               <Toaster />
             </UploadProvider>

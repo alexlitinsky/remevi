@@ -161,7 +161,7 @@ export default function ConfigurePage() {
 
       const { deckId } = await generateResponse.json();
       toast.success("Study deck created! Redirecting...");
-      router.push(`/deck/${deckId}/session-v2`);
+      router.push(`/deck/${deckId}/session`);
       setTimeout(() => clearUploadData(), 500);
 
     } catch (error: unknown) {

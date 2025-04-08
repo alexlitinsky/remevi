@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  console.log('🟢 [quiz/results] GET request received for deck:', params.id);
-  
+export async function GET(req: NextRequest) {
   try {
     const user = await currentUser();
     if (!user?.id) {
@@ -12,8 +10,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return new NextResponse("Unauthorized", { status: 401 });
     }
     
-    const deckId = params.id;
+    // Extract deck ID from URL
     const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const deckId = pathParts[3]; // Index 3 contains the deck ID
+    
+    console.log('🟢 [quiz/results] GET request received for deck:', deckId);
+    
     const sessionId = url.searchParams.get('sessionId');
     
     console.log(`🟢 [quiz/results] Fetching results for deck: ${deckId}, user: ${user.id}${sessionId ? `, session: ${sessionId}` : ''}`);
@@ -187,4 +190,4 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     console.error("🔴 [quiz/results] Error fetching results:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
-} 
+}

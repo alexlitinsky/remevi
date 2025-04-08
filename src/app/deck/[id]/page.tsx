@@ -205,7 +205,7 @@ export default function DeckPage() {
               <div className="flex flex-wrap gap-3 md:flex-nowrap mt-4 md:mt-0">
                 <Button 
                   size="lg" 
-                  onClick={() => router.push(`/deck/${deckId}/session-v2`)} 
+                  onClick={() => router.push(`/deck/${deckId}/session`)} 
                   className="gap-2 cursor-pointer bg-green-600 hover:bg-green-700 text-white"
                 >
                   <BookOpen className="h-4 w-4" />

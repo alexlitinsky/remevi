@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { rateLimit } from '@/lib/rate-limit';
 
 interface QuizSession {
   id: string;
@@ -11,14 +12,25 @@ interface QuizSession {
   pointsEarned: number;
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest) {
   try {
-    console.log('🟢 [quiz/end] POST request received', { deckId: params.id });
+    // Extract deck ID from URL
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const deckId = pathParts[3]; // Index 3 contains the deck ID
+    
+    console.log('🟢 [quiz/end] POST request received', { deckId });
     const user = await currentUser();
     
     if (!user?.id) {
       console.error('🔴 [quiz/end] Unauthorized - no user ID');
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // Rate limiting
+    const rateLimitResult = await rateLimit(user.id);
+    if (rateLimitResult.error) {
+      return rateLimitResult.error;
     }
 
     const body = await req.json();
@@ -28,7 +40,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       sessionId, 
       totalTime,
       userId: user.id,
-      deckId: params.id
+      deckId
     });
 
     // Validate session exists and belongs to user
@@ -36,12 +48,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       where: {
         id: sessionId,
         userId: user.id,
-        deckId: params.id,
+        deckId: deckId,
       },
     });
 
     if (!session) {
-      console.error('🔴 [quiz/end] Session not found:', { sessionId, userId: user.id, deckId: params.id });
+      console.error('🔴 [quiz/end] Session not found:', { sessionId, userId: user.id, deckId });
       return new NextResponse("Session not found", { status: 404 });
     }
 

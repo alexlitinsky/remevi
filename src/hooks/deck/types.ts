@@ -30,6 +30,8 @@ export interface DeckData {
       label?: string;
     }>;
   };
+  processingProgress?: number;
+  processingStage?: string;
 }
 
 export interface StudyProgress {

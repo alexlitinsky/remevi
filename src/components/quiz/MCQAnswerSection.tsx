@@ -1,10 +1,10 @@
 'use client';
 
 import { cn } from "@/lib/utils";
-import { Question } from "@/stores/useQuizStore";
+import { MCQQuestion } from "@/types/quiz";
 
 interface MCQAnswerSectionProps {
-  question: Question;
+  question: MCQQuestion;
   selectedAnswer: string;
   onSelect: (answer: string) => void;
   disabled?: boolean;
@@ -22,7 +22,7 @@ export function MCQAnswerSection({
 
   return (
     <div className="space-y-3">
-      {question.options.map((option, index) => {
+      {question.options.map((option: string, index: number) => {
         const isSelected = selectedAnswer === option;
         const optionLetter = String.fromCharCode(65 + index); // ASCII: A=65, B=66, etc.
         

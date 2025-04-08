@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { currentUser } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
 import { Ratelimit } from '@upstash/ratelimit'
@@ -11,31 +11,8 @@ const ratelimit = new Ratelimit({
   analytics: true,
 })
 
-interface DeckContent {
-  studyContent: {
-    id: string;
-    type: string;
-    flashcardContent: {
-      id: string;
-      studyContentId: string;
-      front: string;
-      back: string;
-    } | null;
-    cardInteractions: Array<{
-      id: string;
-      createdAt: Date;
-      updatedAt: Date;
-      dueDate: Date;
-      easeFactor: number;
-      interval: number;
-      repetitions: number;
-      masteryLevel: string;
-    }>;
-  };
-}
-
 // GET /api/decks - Get all decks for the current user
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const user = await currentUser()
     if (!user?.id) {

@@ -10,6 +10,8 @@ import { FREEMIUM_LIMITS } from '@/lib/constants';
 import { AiModel } from '@/types/ai';
 import { Difficulty } from '@/types/difficulty';
 import { PDFDocument, PDFPage } from 'pdf-lib';
+import { rateLimit } from '@/lib/rate-limit';
+import { checkAndUpdateUploadLimit } from '@/lib/upload-limits';
 
 const PAGES_PER_CHUNK = 5;
 
@@ -198,6 +200,21 @@ export async function POST(request: NextRequest) {
     const user = await currentUser();
     if (!user?.id) {
       return new Response('Unauthorized', { status: 401 });
+    }
+
+    // Rate limiting
+    const rateLimitResult = await rateLimit(user.id);
+    if (rateLimitResult.error) {
+      return rateLimitResult.error;
+    }
+
+    // Check upload limits before proceeding
+    try {
+      await checkAndUpdateUploadLimit();
+    } catch (error) {
+      return new Response(error instanceof Error ? error.message : 'Upload limit exceeded', { 
+        status: 400 
+      });
     }
 
     // Ensure user exists in our database

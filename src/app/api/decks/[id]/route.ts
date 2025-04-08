@@ -117,14 +117,17 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest) {
   try {
     const user = await currentUser();
     if (!user?.id) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const { id } = await params;
+    // Extract the ID from the URL path
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[3]; // Index 3 contains the deck ID
 
     // Check if deck exists and belongs to user
     const deckCheck = await db.deck.findUnique({

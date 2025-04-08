@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { MCQQuestion, FRQQuestion } from "@/types/quiz";
 import { QuizDifficulty } from "@/stores/useQuizStore";
+import { rateLimit } from '@/lib/rate-limit';
 
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -13,16 +14,25 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest) {
   try {
     const user = await currentUser();
     if (!user?.id) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Rate limiting
+    const rateLimitResult = await rateLimit(user.id);
+    if (rateLimitResult.error) {
+      return rateLimitResult.error;
+    }
+
     const { type = "mixed", questionCount = 10 } = await req.json();
-    const awaitParams = await params;
-    const deckId = awaitParams.id;
+    
+    // Extract the deck ID from the URL path
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const deckId = pathParts[3]; // Index 3 contains the deck ID
 
     // Validate deck exists and user has access
     const deck = await db.deck.findFirst({
@@ -68,7 +78,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             options: options,
             correctOptionIndex: mcq.correctOptionIndex,
             explanation: mcq.explanation || undefined,
-            hint: undefined,
+            hint: undefined
           });
         }
       }
@@ -87,7 +97,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             answers: answers,
             caseSensitive: frq.caseSensitive,
             explanation: frq.explanation || undefined,
-            hint: undefined,
+            hint: undefined
           });
         }
       }

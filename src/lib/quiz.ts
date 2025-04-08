@@ -1,5 +1,6 @@
 import { MCQContent, FRQContent } from "@prisma/client";
 import { MCQQuestion, FRQQuestion } from "@/types/quiz";
+import { QuizDifficulty } from "@/stores/useQuizStore";
 
 type StudyContentWithQuestions = {
   id: string;
@@ -21,6 +22,7 @@ export function formatQuizQuestion(content: StudyContentWithQuestions): MCQQuest
     question: content.question,
     hint: content.hint || '',
     topic: content.topic,
+    difficulty: 'medium' as QuizDifficulty, // Default difficulty
   };
 
   if (content.mcqContent) {
@@ -35,6 +37,7 @@ export function formatQuizQuestion(content: StudyContentWithQuestions): MCQQuest
       ...baseQuestion,
       type: 'frq' as const,
       answers: content.frqContent.answers,
+      caseSensitive: false, // Default value
     };
   } else {
     throw new Error('Invalid study content type - neither MCQ nor FRQ content found');

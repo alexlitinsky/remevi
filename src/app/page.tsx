@@ -10,7 +10,6 @@ import {
   Upload,
   Sparkles,
   BookOpen,
-  Clock,
   Trophy,
   Zap,
   Brain,
@@ -19,6 +18,7 @@ import {
   ArrowRight,
   Loader2,
   Trash2,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,7 +48,6 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
-import { isCardDue } from '@/lib/srs';
 
 interface Deck {
   id: string;
@@ -310,17 +309,17 @@ export default function Home() {
 
             <div className="relative z-10">
               <Badge variant="outline" className="mb-6 px-3 py-1 text-sm bg-primary/10 border-primary/20">
-                AI-Powered Learning
+                AI-Powered Study Assistant
               </Badge>
 
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">
-                Transform Your Notes into
+                Study Smarter,
                 <br className="hidden sm:block" />
-                Interactive Study Materials
+                Score Higher
               </h1>
 
               <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
-                Upload your study materials and let AI create effective flashcards and mind maps for accelerated learning
+                Join thousands of students who&apos;ve improved their grades using our AI study assistant. Upload any document and get personalized study materials in seconds.
               </p>
             </div>
 
@@ -366,22 +365,199 @@ export default function Home() {
                 </div>
               </motion.div>
             </div>
-
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <BookOpen className="h-4 w-4" />
-                <span>Intelligent flashcards</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Brain className="h-4 w-4" />
-                <span>Spaced repetition</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Sparkles className="h-4 w-4" />
-                <span>AI-generated questions</span>
-              </div>
-            </div>
           </motion.div>
+
+          {!isSignedIn && (
+            <>
+              {/* Impact Stats Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mb-24"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <Card className="bg-card/50 backdrop-blur-sm border border-primary/10">
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col items-center text-center gap-2">
+                        <div className="text-4xl font-bold text-primary">85%</div>
+                        <p className="text-lg font-medium">Improved Retention</p>
+                        <p className="text-sm text-muted-foreground">
+                          Our spaced repetition system helps you remember more for longer
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-card/50 backdrop-blur-sm border border-primary/10">
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col items-center text-center gap-2">
+                        <div className="text-4xl font-bold text-primary">50%</div>
+                        <p className="text-lg font-medium">Less Study Time</p>
+                        <p className="text-sm text-muted-foreground">
+                          Study smarter, not harder with AI-optimized learning paths
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-card/50 backdrop-blur-sm border border-primary/10">
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col items-center text-center gap-2">
+                        <div className="text-4xl font-bold text-primary">2x</div>
+                        <p className="text-lg font-medium">Faster Mastery</p>
+                        <p className="text-sm text-muted-foreground">
+                          Master concepts in half the time with personalized learning
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </motion.div>
+
+              {/* How It Works Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mb-24"
+              >
+                <div className="text-center mb-12">
+                  <Badge variant="outline" className="mb-4">How It Works</Badge>
+                  <h2 className="text-3xl font-bold mb-4">From Notes to Knowledge in Minutes</h2>
+                  <p className="text-muted-foreground max-w-2xl mx-auto">
+                    Transform any study material into an effective learning experience
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <Card className="bg-card/50 backdrop-blur-sm border border-primary/10">
+                    <CardContent className="pt-6">
+                      <div className="rounded-full bg-primary/10 p-3 w-fit mb-4">
+                        <Upload className="h-6 w-6 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-medium mb-2">1. Upload Your Notes</h3>
+                      <p className="text-muted-foreground">
+                        Drop any PDF, document, or text file - our AI handles the rest
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-card/50 backdrop-blur-sm border border-primary/10">
+                    <CardContent className="pt-6">
+                      <div className="rounded-full bg-primary/10 p-3 w-fit mb-4">
+                        <Sparkles className="h-6 w-6 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-medium mb-2">2. AI Creates Your Study Plan</h3>
+                      <p className="text-muted-foreground">
+                        Get personalized flashcards and quizzes optimized for your learning
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-card/50 backdrop-blur-sm border border-primary/10">
+                    <CardContent className="pt-6">
+                      <div className="rounded-full bg-primary/10 p-3 w-fit mb-4">
+                        <Trophy className="h-6 w-6 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-medium mb-2">3. Excel in Your Exams</h3>
+                      <p className="text-muted-foreground">
+                        Watch your grades improve as you master concepts effortlessly
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </motion.div>
+
+              {/* Success Outcomes Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mb-24"
+              >
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold mb-4">Ready to Ace Your Exams?</h2>
+                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+                    Join students who&apos;ve transformed their academic performance with Remevi
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                  <Card className="bg-card/50 backdrop-blur-sm border border-primary/10">
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col gap-4">
+                        <div className="rounded-full bg-primary/10 p-3 w-fit">
+                          <Brain className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-medium">Better Memory Retention</h3>
+                        <ul className="space-y-2">
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-primary" />
+                            <span>Remember key concepts for months, not days</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-primary" />
+                            <span>Strengthen weak areas automatically</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-primary" />
+                            <span>Build lasting understanding, not cramming</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-card/50 backdrop-blur-sm border border-primary/10">
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col gap-4">
+                        <div className="rounded-full bg-primary/10 p-3 w-fit">
+                          <Zap className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-medium">Efficient Study Sessions</h3>
+                        <ul className="space-y-2">
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-primary" />
+                            <span>Cut study time in half with AI optimization</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-primary" />
+                            <span>Focus on what you need to learn most</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-primary" />
+                            <span>Track your progress in real-time</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </motion.div>
+
+              {/* Final CTA Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="text-center mb-24"
+              >
+                <div className="max-w-3xl mx-auto">
+                  <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                    Start Acing Your Exams Today
+                  </h2>
+                  <p className="text-xl text-muted-foreground mb-8">
+                    Try Remevi free and experience the power of AI-enhanced learning
+                  </p>
+                  <Button size="lg" className="gap-2" onClick={() => setShowSignIn(true)}>
+                    Get Started Free
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            </>
+          )}
 
           {isSignedIn && (
             <>
@@ -520,8 +696,8 @@ export default function Home() {
                         </div>
 
                         {/* Stats */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-                          <Card className="bg-muted/30 border-primary/5">
+                        <div className="grid grid-cols-2 md:grid-cols-2 gap-4 pt-2">
+                          {/* <Card className="bg-muted/30 border-primary/5">
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between">
                                 <div className="text-muted-foreground text-sm">Minutes Studied</div>
@@ -529,7 +705,7 @@ export default function Home() {
                               </div>
                               <div className="text-2xl font-bold mt-2">{progress.minutesStudied || 0}</div>
                             </CardContent>
-                          </Card>
+                          </Card> */}
 
                           <Card className="bg-muted/30 border-primary/5">
                             <CardContent className="p-4">
@@ -723,7 +899,7 @@ export default function Home() {
                                   className="gap-1 text-xs group-hover:text-primary cursor-pointer transition-colors bg-blue-500"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    router.push(`/deck/${deck.id}/session-v2`);
+                                    router.push(`/deck/${deck.id}/session`);
                                   }}
                                 >
                                   Study Now
@@ -795,6 +971,23 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-primary/10 bg-card/50 backdrop-blur-sm mt-24">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <p className="text-sm text-muted-foreground">
+                © {new Date().getFullYear()} Remevi
+              </p>
+              <div className="flex items-center gap-4">
+                <a href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition">Privacy</a>
+                <a href="/terms" className="text-sm text-muted-foreground hover:text-primary transition">Terms</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* Sign In Modal */}
       <AnimatePresence>

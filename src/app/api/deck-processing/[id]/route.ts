@@ -5,11 +5,11 @@ import { NextRequest } from "next/server";
  
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
 ) {
   try {
     const user = await currentUser();
-    const { id } = await params;
+    const id = request.url.split('/').pop();
+
     if (!user?.id) {
       return new Response('Unauthorized', { status: 401 });
     }

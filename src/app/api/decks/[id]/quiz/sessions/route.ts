@@ -2,15 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest) {
   try {
     const user = await currentUser();
     if (!user?.id) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const {id} =  await params;
-    const deckId = id;
+    // Extract deckId from URL
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const deckId = pathParts[3]; // The ID will be at index 3 for /api/decks/[id]/...
 
     // Validate deck exists and user has access
     const deck = await db.deck.findFirst({

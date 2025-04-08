@@ -4,7 +4,7 @@ import { AiModel } from "@/types/ai";
 export const FREEMIUM_LIMITS = {
   FREE: {
     maxPages: 5,
-    maxDecks: 3,
+    maxDecks: 5,
     maxFileSize: 8 * 1024 * 1024, // 8MB
     allowedDifficulties: ["low"] as Difficulty[],
     allowedAiModels: ["standard"] as AiModel[],

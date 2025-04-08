@@ -5,17 +5,22 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { deepseekProvider } from "@/lib/ai/providers";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest) {
   try {
     const user = await currentUser();
     if (!user?.id) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Extract deck ID from URL
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const deckId = pathParts[3]; // Index 3 contains the deck ID
+
     // Get deck with flashcards
     const deck = await db.deck.findFirst({
       where: {
-        id: params.id,
+        id: deckId,
         userId: user.id,
       },
       include: {

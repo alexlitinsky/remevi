@@ -39,6 +39,10 @@ model User {
   topicMastery   TopicMastery[]
   errorLogs      ErrorLog[]
   recoveryLogs   RecoveryLog[]
+  
+  // User limits
+  monthlyUploadsUsed Int @default(0)
+  lastUploadReset DateTime @default(now())
 }
 
 // User settings and preferences

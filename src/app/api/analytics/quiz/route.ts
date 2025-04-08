@@ -3,6 +3,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { QuizAnalyticsEvent } from '@/types/api';
 import { Prisma } from '@prisma/client';
+import { rateLimit } from '@/lib/rate-limit';
 
 interface WhereClause {
   userId: string;
@@ -46,6 +47,12 @@ export async function GET(req: NextRequest) {
     if (!user?.id) {
       console.log('🔴 [analytics/quiz] Unauthorized - No user found');
       return new NextResponse('Unauthorized', { status: 401 });
+    }
+    
+    // Rate limiting
+    const rateLimitResult = await rateLimit(user.id);
+    if (rateLimitResult.error) {
+      return rateLimitResult.error;
     }
     
     const url = new URL(req.url);
@@ -191,23 +198,29 @@ export async function POST(req: NextRequest) {
   }
   
   try {
+    const user = await currentUser();
+    if (!user?.id) {
+      console.log('🔴 [analytics/quiz] Unauthorized - No user found');
+      return new NextResponse('Unauthorized', { 
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+    }
+
+    // Rate limiting
+    const rateLimitResult = await rateLimit(user.id);
+    if (rateLimitResult.error) {
+      return rateLimitResult.error;
+    }
+
     // Check content type
     const contentType = req.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       console.log('🔴 [analytics/quiz] Invalid content type:', contentType);
       return new NextResponse('Invalid content type - expected application/json', { 
         status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-    }
-    
-    const user = await currentUser();
-    if (!user?.id) {
-      console.log('🔴 [analytics/quiz] Unauthorized - No user found');
-      return new NextResponse('Unauthorized', { 
-        status: 401,
         headers: {
           'Content-Type': 'application/json',
         }

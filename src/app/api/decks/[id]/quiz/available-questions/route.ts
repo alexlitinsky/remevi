@@ -2,18 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest) {
   try {
     const user = await currentUser();
     if (!user?.id) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    const awaitedParams = await params;
+    
+    // Extract deck ID from URL
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const deckId = pathParts[3]; // Index 3 contains the deck ID
 
     // Validate deck exists and user has access
     const deck = await db.deck.findFirst({
       where: {
-        id: awaitedParams.id,
+        id: deckId,
         userId: user.id,
       },
       include: {
@@ -45,7 +49,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     const totalCount = mcqCount + frqCount;
     console.log('[available-questions] Deck stats:', {
-      deckId: awaitedParams.id,
+      deckId,
       userId: user.id,
       mcqCount,
       frqCount,

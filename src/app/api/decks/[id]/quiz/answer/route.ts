@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { openai4oMiniResponsesProvider } from "@/lib/ai/providers";
+import { rateLimit } from '@/lib/rate-limit';
 
 async function gradeFRQAnswer(userAnswer: string, correctAnswers: string[], question: string): Promise<{isCorrect: boolean; confidence: number}> {
   const prompt = `Grade this free response answer for correctness. Question: "${question}"
@@ -26,22 +27,27 @@ Student answer: "${userAnswer}"`;
   };
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest) {
   console.log('🟢 [answer/route] POST request received');
   try {
     const user = await currentUser();
     if (!user?.id) {
-      console.log('🔴 [answer/route] Unauthorized - No user found');
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    console.log(`🟢 [answer/route] User authenticated: ${user.id}`);
+
+    // Rate limiting
+    const rateLimitResult = await rateLimit(user.id);
+    if (rateLimitResult.error) {
+      return rateLimitResult.error;
+    }
 
     const requestData = await req.json();
     console.log('🟢 [answer/route] Request payload:', JSON.stringify(requestData));
     
     const { sessionId, questionId, userAnswer: answer, timeTaken } = requestData;
-    const awaitedParams = await params;
-    const deckId = awaitedParams.id;
+    const url = new URL(req.url);
+    const segments = url.pathname.split('/');
+    const deckId = segments[segments.indexOf('decks') + 1];
     
     console.log(`🟢 [answer/route] Processing answer for deck: ${deckId}, session: ${sessionId}, question: ${questionId}`);
 
@@ -273,4 +279,4 @@ async function checkAchievements(userId: string) {
   } catch (error) {
     console.error("Error checking achievements:", error);
   }
-} 
+}

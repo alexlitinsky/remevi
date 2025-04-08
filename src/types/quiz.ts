@@ -19,8 +19,9 @@ export interface QuizConfig {
 export interface BaseQuestion {
   id: string;
   question: string;
-  hint: string;
+  hint?: string;
   topic: string;
+  difficulty: QuizDifficulty;
 }
 
 // MCQ specific question
@@ -28,12 +29,15 @@ export interface MCQQuestion extends BaseQuestion {
   type: 'mcq';
   options: string[];
   correctOptionIndex: number;
+  explanation?: string;
 }
 
 // FRQ specific question
 export interface FRQQuestion extends BaseQuestion {
   type: 'frq';
   answers: string[];
+  caseSensitive: boolean;
+  explanation?: string;
 }
 
 // Quiz session from API

@@ -36,7 +36,8 @@ export function QuizConfigModal({ deckId, hasStarted }: QuizConfigModalProps) {
       await startQuiz({
         deckId,
         type: quizType,
-        questionCount: 10
+        questionCount: 10,
+        difficulty: ['medium', 'hard']
       });
 
       // Show keyboard shortcuts toast for first-time users

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Flashcard } from '@/components/ui/flashcard';
 import { StudyControls } from '@/components/session/StudyControls';
 import { type Difficulty } from '@/lib/srs';
-import { type FlashcardData } from '@/hooks/deck/types';
+import { type FlashcardData } from '@/stores/useStudySessionStore';
 
 interface FlashcardContainerProps {
   cards: FlashcardData[];
@@ -35,20 +35,22 @@ export function FlashcardContainer({
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    e.preventDefault();
     // Space or Enter to flip card
     if ((e.key === ' ' || e.key === 'Enter')) {
+      e.preventDefault(); // Prevent page scroll on space
       onFlip();
     }
     // Number keys for rating (only when card is flipped)
     if (showBack) {
-      if (e.key === 'q') {
-        const responseTime = Date.now() - startTime;
+      const responseTime = Date.now() - startTime;
+      if (e.key === '1') {
+        onRate('again', responseTime);
+      } else if (e.key === '2') {
         onRate('hard', responseTime);
-      } else if (e.key === 'w') {
-        const responseTime = Date.now() - startTime;
-        onRate('medium', responseTime);
-      } else if (e.key === 'e') {
-        const responseTime = Date.now() - startTime;
+      } else if (e.key === '3') {
+        onRate('good', responseTime);
+      } else if (e.key === '4') {
         onRate('easy', responseTime);
       }
     }
@@ -67,6 +69,7 @@ export function FlashcardContainer({
   }
 
   const currentCard = cards[currentCardIndex];
+  const progress = cards.length > 0 ? currentCardIndex / cards.length : 0;
   
   return (
     <div className="w-full max-w-4xl flex flex-col items-center">
@@ -77,7 +80,7 @@ export function FlashcardContainer({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }} 
-          className="w-full"
+          className="w-full mb-8"
         >
           <Flashcard
             key={`card-${currentCardIndex}-${currentCard.id}`}
@@ -88,11 +91,10 @@ export function FlashcardContainer({
             pointsEarned={pointsEarned}
             onNext={onNext}
             onPrev={onPrev}
-            progress={cards.length > 1 
-              ? currentCardIndex / (cards.length) 
-              : 1}
+            progress={progress}
             totalCards={cards.length}
             currentCardIndex={currentCardIndex}
+            className="shadow-xl"
           />
         </motion.div>
       </AnimatePresence>
@@ -105,4 +107,4 @@ export function FlashcardContainer({
       />
     </div>
   );
-}
+} 

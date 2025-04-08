@@ -237,7 +237,8 @@ export function StudyStats({ deckId }: StudyStatsProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            {/* Commenting out study time grid */}
+            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
               <Card className="bg-muted/30">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -271,7 +272,7 @@ export function StudyStats({ deckId }: StudyStatsProps) {
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </div> */}
           </TabsContent>
 
           <TabsContent value="progress" className="space-y-6">

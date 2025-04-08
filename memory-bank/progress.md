@@ -11,6 +11,8 @@
 - **Custom UI Elements**: Consistent styling across the application
 - **Quiz System**: Multiple-choice and free-response questions with scoring
 - **Quiz Statistics**: Tracking quiz performance and results
+- **Upload Limits**: User-based upload tracking and limits
+- **Legal Framework**: Privacy Policy and Terms of Service
 
 ## Current Status
 - The application is in Phase 4 (Gamification and Engagement)
@@ -23,6 +25,8 @@
 - Document processing has been optimized with better progress tracking
 - Combined Study Progress and Achievements into tabbed interface
 - Fixed various linting issues and improved code quality
+- Implemented user upload limits and tracking
+- Added legal pages and universal feedback button
 
 ## Known Issues
 - Quiz time metrics temporarily disabled while stabilizing session time calculations
@@ -33,30 +37,45 @@
 - API endpoints for achievement tracking not yet created
 - Points system integration pending
 - Mobile responsiveness needs improvement
+- Need user dashboard for upload limit management
 
 ## Recent Enhancements
-1. **Session Timing Fixes**
+1. **Upload Limit System**
+   - Implemented user-based upload tracking
+   - Created functions to check and update upload counts
+   - Added UploadCounter component for visual feedback
+   - Integrated limit checks into upload flow
+   - Added error handling for limit exceeded cases
+
+2. **Legal and Feedback Framework**
+   - Added comprehensive Privacy Policy page
+   - Implemented Terms of Service page
+   - Created universal feedback button component
+   - Integrated legal pages into footer navigation
+   - Simplified footer structure
+
+3. **Session Timing Fixes**
    - Fixed sessionId management in useStudySessionStore
    - Added proper cleanup of sessionId when ending sessions
    - Added checks for existing sessions when starting new ones
    - Ensured accurate time tracking between sessions
    - Improved backend time calculation based on session data
 
-2. **Quiz Statistics Component**
+4. **Quiz Statistics Component**
    - Implemented QuizStats component for the study stats page
    - Added metrics for quiz completion and accuracy
    - Created display for recent quiz sessions
    - Implemented 4-column layout matching the flashcard stats design
    - Temporarily disabled time-related metrics while stabilizing time tracking
 
-3. **Achievement System Development**
+5. **Achievement System Development**
    - Defined Achievement and UserAchievement models in Prisma schema
    - Implemented upsert pattern to handle unique constraint violations
    - Added error handling to prevent failures when creating achievements
    - Designed achievement badge SVGs with modern design
    - Created achievement categories and badge styling
 
-4. **Improved Mind Map Visualization**
+6. **Improved Mind Map Visualization**
    - Implemented advanced hierarchical layout algorithm
    - Added graph analysis to identify central concepts
    - Improved node positioning based on connection relationships
@@ -65,14 +84,14 @@
    - Fixed connection rendering and label placement
    - Multi-stage positioning algorithm for better organization
 
-5. **Document Processing Improvements**
+7. **Document Processing Improvements**
    - Fixed polling mechanism to maintain state during updates
    - Updated progress tracking with accurate percentages and stages
    - Improved error handling and recovery options
    - Fixed processing state UI for better user feedback
    - Enhanced coordination between frontend and backend data
 
-6. **UI/UX Enhancements**
+8. **UI/UX Enhancements**
    - Added custom scrollbar styling across the application
    - Improved visual hierarchy in mind map component
    - Enhanced node styling based on type and importance
@@ -80,7 +99,7 @@
    - Added consistency in interactive elements
    - Combined Study Progress and Achievements into a single tabbed interface
 
-7. **Study Session Enhancements**
+9. **Study Session Enhancements**
    - Improved state management during document processing
    - Fixed loading and processing states to avoid UI flickering
    - Enhanced session initialization and state persistence
@@ -98,6 +117,8 @@
 8. Re-enable time tracking metrics once calculations are stable
 9. Optimize database operations for scalability
 10. Deploy next version with improved user experience
+11. Create user dashboard for upload limit management
+12. Implement upgrade path for additional uploads
 
 ## Development Timeline
 - **Phase 1**: Core functionality (Completed)

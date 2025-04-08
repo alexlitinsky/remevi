@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { QuizAnswer } from '@/types/quiz';
 import { formatQuizQuestion } from '@/lib/quiz';
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string; sessionId: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
-    const awaitedParams = await params;
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const sessionId = segments[segments.length - 2];
+    const id = segments[segments.length - 4];
+    
     const { userId } = await auth();
     if (!userId) {
       return new NextResponse('Unauthorized', { status: 401 });
@@ -18,9 +19,9 @@ export async function POST(
     // Get session with answers and deck content
     const session = await db.quizSession.findUnique({
       where: {
-        id: awaitedParams.sessionId,
+        id: sessionId,
         userId,
-        deckId: awaitedParams.id,
+        deckId: id,
       },
       include: {
         quizAnswers: true,
@@ -98,4 +99,4 @@ export async function POST(
     console.error('[QUIZ_RECOVER]', error);
     return new NextResponse('Internal Error', { status: 500 });
   }
-} 
+}
