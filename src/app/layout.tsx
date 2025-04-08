@@ -15,8 +15,25 @@ import { FeedbackButton } from "@/components/layout/FeedbackButton";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Remevi",
-  description: "Learn anything 10x faster",
+  title: "Remevi - AI-Powered Learning Platform | Master Any Subject 10x Faster",
+  description: "Transform your learning with Remevi's AI-powered platform. Create personalized flashcards, take smart quizzes, and master any subject 10x faster. Join thousands of students accelerating their education.",
+  keywords: "AI learning, flashcards, quiz platform, study tools, education technology, personalized learning, spaced repetition, study smarter",
+  openGraph: {
+    title: "Remevi - AI-Powered Learning Platform",
+    description: "Master any subject 10x faster with AI-powered flashcards and quizzes",
+    type: "website",
+    locale: "en_US",
+    siteName: "Remevi",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Remevi - AI-Powered Learning Platform",
+    description: "Master any subject 10x faster with AI-powered flashcards and quizzes",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default async function RootLayout({

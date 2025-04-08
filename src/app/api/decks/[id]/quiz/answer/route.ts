@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
         console.log(`🟢 [answer/route] Answer is text: "${answer}", correct: ${isCorrect}`);
       }
       
-      pointsEarned = isCorrect ? 10 : 0;
+      pointsEarned = isCorrect ? 50 : 0;
       explanation = mcq.explanation ?? "No explanation provided";
     } else if (studyContent.type === "frq" && studyContent.frqContent) {
       const answers = studyContent.frqContent.answers as string[];
@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
       
       isCorrect = aiGraded;
       // Adjust points based on AI confidence
-      pointsEarned = isCorrect ? Math.round(15 * confidence) : 0;
+      pointsEarned = isCorrect ? Math.round(70 * confidence) : 0;
       explanation = studyContent.frqContent.explanation ?? "No explanation provided";
       
       console.log(`🟢 [answer/route] FRQ graded: ${isCorrect}, confidence: ${confidence}, points: ${pointsEarned}`);
