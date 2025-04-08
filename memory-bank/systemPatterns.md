@@ -592,3 +592,71 @@ graph TD
 - Tabs manage progress and achievements
 - Shared state between components
 - Consistent styling throughout 
+
+### Quiz System Patterns
+
+1. Question Type Pattern:
+```typescript
+type MCQQuestion = {
+  id: string;
+  type: 'mcq';
+  question: string;
+  hint: string;
+  topic: string;
+  difficulty: QuizDifficulty;
+  options: string[];
+  correctOptionIndex: number;
+};
+
+type FRQQuestion = {
+  id: string;
+  type: 'frq';
+  question: string;
+  hint: string;
+  topic: string;
+  difficulty: QuizDifficulty;
+  answers: string[];
+  caseSensitive: boolean;
+};
+```
+
+2. Question Formatting Pattern:
+```typescript
+function formatQuizQuestion(content: StudyContentWithQuestions): MCQQuestion | FRQQuestion {
+  const baseQuestion = {
+    id: content.id,
+    question: content.question,
+    hint: content.hint || '',
+    topic: content.topic,
+    difficulty: 'medium' as QuizDifficulty,
+  };
+
+  if (content.mcqContent) {
+    return {
+      ...baseQuestion,
+      type: 'mcq' as const,
+      options: content.mcqContent.options,
+      correctOptionIndex: content.mcqContent.correctOptionIndex,
+    };
+  } else if (content.frqContent) {
+    return {
+      ...baseQuestion,
+      type: 'frq' as const,
+      answers: content.frqContent.answers,
+      caseSensitive: false,
+    };
+  }
+  throw new Error('Invalid study content type');
+}
+```
+
+3. Quiz State Pattern:
+```typescript
+interface QuizState {
+  questions: (MCQQuestion | FRQQuestion)[];
+  currentQuestionIndex: number;
+  answers: Record<string, string | number>;
+  isComplete: boolean;
+  score?: number;
+}
+``` 

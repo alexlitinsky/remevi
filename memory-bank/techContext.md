@@ -565,3 +565,56 @@ model UserAchievement {
 - Type-based node styling
 - Multi-stage positioning algorithm
 - Connection rendering and labeling 
+
+## Quiz System Implementation
+
+### Question Types
+- MCQ (Multiple Choice Questions)
+  - Options array with correct index
+  - Type-safe implementation
+  - Difficulty levels
+  - Hints support
+
+- FRQ (Free Response Questions)
+  - Multiple correct answers
+  - Case sensitivity option
+  - Type-safe implementation
+  - Difficulty levels
+  - Hints support
+
+### Type System
+```typescript
+type StudyContentWithQuestions = {
+  id: string;
+  question: string;
+  hint: string | null;
+  topic: string;
+  mcqContent: {
+    options: string[];
+    correctOptionIndex: number;
+  } | null;
+  frqContent: {
+    answers: string[];
+  } | null;
+};
+
+type QuizDifficulty = 'easy' | 'medium' | 'hard';
+```
+
+### Component Structure
+```
+components/
+  quiz/
+    MCQQuestion.tsx
+    FRQQuestion.tsx
+    QuizProgress.tsx
+    QuizResults.tsx
+    QuizTimer.tsx
+```
+
+### State Management
+- Question state handling
+- Answer tracking
+- Score calculation
+- Progress persistence
+- Timer implementation (planned) 

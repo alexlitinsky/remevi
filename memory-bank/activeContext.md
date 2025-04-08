@@ -1,61 +1,56 @@
 # Active Context
 
 ## Current Focus
-- Implementing universal feedback functionality across the application
-- Improving user engagement and feedback collection
+- Implementing and refining quiz functionality with MCQ and FRQ support
+- Improving quiz type handling and formatting
 - Maintaining clean component architecture with Next.js best practices
-- Implementing legal pages and footer structure
-- Enhancing user upload limits and tracking
+- Enhancing quiz state management and user experience
+- Implementing proper type safety across quiz components
 
 ## Recent Changes
-- Created a universal feedback button component that appears on all pages
-- Moved feedback functionality from page-specific to application-wide
-- Implemented proper client-side component handling for interactive elements
-- Simplified footer by removing redundant "Report Issue" button
-- Added Privacy Policy and Terms of Service pages
-- Implemented upload limits and tracking functionality
-- Created UploadCounter component for user feedback
+- Created quiz formatting utility functions for MCQ and FRQ questions
+- Implemented proper type handling for quiz questions
+- Added support for different quiz difficulties
+- Enhanced quiz state management with proper typing
+- Improved error handling in quiz components
 
 ## Key Decisions
-1. Feedback Button:
-   - Created as a separate client component (`FeedbackButton.tsx`)
-   - Positioned consistently at bottom-right of every page
-   - Uses mailto link for MVP stage (hello@remevi.com)
-   - Styled with primary colors and shadow for visibility
-   - Implemented as a floating button for easy access
+1. Quiz System:
+   - Separated MCQ and FRQ question types with proper TypeScript interfaces
+   - Implemented formatQuizQuestion utility for consistent question formatting
+   - Added QuizDifficulty enum for standardized difficulty levels
+   - Used type guards for proper question type handling
 
 2. Component Architecture:
-   - Separated client-side interactive components from server components
-   - Used 'use client' directive for components with event handlers
-   - Maintained clean separation of concerns
+   - Maintained strict TypeScript typing across components
+   - Separated question type handling logic
+   - Implemented proper error handling for invalid question types
 
-3. Upload Management:
-   - Implemented upload limit tracking per user
-   - Created functions to check and update upload counts
-   - Added visual feedback through UploadCounter component
-
-4. Legal Framework:
-   - Added comprehensive Privacy Policy
-   - Implemented Terms of Service
-   - Integrated legal pages into footer navigation
+3. State Management:
+   - Used proper typing for quiz state
+   - Implemented type-safe question formatting
+   - Added proper error handling for invalid states
 
 ## Next Steps
-- Consider implementing a more sophisticated feedback system in the future
-- Potentially add analytics to track feedback button usage
-- Consider adding different feedback channels (e.g., chat, form) as the product grows
-- Implement user dashboard for upload limit management
-- Add upgrade path for users who need more uploads
+- Implement additional quiz features like timing and scoring
+- Add support for more question types
+- Enhance quiz analytics and reporting
+- Improve quiz UI/UX with animations and transitions
+- Add quiz progress persistence
 
 ## Active Patterns
-- Client Components: Used for interactive elements
-- Layout Components: Universal UI elements shared across pages
-- Floating UI: Fixed position elements for important actions
-- User Limits: Tracking and enforcing usage limits
-- Legal Compliance: Maintaining necessary legal documentation
+- Type-safe Components: Using TypeScript for all quiz components
+- Question Type Guards: Proper handling of different question types
+- State Management: Type-safe quiz state handling
+- Error Handling: Proper error handling for invalid states
+- Quiz Formatting: Consistent question formatting across types
 
 ## Recent Learnings
-- Next.js client/server component separation best practices
-- Proper handling of event handlers in Next.js 13+
-- Universal component implementation in layouts
-- User limit tracking and enforcement patterns
-- Legal requirements for SaaS applications
+- TypeScript type guards for quiz question handling
+- Next.js component type safety best practices
+- Quiz state management patterns
+- Error handling in quiz components
+- Question formatting standardization
+
+## Additional Notes
+- The code block to apply changes from has been updated to reflect the current focus on quiz functionality and recent changes.
