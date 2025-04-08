@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
     const pathParts = url.pathname.split('/');
     const deckId = pathParts[3]; // Index 3 contains the deck ID
     
-    console.log('🟢 [quiz/end] POST request received', { deckId });
     const user = await currentUser();
     
     if (!user?.id) {
@@ -36,12 +35,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { sessionId, totalTime } = body;
 
-    console.log('🟢 [quiz/end] Processing request:', { 
-      sessionId, 
-      totalTime,
-      userId: user.id,
-      deckId
-    });
 
     // Validate session exists and belongs to user
     const session = await db.quizSession.findFirst({
@@ -56,13 +49,6 @@ export async function POST(req: NextRequest) {
       console.error('🔴 [quiz/end] Session not found:', { sessionId, userId: user.id, deckId });
       return new NextResponse("Session not found", { status: 404 });
     }
-
-    console.log('🟢 [quiz/end] Found session:', { 
-      sessionId: session.id,
-      questionsAnswered: session.questionsAnswered,
-      correctAnswers: session.correctAnswers,
-      incorrectAnswers: session.incorrectAnswers
-    });
 
     // Update session with completion data
     const updatedSession = await db.quizSession.update({
@@ -87,7 +73,6 @@ export async function POST(req: NextRequest) {
 
     // Get achievements (or empty array if none)
     const achievements = await checkAchievements(user.id, updatedSession);
-    console.log('🟢 [quiz/end] Achievements unlocked:', achievements.length);
 
     // Prepare response with safety checks for null values
     const response = {
@@ -103,12 +88,6 @@ export async function POST(req: NextRequest) {
       },
       achievements: achievements || [],
     };
-
-    console.log('🟢 [quiz/end] Sending response:', { 
-      pointsEarned: response.sessionStats.pointsEarned,
-      accuracy: response.sessionStats.accuracy,
-      achievementsCount: response.achievements.length
-    });
 
     return NextResponse.json(response);
   } catch (error) {

@@ -28,7 +28,6 @@ Student answer: "${userAnswer}"`;
 }
 
 export async function POST(req: NextRequest) {
-  console.log('🟢 [answer/route] POST request received');
   try {
     const user = await currentUser();
     if (!user?.id) {
@@ -42,14 +41,12 @@ export async function POST(req: NextRequest) {
     }
 
     const requestData = await req.json();
-    console.log('🟢 [answer/route] Request payload:', JSON.stringify(requestData));
     
     const { sessionId, questionId, userAnswer: answer, timeTaken } = requestData;
     const url = new URL(req.url);
     const segments = url.pathname.split('/');
     const deckId = segments[segments.indexOf('decks') + 1];
     
-    console.log(`🟢 [answer/route] Processing answer for deck: ${deckId}, session: ${sessionId}, question: ${questionId}`);
 
     // Validate session exists and belongs to user
     const session = await db.quizSession.findFirst({
@@ -61,13 +58,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (!session) {
-      console.log(`🔴 [answer/route] Session not found - sessionId: ${sessionId}, userId: ${user.id}, deckId: ${deckId}`);
       return new NextResponse("Session not found", { status: 404 });
     }
-    console.log(`🟢 [answer/route] Session found: ${session.id}`);
 
     // Get question content - first try to find MCQ or FRQ directly
-    console.log(`🟢 [answer/route] Looking up question content for ID: ${questionId}`);
 
     // Modified approach - get studyContent for MCQ/FRQ first
     const mcqContent = await db.mCQContent.findUnique({
@@ -84,7 +78,6 @@ export async function POST(req: NextRequest) {
     const studyContentId = mcqContent?.studyContentId || frqContent?.studyContentId;
 
     if (!studyContentId) {
-      console.log(`🔴 [answer/route] Question ID not found in either MCQ or FRQ content: ${questionId}`);
       return new NextResponse("Question not found", { status: 404 });
     }
 
@@ -97,7 +90,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (!deckContent) {
-      console.log(`🔴 [answer/route] Study content found but not in requested deck - contentId: ${studyContentId}, deckId: ${deckId}`);
       return new NextResponse("Question not found in this deck", { status: 404 });
     }
 
@@ -111,11 +103,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (!studyContent) {
-      console.log(`🔴 [answer/route] Study content not found after verifying IDs - contentId: ${studyContentId}`);
       return new NextResponse("Question not found", { status: 404 });
     }
 
-    console.log(`🟢 [answer/route] Question found: ${studyContent.id}, type: ${studyContent.type}`);
 
     // Check answer
     let isCorrect = false;
@@ -127,19 +117,15 @@ export async function POST(req: NextRequest) {
       // The answer can either be the option's text or the option's index
       const mcq = studyContent.mcqContent;
       const options = mcq.options as string[];
-      const correctOptionIndex = mcq.correctOptionIndex;
       
-      console.log(`🟢 [answer/route] MCQ - answer submitted: "${answer}", correctIndex: ${correctOptionIndex}`);
       
       // Check if answer is an index or option text
       if (!isNaN(parseInt(answer))) {
         // It's an index
         isCorrect = parseInt(answer) === mcq.correctOptionIndex;
-        console.log(`🟢 [answer/route] Answer is index: ${answer}, correct: ${isCorrect}`);
       } else {
         // It's the text of an option
         isCorrect = answer === options[mcq.correctOptionIndex];
-        console.log(`🟢 [answer/route] Answer is text: "${answer}", correct: ${isCorrect}`);
       }
       
       pointsEarned = isCorrect ? 50 : 0;
@@ -148,7 +134,6 @@ export async function POST(req: NextRequest) {
       const answers = studyContent.frqContent.answers as string[];
       const question = studyContent.frqContent.question as string;
       
-      console.log(`🟢 [answer/route] FRQ - answer submitted: "${answer}", expected answers: ${JSON.stringify(answers)}`);
       
       const { isCorrect: aiGraded, confidence } = await gradeFRQAnswer(
         answer,
@@ -161,12 +146,10 @@ export async function POST(req: NextRequest) {
       pointsEarned = isCorrect ? Math.round(70 * confidence) : 0;
       explanation = studyContent.frqContent.explanation ?? "No explanation provided";
       
-      console.log(`🟢 [answer/route] FRQ graded: ${isCorrect}, confidence: ${confidence}, points: ${pointsEarned}`);
     }
 
     // Record answer
-    console.log(`🟢 [answer/route] Recording answer in database`);
-    const quizAnswer = await db.quizAnswer.create({
+    await db.quizAnswer.create({
       data: {
         quizSessionId: sessionId,
         studyContentId: studyContent.id,
@@ -176,7 +159,6 @@ export async function POST(req: NextRequest) {
         pointsEarned,
       },
     });
-    console.log(`🟢 [answer/route] Answer recorded: ${quizAnswer.id}`);
 
     // Update session stats
     await db.quizSession.update({
@@ -188,7 +170,6 @@ export async function POST(req: NextRequest) {
         pointsEarned: { increment: pointsEarned },
       },
     });
-    console.log(`🟢 [answer/route] Session stats updated`);
 
     // Update user progress
     await db.userProgress.update({
@@ -201,7 +182,6 @@ export async function POST(req: NextRequest) {
     // Check for achievements
     await checkAchievements(user.id);
 
-    console.log(`🟢 [answer/route] Answer processing complete, returning response`);
     return NextResponse.json({
       isCorrect,
       pointsEarned,
@@ -214,26 +194,23 @@ export async function POST(req: NextRequest) {
 }
 
 interface AchievementRequirements {
-  totalQuizzes?: number;
-  totalCorrectAnswers?: number;
+  pointThreshold: number;
 }
 
 async function checkAchievements(userId: string) {
   try {
-    // Get user's quiz stats
-    const quizStats = await db.quizSession.aggregate({
+    // Get user's current points
+    const userProgress = await db.userProgress.findUnique({
       where: { userId },
-      _count: { id: true },
-      _sum: {
-        correctAnswers: true,
-        questionsAnswered: true,
-      },
+      select: { points: true }
     });
+
+    if (!userProgress) return;
 
     // Get available achievements
     const achievements = await db.achievement.findMany({
       where: {
-        category: "quiz",
+        visible: true,
         NOT: {
           userAchievements: {
             some: {
@@ -246,20 +223,9 @@ async function checkAchievements(userId: string) {
 
     // Check each achievement
     for (const achievement of achievements) {
-      const requirements = achievement.requirements as AchievementRequirements;
-      let unlocked = false;
-
-      if (requirements.totalQuizzes && quizStats._count.id >= requirements.totalQuizzes) {
-        unlocked = true;
-      }
-
-      if (requirements.totalCorrectAnswers && 
-          quizStats._sum.correctAnswers &&
-          quizStats._sum.correctAnswers >= requirements.totalCorrectAnswers) {
-        unlocked = true;
-      }
-
-      if (unlocked) {
+      const requirements = achievement.requirements as unknown as AchievementRequirements;
+      
+      if (requirements.pointThreshold && userProgress.points >= requirements.pointThreshold) {
         await db.userAchievement.create({
           data: {
             userId,

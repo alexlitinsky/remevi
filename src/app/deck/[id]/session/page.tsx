@@ -103,7 +103,6 @@ export default function DeckStudyPage() {
               }
             }));
 
-            console.log(`Processing: ${updatedDeck.processingProgress}% - ${updatedDeck.processingStage}`);
 
           }
         } catch (error) {

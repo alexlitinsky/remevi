@@ -281,6 +281,7 @@ model Achievement {
   type          String // "milestone", "special", "secret", etc.
   requirements  Json // Conditions to unlock (e.g., {"pointsRequired": 1000})
   badgeIcon     String // Icon identifier or URL
+  visible        Boolean  @default(false)  // Add this line
   pointsAwarded Int    @default(0)
 
   // Relationships

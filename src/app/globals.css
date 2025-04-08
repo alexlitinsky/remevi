@@ -347,3 +347,10 @@ body {
 .custom-scrollbar::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* Achievement glow effects */
+.shadow-glow-yellow {
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.3),
+              0 0 20px rgba(234, 179, 8, 0.2),
+              0 0 30px rgba(234, 179, 8, 0.1);
+}

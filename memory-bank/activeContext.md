@@ -1,56 +1,66 @@
 # Active Context
 
 ## Current Focus
-- Implementing and refining quiz functionality with MCQ and FRQ support
-- Improving quiz type handling and formatting
-- Maintaining clean component architecture with Next.js best practices
-- Enhancing quiz state management and user experience
-- Implementing proper type safety across quiz components
+- Refining the achievement progress bar UI component
+- Improving visual representation of achievement milestones
+- Ensuring proper z-index layering for visual components
+- Enhancing user experience through clear progress visualization
+- Maintaining accessibility and tooltip functionality
+- Fixing UI rendering issues with achievement icons and progress indicators
 
 ## Recent Changes
-- Created quiz formatting utility functions for MCQ and FRQ questions
-- Implemented proper type handling for quiz questions
-- Added support for different quiz difficulties
-- Enhanced quiz state management with proper typing
-- Improved error handling in quiz components
+- Fixed achievement progress bar layout and styling
+- Adjusted z-index values to ensure icons are visible on top of gray marker lines
+- Added proper TypeScript ESLint rule to handle any types where necessary
+- Improved visual hierarchy with proper layering:
+  - Gray marker lines (z-index: 5)
+  - Progress bar (implied z-index: 10)
+  - Current position indicator (z-index: 15)
+  - Achievement icons (z-index: 20)
+- Ensured achievement icons are properly positioned at their respective thresholds
+- Fixed icon positioning with precise CSS styling and transforms
 
 ## Key Decisions
-1. Quiz System:
-   - Separated MCQ and FRQ question types with proper TypeScript interfaces
-   - Implemented formatQuizQuestion utility for consistent question formatting
-   - Added QuizDifficulty enum for standardized difficulty levels
-   - Used type guards for proper question type handling
+1. Visual Hierarchy:
+   - Achievement icons should appear on top of the gray marker lines
+   - Current position indicator should be prominently visible
+   - Z-index values carefully managed to create proper layering
 
 2. Component Architecture:
-   - Maintained strict TypeScript typing across components
-   - Separated question type handling logic
-   - Implemented proper error handling for invalid question types
+   - Maintained clean separation of progress bar, markers, and icons
+   - Used relative positioning for precise alignment
+   - Implemented proper TypeScript interfaces for achievement requirements
+   - Added ESLint comments where necessary to handle JsonValue compatibility
 
 3. State Management:
-   - Used proper typing for quiz state
-   - Implemented type-safe question formatting
-   - Added proper error handling for invalid states
+   - Used props for achievements and current points
+   - Calculated progress percentage based on max threshold
+   - Properly determined unlocked achievements based on current points
 
 ## Next Steps
-- Implement additional quiz features like timing and scoring
-- Add support for more question types
-- Enhance quiz analytics and reporting
-- Improve quiz UI/UX with animations and transitions
-- Add quiz progress persistence
+- Consider adding subtle animation for achievement unlocking
+- Implement notification system for newly unlocked achievements
+- Explore better mobile responsiveness for the progress bar
+- Consider implementing smooth progress transitions
+- Add enhanced accessibility features for screen readers
 
 ## Active Patterns
-- Type-safe Components: Using TypeScript for all quiz components
-- Question Type Guards: Proper handling of different question types
-- State Management: Type-safe quiz state handling
-- Error Handling: Proper error handling for invalid states
-- Quiz Formatting: Consistent question formatting across types
+- Visual Layering: Using z-index for proper component stacking
+- Responsive Design: Full-width progress bar with relative positioning
+- Tooltips: Providing detailed achievement information on hover
+- Conditional Styling: Different visual treatment for locked/unlocked achievements
+- Error Handling: Ensuring proper display even with missing image data
 
 ## Recent Learnings
-- TypeScript type guards for quiz question handling
-- Next.js component type safety best practices
-- Quiz state management patterns
-- Error handling in quiz components
-- Question formatting standardization
+- Proper z-index management for overlapping elements
+- Precise positioning with transform and CSS calculations
+- TypeScript ESLint rule management for edge cases
+- Visual hierarchy best practices for progress indicators
+- Image component error handling techniques
 
 ## Additional Notes
-- The code block to apply changes from has been updated to reflect the current focus on quiz functionality and recent changes.
+- Achievement badges are rendered as Image components with proper alt text
+- The progress bar visually indicates current progress toward maximum threshold
+- Tooltips provide additional context about each achievement
+- The component handles both locked and unlocked achievement states with different styling
+- ESLint rules have been properly managed with specific comments where needed

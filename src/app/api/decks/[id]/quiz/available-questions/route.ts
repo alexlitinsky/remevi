@@ -48,13 +48,6 @@ export async function GET(req: NextRequest) {
     ).length;
 
     const totalCount = mcqCount + frqCount;
-    console.log('[available-questions] Deck stats:', {
-      deckId,
-      userId: user.id,
-      mcqCount,
-      frqCount,
-      totalCount
-    });
 
     return NextResponse.json({
       mcq: mcqCount,

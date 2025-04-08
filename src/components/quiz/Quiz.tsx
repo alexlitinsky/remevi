@@ -45,7 +45,6 @@ export function Quiz({ deckId }: QuizProps) {
     // If there's a mismatch between the current deckId and the one
     // we're supposed to be using, clean up the session
     if (currentDeckId && currentDeckId !== deckId) {
-      console.log('Quiz component detected deck mismatch:', currentDeckId, 'vs', deckId);
       cleanupSession();
     }
   }, [deckId, cleanupSession]);

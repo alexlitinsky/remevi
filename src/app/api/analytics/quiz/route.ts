@@ -40,12 +40,10 @@ interface AnalyticsRecord {
 
 // Add GET endpoint to retrieve analytics data
 export async function GET(req: NextRequest) {
-  console.log('🟢 [analytics/quiz] GET request received');
   
   try {
     const user = await currentUser();
     if (!user?.id) {
-      console.log('🔴 [analytics/quiz] Unauthorized - No user found');
       return new NextResponse('Unauthorized', { status: 401 });
     }
     
@@ -59,7 +57,6 @@ export async function GET(req: NextRequest) {
     const sessionId = url.searchParams.get('sessionId');
     const deckId = url.searchParams.get('deckId');
     
-    console.log('🟢 [analytics/quiz] Fetching analytics data:', { sessionId, deckId });
     
     // Filter events based on parameters
     const whereClause: WhereClause = { userId: user.id };
@@ -90,8 +87,6 @@ export async function GET(req: NextRequest) {
       take: 10,
     });
     
-    console.log(`🟢 [analytics/quiz] Found ${completedQuizzes.length} completed quizzes`);
-    
     // Get question_answered events for the specified session if provided
     const questionEvents: AnalyticsRecord[] = sessionId ? await db.quizAnalytics.findMany({
       where: {
@@ -107,7 +102,6 @@ export async function GET(req: NextRequest) {
       },
     }) : [];
     
-    console.log(`🟢 [analytics/quiz] Found ${questionEvents.length} question events for session ${sessionId}`);
     
     // Get topic mastery data
     const topicMastery = await db.topicMastery.findMany({
@@ -173,7 +167,6 @@ export async function GET(req: NextRequest) {
       } : null,
     };
     
-    console.log('🟢 [analytics/quiz] Returning analytics data');
     
     return NextResponse.json(analyticsData);
   } catch (error) {
@@ -183,7 +176,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  console.log('🟢 [analytics/quiz] POST request received');
   
   // Check for OPTIONS request (preflight)
   if (req.method === 'OPTIONS') {
@@ -200,7 +192,6 @@ export async function POST(req: NextRequest) {
   try {
     const user = await currentUser();
     if (!user?.id) {
-      console.log('🔴 [analytics/quiz] Unauthorized - No user found');
       return new NextResponse('Unauthorized', { 
         status: 401,
         headers: {
@@ -218,7 +209,6 @@ export async function POST(req: NextRequest) {
     // Check content type
     const contentType = req.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
-      console.log('🔴 [analytics/quiz] Invalid content type:', contentType);
       return new NextResponse('Invalid content type - expected application/json', { 
         status: 400,
         headers: {
@@ -228,7 +218,6 @@ export async function POST(req: NextRequest) {
     }
 
     const event: QuizAnalyticsEvent = await req.json();
-    console.log('🟢 [analytics/quiz] Processing event:', { type: event.type, data: event.data });
 
     // Store analytics event
     await db.quizAnalytics.create({
@@ -239,12 +228,10 @@ export async function POST(req: NextRequest) {
         timestamp: new Date(event.data.timestamp),
       },
     });
-    console.log('🟢 [analytics/quiz] Event stored in database');
 
     // Update user stats based on event type
     switch (event.type) {
       case 'quiz_completed':
-        console.log('🟢 [analytics/quiz] Processing quiz_completed event');
         try {
           // Make sure totalTime is a safe integer value for database
           const safeTimeValue = Math.min(
@@ -253,10 +240,7 @@ export async function POST(req: NextRequest) {
             Math.round(Number(event.data.totalTime)) || 0
           );
           
-          console.log('🟢 [analytics/quiz] Safe time value calculated:', { 
-            original: event.data.totalTime,
-            converted: safeTimeValue
-          });
+          
           
           await db.userProgress.update({
             where: { userId: user.id },
@@ -266,7 +250,6 @@ export async function POST(req: NextRequest) {
               points: { increment: Math.round(Number(event.data.score)) || 0 },
             },
           });
-          console.log('🟢 [analytics/quiz] Updated user progress for quiz completion');
         } catch (error) {
           console.error('🔴 [analytics/quiz] Error updating user progress:', error);
           // Continue processing other parts even if this fails
@@ -345,7 +328,6 @@ export async function POST(req: NextRequest) {
         break;
     }
 
-    console.log('🟢 [analytics/quiz] Successfully processed event:', event.type);
     return NextResponse.json({ success: true, timestamp: new Date().toISOString() }, {
       headers: {
         'Content-Type': 'application/json',

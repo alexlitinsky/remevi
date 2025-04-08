@@ -515,7 +515,8 @@ export const useStudySessionStore = create<StudySessionState>()(
           sessionPoints: 0,
           lastEarnedPoints: null,
           sessionTime: 0,
-          sessionStartTime: null // Reset the session start time
+          sessionStartTime: null, // Reset the session start time
+          completedCardIds: [] // Reset completed cards to prevent accumulation across sessions
         });
         
         // Clear session state from localStorage

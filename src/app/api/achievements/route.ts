@@ -3,6 +3,48 @@ import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
 
+// Helper function to unlock achievements
+async function unlockAchievements(userId: string, currentPoints: number) {
+  // Get all achievements that should be unlocked but aren't yet
+  const achievementsToUnlock = await db.achievement.findMany({
+    where: {
+      AND: [
+        // Where the point threshold is less than or equal to current points
+        {
+          requirements: {
+            path: ['pointThreshold'],
+            lte: currentPoints
+          }
+        },
+        // And there's no existing unlock record
+        {
+          NOT: {
+            userAchievements: {
+              some: {
+                userId: userId
+              }
+            }
+          }
+        }
+      ]
+    }
+  });
+
+  // If we found achievements to unlock, create the records
+  if (achievementsToUnlock.length > 0) {
+    await db.userAchievement.createMany({
+      data: achievementsToUnlock.map(achievement => ({
+        userId: userId,
+        achievementId: achievement.id,
+        unlockedAt: new Date(),
+        notified: false
+      }))
+    });
+  }
+
+  return achievementsToUnlock;
+}
+
 export async function GET() {
   try {
     const user = await currentUser();
@@ -16,25 +58,44 @@ export async function GET() {
       return rateLimitResult.error;
     }
 
-    const [achievements, userAchievements] = await Promise.all([
+    const [achievements, userProgress] = await Promise.all([
       db.achievement.findMany({
+        where: {
+          visible: true
+        },
         orderBy: {
-          category: 'asc'
-        }
-      }),
-      db.userAchievement.findMany({
-        where: { 
-          userId: user.id 
+          requirements: 'asc' // This will order by point threshold
         },
         include: {
-          achievement: true
+          userAchievements: {
+            where: {
+              userId: user.id
+            }
+          }
         }
+      }),
+      db.userProgress.findUnique({
+        where: { userId: user.id },
+        select: { points: true }
       })
     ]);
 
+    const totalPoints = userProgress?.points || 0;
+
+    // Check and unlock any achievements that should be unlocked
+    const newlyUnlocked = await unlockAchievements(user.id, totalPoints);
+
+    // If we unlocked new achievements, add them to the response
+    const achievementsWithUnlocks = achievements.map(achievement => ({
+      ...achievement,
+      isUnlocked: achievement.userAchievements.length > 0 || 
+                  newlyUnlocked.some(a => a.id === achievement.id)
+    }));
+
     return NextResponse.json({
-      achievements,
-      userAchievements
+      achievements: achievementsWithUnlocks,
+      totalPoints,
+      newlyUnlocked: newlyUnlocked.length > 0 ? newlyUnlocked : undefined
     });
   } catch (error) {
     console.error('[ACHIEVEMENTS_GET]', error);

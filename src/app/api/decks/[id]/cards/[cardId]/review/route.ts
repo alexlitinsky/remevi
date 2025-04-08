@@ -22,7 +22,6 @@ export async function POST(req: NextRequest) {
     // Get user's timezone
     const userTimezone = req.headers.get('x-user-timezone') || 'UTC';
     
-    console.log('Processing review for:', { deckId, studyContentId });
     
     if (!deckId || !studyContentId) {
       return new NextResponse("Missing required parameters", { status: 400 });
@@ -40,7 +39,6 @@ export async function POST(req: NextRequest) {
     });
 
     const { difficulty, responseTime, sessionId: requestSessionId } = await req.json();
-    console.log('Review data:', { difficulty, responseTime });
 
     // Get the study content to ensure it exists
     const studyContent = await db.studyContent.findUnique({
@@ -64,7 +62,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log('Existing card interaction:', cardInteraction);
 
     const review = {
       difficulty: difficulty as Difficulty,
@@ -78,14 +75,11 @@ export async function POST(req: NextRequest) {
       cardInteraction?.repetitions ?? 0
     );
 
-    console.log('Calculated next review:', nextReview);
 
     const newStreak = calculateStreak(
       cardInteraction?.streak ?? 0,
       review.difficulty,
     );
-
-    console.log('New streak:', newStreak);
 
     // Determine mastery level based on performance
     let masteryLevel = "new";

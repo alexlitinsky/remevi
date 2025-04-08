@@ -41,16 +41,13 @@ export function GlobalAchievements() {
   useEffect(() => {
     const fetchAchievements = async () => {
       try {
-        console.log('Fetching achievements...', { isSignedIn, userId: user?.id });
         const response = await fetch('/api/achievements');
-        console.log('API response status:', response.status);
         
         if (!response.ok) {
           throw new Error('Failed to fetch achievements');
         }
         
         const data: ApiResponse = await response.json();
-        console.log('Raw API response:', data);
         
         // Map achievements with unlocked status
         const mappedAchievements = data.achievements.map(achievement => ({
@@ -58,7 +55,6 @@ export function GlobalAchievements() {
           unlocked: data.userAchievements.some(ua => ua.achievementId === achievement.id),
         }));
         
-        console.log('Mapped achievements:', mappedAchievements);
         setAchievements(mappedAchievements);
       } catch (error) {
         console.error('Error fetching achievements:', error);
@@ -69,10 +65,8 @@ export function GlobalAchievements() {
     };
 
     if (isSignedIn) {
-      console.log('User is signed in, fetching achievements');
       fetchAchievements();
     } else {
-      console.log('User is not signed in');
       setAchievements([]); // Reset achievements when not signed in
       setLoading(false);
     }
@@ -97,14 +91,11 @@ export function GlobalAchievements() {
     (achievement) => achievement.category && ['study', 'mastery', 'streak', 'points'].includes(achievement.category)
   );
   
-  console.log('Achievement categories:', achievements.map(a => a.category));
-  console.log('Filtered global achievements:', globalAchievements);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {globalAchievements.map((achievement) => {
         const fileName = getFileName(achievement.name);
-        console.log(`Achievement: ${achievement.name}, File name: ${fileName}, Unlocked: ${achievement.unlocked}`);
         
         return (
           <div 

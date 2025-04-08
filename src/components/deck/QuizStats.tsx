@@ -64,12 +64,6 @@ export function QuizStats({ deckId }: QuizStatsProps) {
         }
         const sessionsData = await sessionsResponse.json()
         
-        // Log data for debugging with JSON.stringify
-        console.log('Quiz Stats Raw Data:', JSON.stringify({
-          availableData,
-          sessions: sessionsData.sessions
-        }, null, 2))
-        
         // Process the data
         const totalSessions = sessionsData.sessions.length
         // Only count sessions with points as completed
@@ -85,13 +79,7 @@ export function QuizStats({ deckId }: QuizStatsProps) {
         
         completedSessions.forEach((session: QuizSessionSummary) => {
           const points = session.pointsEarned || 0
-          console.log('Processing session:', {
-            id: session.id,
-            points,
-            questionsAnswered: session.questionsAnswered,
-            correctAnswers: session.correctAnswers,
-            incorrectAnswers: session.incorrectAnswers
-          })
+          
           
           totalQuestions += session.questionsAnswered || 0
           totalCorrect += session.correctAnswers || 0
@@ -111,17 +99,6 @@ export function QuizStats({ deckId }: QuizStatsProps) {
           ? Math.round(totalScore / completedSessions.length) 
           : 0
 
-        console.log('Calculated stats:', {
-          totalQuestions,
-          totalCorrect,
-          totalIncorrect,
-          totalScore,
-          bestScore,
-          averageAccuracy,
-          averageScore,
-          completedSessionsCount: completedSessions.length
-        })
-        
         // Calculate average time per question (commented out for now)
         /*
         const averageTimePerQuestion = totalQuestions > 0 

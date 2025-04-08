@@ -3,22 +3,15 @@ import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 interface AchievementRequirements {
-  quizScore?: number;
-  correctAnswers?: number;
-  cardsStudied?: number;
-  streakDays?: number;
-  pointThreshold?: number;
+  pointThreshold: number;
 }
 
-export async function POST(req: Request) {
+export async function POST() {
   try {
     const user = await currentUser();
     if (!user) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
-
-    const body = await req.json();
-    const { quizScore, streakDays, cardsStudied, correctAnswers, sessionType } = body;
 
     // Get user's current points
     const userProgress = await db.userProgress.findUnique({
@@ -29,6 +22,7 @@ export async function POST(req: Request) {
     // Get all achievements user hasn't unlocked yet
     const availableAchievements = await db.achievement.findMany({
       where: {
+        visible: true,
         NOT: {
           userAchievements: {
             some: {
@@ -43,39 +37,11 @@ export async function POST(req: Request) {
 
     // Check each achievement's requirements
     for (const achievement of availableAchievements) {
-      const requirements = achievement.requirements as AchievementRequirements;
-      let isUnlocked = false;
-
-      // Check different types of requirements
-      if (sessionType === 'quiz') {
-        if (requirements.quizScore && quizScore >= requirements.quizScore) {
-          isUnlocked = true;
-        }
-        if (requirements.correctAnswers && correctAnswers >= requirements.correctAnswers) {
-          isUnlocked = true;
-        }
-      }
-
-      if (sessionType === 'study') {
-        if (requirements.cardsStudied && cardsStudied >= requirements.cardsStudied) {
-          isUnlocked = true;
-        }
-      }
-
-      // Check streak requirements regardless of session type
-      if (requirements.streakDays && streakDays >= requirements.streakDays) {
-        isUnlocked = true;
-      }
-
+      const requirements = achievement.requirements as unknown as AchievementRequirements;
+      
       // Check point threshold requirements
       if (requirements.pointThreshold && currentPoints >= requirements.pointThreshold) {
-        isUnlocked = true;
-      }
-
-      if (isUnlocked) {
-        // Check if user already has this achievement to avoid constraint error
         try {
-          // Use upsert instead of create to handle existing achievements
           const userAchievement = await db.userAchievement.upsert({
             where: {
               userId_achievementId: {
@@ -84,7 +50,6 @@ export async function POST(req: Request) {
               },
             },
             update: {
-              // Just update the notified status if it already exists
               notified: false,
             },
             create: {
@@ -97,16 +62,10 @@ export async function POST(req: Request) {
             }
           });
 
-          // Only award points if this is a new achievement (not previously awarded)
           if (userAchievement) {
-            // Update user progress with points
-            await db.userProgress.upsert({
+            await db.userProgress.update({
               where: { userId: user.id },
-              create: {
-                userId: user.id,
-                points: achievement.pointsAwarded
-              },
-              update: {
+              data: {
                 points: {
                   increment: achievement.pointsAwarded
                 }
@@ -117,7 +76,6 @@ export async function POST(req: Request) {
           }
         } catch (error) {
           console.error(`[ACHIEVEMENTS_CHECK] Error processing achievement ${achievement.id}:`, error);
-          // Continue processing other achievements rather than failing completely
           continue;
         }
       }

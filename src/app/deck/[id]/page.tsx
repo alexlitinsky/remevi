@@ -77,7 +77,6 @@ export default function DeckPage() {
               ? Object.keys(statsData.reviewsByDate).sort().pop()
               : undefined
           });
-          console.log("deckData", deckData);
         }
       } catch (error) {
         console.error('Failed to fetch deck:', error);

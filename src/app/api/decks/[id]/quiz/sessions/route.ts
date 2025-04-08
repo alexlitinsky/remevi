@@ -37,7 +37,6 @@ export async function GET(req: NextRequest) {
       ],
     });
 
-    console.log(`[quiz/sessions] Found ${sessions.length} sessions for deck: ${deckId}`);
 
     return NextResponse.json({
       sessions: sessions,

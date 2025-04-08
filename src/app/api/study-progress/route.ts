@@ -44,7 +44,7 @@ export async function GET() {
       }
     })
 
-    // Get user progress for streak
+    // Get user progress for streak and points
     const userProgress = await db.userProgress.findUnique({
       where: { userId: user.id }
     });
@@ -109,14 +109,6 @@ export async function GET() {
       return dayActivity
     })
 
-    // Calculate total points (weighted by mastery level)
-    const totalPoints = (
-      (masteryLevels.mastered * 100) +    // 100 points per mastered card
-      (masteryLevels.learning * 75) +      // 75 points per learning card
-      (masteryLevels.struggling * 25) +    // 25 points per struggling card
-      studySessions.reduce((acc, session) => acc + (session.pointsEarned || 0), 0)  // Plus session points
-    );
-
     // Calculate total study time
     const totalStudyTime = studySessions.reduce((acc, session) => 
       acc + (session.totalTime || 0), 0
@@ -146,7 +138,7 @@ export async function GET() {
           mastery: masteryLevel // Use current mastery level as we don't track historical mastery
         }
       }),
-      totalPoints
+      totalPoints: userProgress?.points || 0
     }
 
     return NextResponse.json(progress)

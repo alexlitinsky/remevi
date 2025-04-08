@@ -6,7 +6,6 @@ export async function GET(req: NextRequest) {
   try {
     const user = await currentUser();
     if (!user?.id) {
-      console.log('🔴 [quiz/results] Unauthorized - No user found');
       return new NextResponse("Unauthorized", { status: 401 });
     }
     
@@ -15,11 +14,9 @@ export async function GET(req: NextRequest) {
     const pathParts = url.pathname.split('/');
     const deckId = pathParts[3]; // Index 3 contains the deck ID
     
-    console.log('🟢 [quiz/results] GET request received for deck:', deckId);
     
     const sessionId = url.searchParams.get('sessionId');
     
-    console.log(`🟢 [quiz/results] Fetching results for deck: ${deckId}, user: ${user.id}${sessionId ? `, session: ${sessionId}` : ''}`);
     
     // Get the most recent quiz session for this deck if sessionId not provided
     let session;
@@ -36,7 +33,6 @@ export async function GET(req: NextRequest) {
       });
       
       if (!session) {
-        console.log(`🔴 [quiz/results] Session not found: ${sessionId}`);
         return new NextResponse("Session not found", { status: 404 });
       }
     } else {
@@ -53,12 +49,10 @@ export async function GET(req: NextRequest) {
       });
       
       if (!session) {
-        console.log(`🔴 [quiz/results] No completed sessions found for deck: ${deckId}`);
         return new NextResponse("No completed sessions found", { status: 404 });
       }
     }
     
-    console.log(`🟢 [quiz/results] Found session: ${session.id}`);
     
     // Get all answers for this session with their questions
     const answers = await db.quizAnswer.findMany({
@@ -78,7 +72,6 @@ export async function GET(req: NextRequest) {
       ]
     });
     
-    console.log(`🟢 [quiz/results] Found ${answers.length} answers for session: ${session.id}`);
     
     // Get all study content for this deck (to know total possible questions)
     const deckContent = await db.deckContent.findMany({
@@ -169,7 +162,6 @@ export async function GET(req: NextRequest) {
       };
     });
     
-    console.log(`🟢 [quiz/results] Returning results with ${formattedAnswers.length} answers and ${formattedAchievements.length} achievements`);
     
     return NextResponse.json({
       sessionId: session.id,

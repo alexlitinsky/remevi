@@ -83,7 +83,6 @@ export const useAchievementStore = create<AchievementState>()(
         
         // Prevent multiple checks within 3 seconds to avoid duplicate notifications
         if (lastCheckTime && currentTime - lastCheckTime < 3000) {
-          console.log('Skipping achievement check - too soon since last check');
           return;
         }
         

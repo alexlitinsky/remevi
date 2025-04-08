@@ -41,13 +41,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { GlobalAchievements } from '@/components/achievements/GlobalAchievements';
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
+import { AchievementProgressBar } from '@/components/achievements/AchievementProgressBar';
 
 interface Deck {
   id: string;
@@ -75,6 +69,28 @@ interface StudyProgress {
   totalPoints: number;
 }
 
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  type: string;
+  requirements: {
+    pointThreshold: number;
+    streakDays?: number;
+    quizScore?: number;
+    cardsStudied?: number;
+    correctAnswers?: number;
+    decksCreated?: number;
+    perfectQuiz?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any; // For any other potential properties
+  };
+  badgeIcon: string;
+  pointsAwarded: number;
+  visible: boolean;
+}
+
 export default function Home() {
   const { isSignedIn } = useUser();
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -96,6 +112,7 @@ export default function Home() {
     })).reverse(),
     totalPoints: 0
   });
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [isExtractingMeta, setIsExtractingMeta] = useState(false);
   const { setFile, setMetadata, file, metadata } = useUploadContext();
   const { subscription } = useSubscription();
@@ -107,15 +124,8 @@ export default function Home() {
     if (isSignedIn) {
       fetchDecks();
       fetchProgress();
+      fetchAchievements();
       
-      // const pendingUpload = localStorage.getItem('pendingUpload');
-      // if (pendingUpload) {
-      //   const { file, metadata } = JSON.parse(pendingUpload);
-      //   setFile(file);
-      //   setMetadata(metadata);
-      //   localStorage.removeItem('pendingUpload');
-      // }
-
       if (file && metadata) {
         router.push('/deck/configure');
       }
@@ -146,6 +156,23 @@ export default function Home() {
       console.error('Failed to fetch decks:', error);
     } finally {
       setIsLoadingDecks(false);
+    }
+  };
+
+  const fetchAchievements = async () => {
+    try {
+      const response = await fetch('/api/achievements');
+      if (response.ok) {
+        const data = await response.json();
+        setAchievements(data.achievements);
+        // Update progress with total points
+        setProgress(prev => ({
+          ...prev,
+          totalPoints: data.totalPoints
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch achievements:', error);
     }
   };
 
@@ -561,7 +588,7 @@ export default function Home() {
 
           {isSignedIn && (
             <>
-              {/* Combined Study Progress & Achievements Section */}
+              {/* Combined Study Progress Section */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -573,166 +600,135 @@ export default function Home() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
                         <CardTitle className="text-2xl font-bold">Learning Progress</CardTitle>
-                        <CardDescription>Track your learning journey and achievements</CardDescription>
+                        <CardDescription>Track your learning journey</CardDescription>
+                      </div>
+                      <div className="flex items-center justify-end">
+                        <div className="text-muted-foreground text-sm">Days Streak</div>
+                        <Flame className="h-4 w-4 text-orange-500 ml-2" />
+                        <div className="text-2xl font-bold ml-2">{progress.currentStreak || 0}</div>
                       </div>
                     </div>
                   </CardHeader>
 
                   <CardContent>
-                    <Tabs defaultValue="progress" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 mb-6">
-                        <TabsTrigger value="progress">Study Progress</TabsTrigger>
-                        <TabsTrigger value="achievements">Achievements</TabsTrigger>
-                      </TabsList>
+                    {/* Study Progress */}
+                    <div className="space-y-6">
+                      {/* Cards Reviewed */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Cards Reviewed</span>
+                          <span className="font-medium">
+                            {progress.cardsReviewed}/{progress.totalCards}
+                          </span>
+                        </div>
+                        <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
+                          <motion.div 
+                            className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(progress.cardsReviewed / progress.totalCards) * 100}%` }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                          >
+                            <motion.div
+                              className="absolute inset-0 w-full h-full"
+                              style={{
+                                background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
+                                backgroundSize: "200% 100%",
+                              }}
+                              animate={{
+                                backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
+                              }}
+                              transition={{
+                                duration: 2,
+                                ease: "linear",
+                                repeat: Infinity,
+                              }}
+                            />
+                          </motion.div>
+                        </div>
+                      </div>
 
-                      <TabsContent value="progress" className="space-y-6">
-                        {/* Cards Reviewed */}
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Cards Reviewed</span>
-                            <span className="font-medium">
-                              {progress.cardsReviewed}/{progress.totalCards}
-                            </span>
-                          </div>
-                          <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
-                            <motion.div 
-                              className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${(progress.cardsReviewed / progress.totalCards) * 100}%` }}
-                              transition={{ duration: 0.5, ease: "easeInOut" }}
-                            >
-                              <motion.div
-                                className="absolute inset-0 w-full h-full"
-                                style={{
-                                  background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
-                                  backgroundSize: "200% 100%",
-                                }}
-                                animate={{
-                                  backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
-                                }}
-                                transition={{
-                                  duration: 2,
-                                  ease: "linear",
-                                  repeat: Infinity,
-                                }}
-                              />
-                            </motion.div>
-                          </div>
+                      {/* Mastery Level */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Mastery Level</span>
+                          <span className="font-medium">{progress.masteryLevel}%</span>
+                        </div>
+                        <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
+                          <motion.div 
+                            className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress.masteryLevel}%` }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                          >
+                            <motion.div
+                              className="absolute inset-0 w-full h-full"
+                              style={{
+                                background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
+                                backgroundSize: "200% 100%",
+                              }}
+                              animate={{
+                                backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
+                              }}
+                              transition={{
+                                duration: 2,
+                                ease: "linear",
+                                repeat: Infinity,
+                              }}
+                            />
+                          </motion.div>
+                        </div>
+                      </div>
+
+                      {/* Weekly Activity */}
+                      <div className="pt-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-sm font-medium">Weekly Activity</h3>
+                          <Badge variant="outline" className="text-xs">
+                            Last 7 days
+                          </Badge>
                         </div>
 
-                        {/* Mastery Level */}
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Mastery Level</span>
-                            <span className="font-medium">{progress.masteryLevel}%</span>
-                          </div>
-                          <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-1 overflow-hidden">
-                            <motion.div 
-                              className="bg-blue-500 h-2.5 rounded-full relative overflow-hidden"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${progress.masteryLevel}%` }}
-                              transition={{ duration: 0.5, ease: "easeInOut" }}
-                            >
-                              <motion.div
-                                className="absolute inset-0 w-full h-full"
-                                style={{
-                                  background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)",
-                                  backgroundSize: "200% 100%",
-                                }}
-                                animate={{
-                                  backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"],
-                                }}
-                                transition={{
-                                  duration: 2,
-                                  ease: "linear",
-                                  repeat: Infinity,
-                                }}
-                              />
-                            </motion.div>
-                          </div>
-                        </div>
+                        <div className="grid grid-cols-7 gap-2">
+                          {Array.from({ length: 7 }, (_, i) => {
+                            const date = new Date();
+                            date.setDate(date.getDate() - (6 - i));
+                            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                            const value = progress.weeklyActivity[i] || 0;
+                            const maxValue = Math.max(...progress.weeklyActivity, 1);
+                            const heightPercent = (value / maxValue) * 100;
 
-                        {/* Weekly Activity */}
-                        <div className="pt-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-medium">Weekly Activity</h3>
-                            <Badge variant="outline" className="text-xs">
-                              Last 7 days
-                            </Badge>
-                          </div>
-
-                          <div className="grid grid-cols-7 gap-2">
-                            {Array.from({ length: 7 }, (_, i) => {
-                              const date = new Date();
-                              date.setDate(date.getDate() - (6 - i));
-                              const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                              const value = progress.weeklyActivity[i] || 0;
-                              const maxValue = Math.max(...progress.weeklyActivity, 1);
-                              const heightPercent = (value / maxValue) * 100;
-
-                              return (
-                                <div key={dayName} className="flex flex-col items-center gap-2">
-                                  {/* Bar container */}
-                                  <div className="w-full h-[100px] flex items-end bg-muted/10 rounded-sm overflow-hidden">
-                                    {/* Actual bar */}
-                                    <div 
-                                      className="w-full bg-green-400"
-                                      style={{ 
-                                        height: `${heightPercent}%`,
-                                        minHeight: value > 0 ? '2px' : '0',
-                                        transition: 'height 0.5s ease-out'
-                                      }} 
-                                    />
-                                  </div>
-
-                                  {/* Day label */}
-                                  <span className="text-xs text-muted-foreground">
-                                    {dayName}
-                                  </span>
+                            return (
+                              <div key={dayName} className="flex flex-col items-center gap-2">
+                                {/* Bar container */}
+                                <div className="w-full h-[100px] flex items-end bg-muted/10 rounded-sm overflow-hidden">
+                                  {/* Actual bar */}
+                                  <div 
+                                    className="w-full bg-green-400"
+                                    style={{ 
+                                      height: `${heightPercent}%`,
+                                      minHeight: value > 0 ? '2px' : '0',
+                                      transition: 'height 0.5s ease-out'
+                                    }} 
+                                  />
                                 </div>
-                              );
-                            })}
-                          </div>
+
+                                {/* Day label */}
+                                <span className="text-xs text-muted-foreground">
+                                  {dayName}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
+                      </div>
 
-                        {/* Stats */}
-                        <div className="grid grid-cols-2 md:grid-cols-2 gap-4 pt-2">
-                          {/* <Card className="bg-muted/30 border-primary/5">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="text-muted-foreground text-sm">Minutes Studied</div>
-                                <Clock className="h-4 w-4 text-primary/70" />
-                              </div>
-                              <div className="text-2xl font-bold mt-2">{progress.minutesStudied || 0}</div>
-                            </CardContent>
-                          </Card> */}
-
-                          <Card className="bg-muted/30 border-primary/5">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="text-muted-foreground text-sm">Days Streak</div>
-                                <Flame className="h-4 w-4 text-orange-500" />
-                              </div>
-                              <div className="text-2xl font-bold mt-2">{progress.currentStreak || 0}</div>
-                            </CardContent>
-                          </Card>
-
-                          <Card className="bg-muted/30 border-primary/5">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="text-muted-foreground text-sm">Total Points</div>
-                                <Trophy className="h-4 w-4 text-yellow-500" />
-                              </div>
-                              <div className="text-2xl font-bold mt-2">{progress.totalPoints || 0}</div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="achievements">
-                        <GlobalAchievements />
-                      </TabsContent>
-                    </Tabs>
+                      {/* Move AchievementProgressBar here */}
+                      <AchievementProgressBar 
+                        achievements={achievements} 
+                        currentPoints={progress.totalPoints} 
+                        className="mb-4"
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>

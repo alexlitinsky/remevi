@@ -122,13 +122,11 @@ export const useQuizStore = create<QuizState>()(
         // If we have a previous deck ID and it's different from the current one,
         // or if we're loading the component with a different deck, clean up
         if (previousDeckId && previousDeckId !== config.deckId) {
-          console.log('Switching from deck', previousDeckId, 'to', config.deckId);
           get().cleanupSession();
         }
         
         // Now check if there's a valid session we can resume for this specific deck
         if (get().isValidSession() && state.config?.deckId === config.deckId) {
-          console.log('Resuming existing quiz session for deck', config.deckId);
           
           // Resume the session by setting the current question and view
           const currentQuestion = state.questions[state.currentQuestionIndex];
@@ -145,7 +143,6 @@ export const useQuizStore = create<QuizState>()(
         }
         
         // If we get here, we need to start a new quiz
-        console.log('Starting new quiz for deck', config.deckId);
         set({ isLoading: true, error: null, deckId: config.deckId });
         
         try {
@@ -190,7 +187,6 @@ export const useQuizStore = create<QuizState>()(
 
       // Thoroughly clean up the session state
       cleanupSession: () => {
-        console.log('Cleaning up quiz session');
         set({
           sessionId: null,
           questions: [],
