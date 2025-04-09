@@ -257,10 +257,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
+      Sentry.captureMessage(error);
       return new Response(error, { status: 400 });
     }
 
     if (!uploadId || !filePath) {
+      Sentry.captureMessage('Invalid upload data provided');
       return new Response('Invalid upload data provided', { status: 400 });
     }
 
