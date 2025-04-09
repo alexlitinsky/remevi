@@ -177,7 +177,7 @@ export default function DeckStudyPage() {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <StudyDeckHeader
-        title={deck?.name || "Study Session"}
+        title={deck?.title || "Study Session"}
         deckId={deckId}
         newCardCount={newCardCount}
         dueCardCount={dueCardCount}
@@ -199,14 +199,16 @@ export default function DeckStudyPage() {
           onNext={moveToNextCard}
           onPrev={moveToPrevCard}
         />
+
+{/* Floating Action Buttons */}
+<StudyActionButtons
+  onShowSettings={() => toggleSettings(true)}
+  onToggleMindMap={() => toggleMindMap(true)}
+  mindMapAvailable={true} // You may need to implement logic to determine when mind map is available
+/>
+
       </main>
 
-      {/* Floating Action Buttons */}
-      <StudyActionButtons
-        onShowSettings={() => toggleSettings(true)}
-        onToggleMindMap={() => toggleMindMap(true)}
-        mindMapAvailable={true} // You may need to implement logic to determine when mind map is available
-      />
 
       {/* Modals */}
       <SettingsModal

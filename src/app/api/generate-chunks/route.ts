@@ -103,10 +103,6 @@ async function processChunk(
       temperature: 0.7
     });
 
-    console.log(`Successfully processed chunk ${chunkIndex + 1}/${totalChunks} with:
-      - ${result.object.flashcards.length} flashcards
-      - ${result.object.mcqs.length} MCQs
-      - ${result.object.frqs.length} FRQs`);
     return result.object;
   } catch (error) {
     console.error(`Error processing chunk ${chunkIndex + 1}/${totalChunks}:`, error);
@@ -187,7 +183,6 @@ async function generateMindMap(chunkResults: ChunkResult[], aiModel: string) {
       temperature: 0.5
     });
 
-    console.log('Successfully generated mind map');
     return result.object.mindMap;
   } catch (error) {
     console.error('Error generating mind map:', error);
@@ -354,7 +349,6 @@ export async function POST(request: NextRequest) {
 
         // Split PDF into chunks
         const chunks = await splitPdfIntoChunks(fileBuffer, pageRange);
-        console.log(`Split PDF into ${chunks.length} chunks`);
         
         // Update total chunks count
         await db.deck.update({
@@ -404,9 +398,6 @@ export async function POST(request: NextRequest) {
         if (chunkResults.length === 0) {
           throw new Error('Failed to generate any flashcards from the document');
         }
-
-        console.log(`Successfully processed ${successfulChunks}/${chunks.length} chunks`);
-        console.log(`Generated ${chunkResults.flatMap(r => r.flashcards).length} total flashcards`);
 
         // Combine results
         const allFlashcards = chunkResults.flatMap(result => result.flashcards);
@@ -555,8 +546,6 @@ export async function POST(request: NextRequest) {
         // Generate mind map in the background
         (async () => {
           try {
-            console.log('Generating mind map...');
-            
             // Update progress to show mind map generation started
             await db.deck.update({
               where: { id: deck.id },
@@ -582,7 +571,6 @@ export async function POST(request: NextRequest) {
                 error: null
               }
             });
-            console.log('Mind map generation completed');
           } catch (error) {
             console.error('Error generating mind map:', error);
             await db.deck.update({

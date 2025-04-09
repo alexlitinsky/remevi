@@ -14,7 +14,7 @@ export function StudyActionButtons({
   mindMapAvailable = false 
 }: StudyActionButtonsProps) {
   return (
-    <div className="fixed bottom-6 right-6 flex flex-col gap-3">
+    <div className="absolute bottom-12 right-6 flex flex-col gap-3 z-50">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

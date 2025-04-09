@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { STRIPE_SUB_CACHE } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
@@ -21,8 +21,14 @@ const ANNUAL_TOTAL = ANNUAL_PRICE * 12;
 const FEATURES = [
   "Unlimited Generations",
   "Unlimited Pages per Document",
-  "Access to Advanced AI Models",
+  "Advanced AI Models",
   "Higher Question Ranges",
+];
+const FREE_FEATURES = [
+  "Up to 10 Generations",
+  "Up to 30 Pages per Document",
+  "Standard AI Models",
+  "Lower Question Ranges",
 ];
 
 export function PricingModal({ open, onOpenChange, subscription }: PricingModalProps) {
@@ -81,7 +87,7 @@ export function PricingModal({ open, onOpenChange, subscription }: PricingModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] max-w-[400px] overflow-y-auto p-0 bg-black">
+      <DialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] w-[1000px] max-w-[90vw] overflow-y-auto p-0 bg-black">
         <div className="px-6 pt-6">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-center text-2xl font-bold tracking-tight">
@@ -110,96 +116,81 @@ export function PricingModal({ open, onOpenChange, subscription }: PricingModalP
           )}
         </div>
 
-        <div className="mt-6 space-y-6 px-6">
-          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.03] p-6">
-            {isSubscribed ? (
-              <div className="text-center">
-                <div className="text-xl font-semibold text-zinc-100">
-                  Current Plan
-                </div>
-                <div className="mt-2 text-sm text-zinc-400">
-                  {subscription.status === "active" ? "Active" : "Trial"} subscription
-                </div>
-                {subscription.cancelAtPeriodEnd && (
-                  <div className="mt-2 text-sm font-medium text-amber-500">
-                    Cancels at period end ({new Date(subscription.currentPeriodEnd * 1000).toLocaleDateString()})
+        <div className="mt-6 grid grid-cols-2 gap-4 px-4 pb-6">
+          {/* Free Plan */}
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-8">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-zinc-100">Free</div>
+              <div className="mt-1 text-sm text-zinc-400">forever</div>
+            </div>
+
+            <div className="mt-6 h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+
+            <ul className="mt-6 space-y-3">
+              {FREE_FEATURES.map((feature) => (
+                <li key={feature} className="flex items-center gap-3">
+                  <div className="rounded-full bg-zinc-600 p-1">
+                    <Check className="h-3.5 w-3.5 text-zinc-300" />
                   </div>
-                )}
-                <Button
-                  className="mt-6 w-full bg-blue-600 text-white hover:bg-blue-500 transition-colors"
-                  onClick={handleManageSubscription}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Manage Subscription"
-                  )}
-                </Button>
+                  <span className="text-sm text-zinc-300">{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <Button
+              className="mt-6 w-full bg-zinc-700 text-white hover:bg-zinc-600"
+              onClick={() => onOpenChange(false)}
+            >
+              Continue with Free Plan
+            </Button>
+          </div>
+
+          {/* Paid Plan */}
+          <div className="rounded-lg border border-blue-900/50 bg-blue-900/10 p-8">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-zinc-100">
+                ${isAnnual ? ANNUAL_PRICE : MONTHLY_PRICE}
               </div>
-            ) : (
-              <>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-zinc-100">
-                    ${isAnnual ? ANNUAL_PRICE : MONTHLY_PRICE}
+              <div className="mt-1 text-sm text-zinc-400">per month</div>
+              {isAnnual && (
+                <>
+                  <div className="mt-2 text-sm text-zinc-400">
+                    ${ANNUAL_TOTAL.toFixed(2)} billed annually
                   </div>
-                  <div className="mt-1 text-sm text-zinc-400">per month</div>
-                  {isAnnual && (
-                    <>
-                      <div className="mt-2 text-sm text-zinc-400">
-                        ${ANNUAL_TOTAL.toFixed(2)} billed annually
-                      </div>
-                      <div className="mt-2 text-sm font-medium text-emerald-500">
-                        Save ${((MONTHLY_PRICE - ANNUAL_PRICE) * 12).toFixed(2)} per year
-                      </div>
-                    </>
-                  )}
-                </div>
+                  <div className="mt-2 text-sm font-medium text-emerald-500">
+                    Save ${((MONTHLY_PRICE - ANNUAL_PRICE) * 12).toFixed(2)} per year
+                  </div>
+                </>
+              )}
+            </div>
 
-                <div className="mt-6 h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+            <div className="mt-6 h-px bg-gradient-to-r from-transparent via-blue-700 to-transparent" />
 
-                <ul className="mt-6 space-y-3">
-                  {FEATURES.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3">
-                      <div className="rounded-full bg-blue-500/10 p-1">
-                        <svg
-                          className="h-3.5 w-3.5 text-blue-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-sm text-zinc-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+            <ul className="mt-6 space-y-3">
+              {FEATURES.map((feature) => (
+                <li key={feature} className="flex items-center gap-3">
+                  <div className="rounded-full bg-blue-500/10 p-1">
+                    <Check className="h-3.5 w-3.5 text-blue-500" />
+                  </div>
+                  <span className="text-sm text-zinc-300">{feature}</span>
+                </li>
+              ))}
+            </ul>
 
-                <Button
-                  className="mt-6 w-full bg-blue-600 text-white hover:bg-blue-500 transition-colors"
-                  onClick={handleSubscribe}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    `Subscribe ${isAnnual ? "Annually" : "Monthly"}`
-                  )}
-                </Button>
-              </>
-            )}
+            <Button
+              className="mt-6 w-full bg-blue-600 text-white hover:bg-blue-500 transition-colors"
+              onClick={handleSubscribe}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                `Subscribe ${isAnnual ? "Annually" : "Monthly"}`
+              )}
+            </Button>
           </div>
         </div>
 
@@ -214,4 +205,4 @@ export function PricingModal({ open, onOpenChange, subscription }: PricingModalP
       </DialogContent>
     </Dialog>
   );
-} 
+}

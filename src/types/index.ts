@@ -27,7 +27,8 @@ export interface StudySessionStats {
 
 export interface DeckData {
   id: string
-  name: string
+  name: string,
+  title: string,
   description?: string
   card_count: number
   owner_id: string
