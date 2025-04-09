@@ -220,17 +220,6 @@ export async function POST(request: NextRequest) {
       return rateLimitResult.error;
     }
 
-    // Check upload limits before proceeding
-    try {
-      console.log('[POST /api/generate-chunks] Checking upload limits');
-      await checkAndUpdateUploadLimit();
-    } catch (error) {
-      console.log('[POST /api/generate-chunks] Upload limit exceeded');
-      Sentry.captureException(error);
-      return new Response(error instanceof Error ? error.message : 'Upload limit exceeded', { 
-        status: 400 
-      });
-    }
 
     // Ensure user exists in our database
     console.log('[POST /api/generate-chunks] Ensuring user exists in database');
@@ -243,6 +232,18 @@ export async function POST(request: NextRequest) {
       },
       update: {},
     });
+
+    // Check upload limits before proceeding
+    try {
+      console.log('[POST /api/generate-chunks] Checking upload limits');
+      await checkAndUpdateUploadLimit();
+    } catch (error) {
+      console.log('[POST /api/generate-chunks] Upload limit exceeded');
+      Sentry.captureException(error);
+      return new Response(error instanceof Error ? error.message : 'Upload limit exceeded', { 
+        status: 400 
+      });
+    }
 
     let fileBuffer: Buffer;
     let metadata: { originalName: string; type: string; size: number };
