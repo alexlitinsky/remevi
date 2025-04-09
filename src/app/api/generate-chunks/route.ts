@@ -34,18 +34,25 @@ async function splitPdfIntoChunks(fileBuffer: Buffer, pageRange?: { start: numbe
 
   // Process pages in chunks
   for (let i = startPage; i < endPage; i += PAGES_PER_CHUNK) {
-    const chunkDoc = await PDFDocument.create();
-    const chunkEnd = Math.min(i + PAGES_PER_CHUNK, endPage);
-    
-    // Copy pages for this chunk
-    const pageIndices = Array.from({ length: chunkEnd - i }, (_, idx) => i + idx);
-    const pages = await chunkDoc.copyPages(pdfDoc, pageIndices);
-    pages.forEach((page: PDFPage) => chunkDoc.addPage(page));
-    
-    const chunkBytes = await chunkDoc.save();
-    chunks.push(Buffer.from(chunkBytes));
-    
-    console.log(`Processed chunk ${chunks.length} of ${Math.ceil((endPage - startPage) / PAGES_PER_CHUNK)}`);
+    try {
+      const chunkDoc = await PDFDocument.create();
+      const chunkEnd = Math.min(i + PAGES_PER_CHUNK, endPage);
+      
+      const pageIndices = Array.from({ length: chunkEnd - i }, (_, idx) => i + idx);
+      console.log(`Copying pages: ${pageIndices.join(', ')}`);
+      
+      const pages = await chunkDoc.copyPages(pdfDoc, pageIndices);
+      pages.forEach(page => chunkDoc.addPage(page));
+      
+      const chunkBytes = await chunkDoc.save();
+      chunks.push(Buffer.from(chunkBytes));
+      
+      console.log(`Successfully processed chunk ${chunks.length}`);
+    } catch (error) {
+      Sentry.captureException(error);
+      console.error(`Failed to process chunk starting at page ${i + 1}:`, error);
+      throw new Error(`PDF processing failed at page ${i + 1}`);
+    }
   }
 
   return chunks;
