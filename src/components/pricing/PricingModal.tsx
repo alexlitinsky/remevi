@@ -15,14 +15,14 @@ interface PricingModalProps {
   subscription: STRIPE_SUB_CACHE | null;
 }
 
-const MONTHLY_PRICE = 6.90;
-const ANNUAL_PRICE = 4.20;
+const MONTHLY_PRICE = 8.00;
+const ANNUAL_PRICE = 4.00;
 const ANNUAL_TOTAL = ANNUAL_PRICE * 12;
 const FEATURES = [
-  "Unlimited AI Tutoring",
-  "Personalized Learning Path",
-  "Progress Tracking",
-  "24/7 Support",
+  "Unlimited Generations",
+  "Unlimited Pages per Document",
+  "Access to Advanced AI Models",
+  "Higher Question Ranges",
 ];
 
 export function PricingModal({ open, onOpenChange, subscription }: PricingModalProps) {
