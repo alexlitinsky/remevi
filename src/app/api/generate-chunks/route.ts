@@ -42,7 +42,7 @@ async function splitPdfIntoChunks(fileBuffer: Buffer, pageRange?: { start: numbe
       console.log(`Copying pages: ${pageIndices.join(', ')}`);
       
       const pages = await chunkDoc.copyPages(pdfDoc, pageIndices);
-      pages.forEach(page => chunkDoc.addPage(page));
+    pages.forEach((page: PDFPage) => chunkDoc.addPage(page));
       
       const chunkBytes = await chunkDoc.save();
       chunks.push(Buffer.from(chunkBytes));
