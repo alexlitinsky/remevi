@@ -30,6 +30,8 @@ async function splitPdfIntoChunks(fileBuffer: Buffer, pageRange?: { start: numbe
   const endPage = Math.min(pageRange?.end ?? totalPages, totalPages);
   const chunks: Buffer[] = [];
 
+  console.log(`Processing pages ${startPage + 1} to ${endPage} in chunks of ${PAGES_PER_CHUNK} pages`);
+
   // Process pages in chunks
   for (let i = startPage; i < endPage; i += PAGES_PER_CHUNK) {
     const chunkDoc = await PDFDocument.create();
@@ -42,6 +44,8 @@ async function splitPdfIntoChunks(fileBuffer: Buffer, pageRange?: { start: numbe
     
     const chunkBytes = await chunkDoc.save();
     chunks.push(Buffer.from(chunkBytes));
+    
+    console.log(`Processed chunk ${chunks.length} of ${Math.ceil((endPage - startPage) / PAGES_PER_CHUNK)}`);
   }
 
   return chunks;
@@ -55,6 +59,7 @@ async function processChunk(
   aiModel: string
 ) {
   const chunkPrompt = `Process part ${chunkIndex + 1} of ${totalChunks} of the document.\n\n${difficultyPrompt}`;
+  console.log(chunkPrompt)
   
   try {
     const result = await generateObject({
@@ -103,6 +108,7 @@ async function processChunk(
       maxTokens: 4000,
       temperature: 0.7
     });
+    console.log('Processed chunk:', result.object)
 
     return result.object;
   } catch (error) {
@@ -185,6 +191,7 @@ async function generateMindMap(chunkResults: ChunkResult[], aiModel: string) {
       temperature: 0.5
     });
 
+    console.log('Generated mind map:', result.object.mindMap)
     return result.object.mindMap;
   } catch (error) {
     console.error('Error generating mind map:', error);
