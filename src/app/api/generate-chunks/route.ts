@@ -12,6 +12,7 @@ import { Difficulty } from '@/types/difficulty';
 import { PDFDocument, PDFPage } from 'pdf-lib';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkAndUpdateUploadLimit } from '@/lib/upload-limits';
+import * as Sentry from '@sentry/nextjs';
 
 const PAGES_PER_CHUNK = 5;
 
@@ -106,6 +107,7 @@ async function processChunk(
     return result.object;
   } catch (error) {
     console.error(`Error processing chunk ${chunkIndex + 1}/${totalChunks}:`, error);
+    Sentry.captureException(error);
     return {
       summary: '',
       flashcards: [],
@@ -186,20 +188,28 @@ async function generateMindMap(chunkResults: ChunkResult[], aiModel: string) {
     return result.object.mindMap;
   } catch (error) {
     console.error('Error generating mind map:', error);
+    Sentry.captureException(error);
     return { nodes: [], connections: [] };
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    Sentry.init({
+      environment: process.env.NODE_ENV,
+      dsn: process.env.SENTRY_DSN,
+    });
+
     const user = await currentUser();
     if (!user?.id) {
+      Sentry.captureMessage('Unauthorized');
       return new Response('Unauthorized', { status: 401 });
     }
 
     // Rate limiting
     const rateLimitResult = await rateLimit(user.id);
     if (rateLimitResult.error) {
+      Sentry.captureMessage('Rate limit exceeded');
       return rateLimitResult.error;
     }
 
@@ -207,6 +217,7 @@ export async function POST(request: NextRequest) {
     try {
       await checkAndUpdateUploadLimit();
     } catch (error) {
+      Sentry.captureException(error);
       return new Response(error instanceof Error ? error.message : 'Upload limit exceeded', { 
         status: 400 
       });
@@ -263,6 +274,7 @@ export async function POST(request: NextRequest) {
       metadata = fileMetadata;
     } catch (error) {
       console.error('Error accessing file from storage:', error);
+      Sentry.captureException(error);
       return new Response('Upload not found or expired', { status: 404 });
     }
 
@@ -573,6 +585,7 @@ export async function POST(request: NextRequest) {
             });
           } catch (error) {
             console.error('Error generating mind map:', error);
+            Sentry.captureException(error);
             await db.deck.update({
               where: { id: deck.id },
               data: {
@@ -586,6 +599,7 @@ export async function POST(request: NextRequest) {
 
       } catch (error) {
         console.error('Error processing study materials:', error);
+        Sentry.captureException(error);
         
         // Update study material status
         await db.studyMaterial.update({
@@ -614,6 +628,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error generating study materials:', error);
+    Sentry.captureException(error);
     return new Response('Error processing file', { status: 500 });
   }
 }
