@@ -1,72 +1,138 @@
-export type Difficulty = 'hard' | 'medium' | 'easy';
+export type Difficulty = 'again' | 'hard' | 'good' | 'easy';
 
-interface ReviewData {
+// Core data structures
+export interface ReviewData {
   difficulty: Difficulty;
   responseTime: number; // milliseconds
 }
 
-interface SchedulingResult {
-  interval: number;
-  easeFactor: number;
-  repetitions: number;
-  dueDate: Date;
-  points: number;
+export interface SchedulingResult {
+  interval: number; // days until next review
+  easeFactor: number; // multiplier for spacing
+  repetitions: number; // count of successful reviews
+  dueDate: Date; // next review date
+  points: number; // points awarded for this review
+  lapsed: boolean; // whether the card was forgotten
 }
 
-const DIFFICULTY_QUALITY = {
-  hard: 0,
-  medium: 1,
-  easy: 2,
+export interface FlashcardData {
+  id: string;
+  front: string;
+  back: string;
+  dueDate: string; // ISO string format
+  easeFactor: number;
+  interval: number;
+  repetitions: number;
+  isNew: boolean;
+  isDue: boolean;
+  lapses: number; // count of times card was forgotten
+  lastReviewed?: string; // ISO string of last review date
+}
+
+const DIFFICULTY_MULTIPLIER: Record<Difficulty, number> = {
+  again: 0.0, // No points for forgotten cards
+  hard: 1.0,
+  good: 1.5,
+  easy: 2.0,
 };
 
-const DIFFICULTY_MULTIPLIER = {
-  hard: 2.0,
-  medium: 1.5,
-  easy: 1.0,
-};
-
+// Algorithm configuration constants
 const BASE_POINTS = 10;
 const MAX_RESPONSE_TIME = 30000; // 30 seconds
 const MIN_EASE_FACTOR = 1.3;
+const MAX_EASE_FACTOR = 2.5;
+const EASE_BONUS = 0.15; // Bonus for easy cards
+const EASE_PENALTY = 0.2; // Penalty for difficult cards
+const LAPSE_INTERVAL_REDUCTION = 0.5; // How much to reduce interval on lapse
+const MAXIMUM_INTERVAL = 365; // Cap interval at 1 year
 
+/**
+ * Calculate points based on difficulty and response time
+ */
+export function calculatePoints(difficulty: Difficulty, responseTime: number): number {
+  if (difficulty === 'again') return 0;
+  
+  const speedMultiplier = Math.max(1, 2 - (responseTime / MAX_RESPONSE_TIME));
+  const difficultyMultiplier = DIFFICULTY_MULTIPLIER[difficulty];
+  
+  return Math.round(BASE_POINTS * speedMultiplier * difficultyMultiplier);
+}
+
+/**
+ * Calculate when a card should next be reviewed
+ */
 export function calculateNextReview(
   review: ReviewData,
-  currentStreak: number,
-  currentEaseFactor: number,
-  currentRepetitions: number
+  currentInterval: number = 0,
+  currentEaseFactor: number = 2.5,
+  currentRepetitions: number = 0
 ): SchedulingResult {
   const { difficulty, responseTime } = review;
-  const quality = DIFFICULTY_QUALITY[difficulty];
-
-  // Calculate new ease factor
-  let easeFactor = currentEaseFactor + (0.1 - (3 - quality) * (0.08 + (3 - quality) * 0.02));
-  easeFactor = Math.max(MIN_EASE_FACTOR, easeFactor);
+  let lapsed = false;
+  let repetitions = currentRepetitions;
+  
+  // Handle card lapses ("again" responses)
+  if (difficulty === 'again') {
+    lapsed = true;
+    repetitions = 0; // Reset repetitions counter
+    
+    // Calculate new ease factor with penalty
+    currentEaseFactor = Math.max(
+      MIN_EASE_FACTOR, 
+      currentEaseFactor - EASE_PENALTY
+    );
+    
+    // Reduce interval
+    currentInterval = Math.max(
+      1, 
+      Math.floor(currentInterval * LAPSE_INTERVAL_REDUCTION)
+    );
+  } else {
+    // Calculate new ease factor
+    let easeDelta = 0;
+    
+    if (difficulty === 'easy') {
+      easeDelta = EASE_BONUS;
+    } else if (difficulty === 'hard') {
+      easeDelta = -EASE_PENALTY;
+    }
+    
+    currentEaseFactor = Math.min(
+      MAX_EASE_FACTOR,
+      Math.max(MIN_EASE_FACTOR, currentEaseFactor + easeDelta)
+    );
+    
+    // Increment repetitions counter for successful reviews
+    repetitions = currentRepetitions + 1;
+  }
 
   // Calculate new interval
   let interval: number;
-  if (currentRepetitions === 0) {
-    interval = 1;
-  } else if (currentRepetitions === 1) {
-    interval = 6;
+  if (lapsed) {
+    interval = 1; // Start over for lapsed cards
+  } else if (repetitions === 1) {
+    interval = 1; // First successful review
+  } else if (repetitions === 2) {
+    interval = 3; // Second successful review
+  } else if (repetitions === 3) {
+    interval = 7; // Third successful review
   } else {
-    interval = Math.round(currentRepetitions * easeFactor);
+    // After that, apply the ease factor
+    interval = Math.round(currentInterval * currentEaseFactor);
   }
-
-  // Adjust interval based on difficulty
-  if (difficulty === 'hard') {
-    interval = Math.max(1, Math.floor(interval * 0.5));
-  } else if (difficulty === 'medium') {
-    interval = Math.max(1, Math.floor(interval * 0.75));
+  
+  // Apply difficulty adjustments
+  if (difficulty === 'hard' && !lapsed) {
+    interval = Math.max(1, Math.floor(interval * 0.8));
+  } else if (difficulty === 'easy') {
+    interval = Math.ceil(interval * 1.3);
   }
+  
+  // Cap maximum interval
+  interval = Math.min(MAXIMUM_INTERVAL, interval);
 
   // Calculate points
-  const speedMultiplier = Math.max(1, 2 - (responseTime / MAX_RESPONSE_TIME));
-  const difficultyMultiplier = DIFFICULTY_MULTIPLIER[difficulty];
-  const streakMultiplier = Math.min(2, 1 + (currentStreak * 0.1));
-  
-  const points = Math.round(
-    BASE_POINTS * speedMultiplier * difficultyMultiplier * streakMultiplier
-  );
+  const points = calculatePoints(difficulty, responseTime);
 
   // Calculate next due date
   const dueDate = new Date();
@@ -74,31 +140,57 @@ export function calculateNextReview(
 
   return {
     interval,
-    easeFactor,
-    repetitions: currentRepetitions + 1,
+    easeFactor: currentEaseFactor,
+    repetitions,
     dueDate,
     points,
+    lapsed
   };
 }
 
-export function isCardDue(dueDate: Date): boolean {
-  return new Date() >= dueDate;
+/**
+ * Check if a card is due for review
+ */
+export function isCardDue(dueDate: Date | string): boolean {
+  const dueDateObj = typeof dueDate === 'string' ? new Date(dueDate) : dueDate;
+  return new Date() >= dueDateObj;
 }
 
+/**
+ * Calculate streak based on review difficulty
+ */
 export function calculateStreak(
-  previousStreak: number,
-  difficulty: Difficulty,
-  lastReviewDate: Date | null
+  currentStreak: number,
+  difficulty: Difficulty
 ): number {
-  // Break streak if it's been more than 24 hours since last review
-  if (lastReviewDate && new Date().getTime() - lastReviewDate.getTime() > 24 * 60 * 60 * 1000) {
+  // Reset streak for "again" responses
+  if (difficulty === 'again') {
     return 0;
   }
-
-  // Break streak on 'hard' rating
+  
+  // Maintain streak for "hard" responses, but don't increment
   if (difficulty === 'hard') {
-    return 0;
+    return currentStreak;
   }
+  
+  // Increment streak for "good" and "easy" responses
+  return currentStreak + 1;
+}
 
-  return previousStreak + 1;
-} 
+/**
+ * Create default values for a new flashcard
+ */
+export function createNewFlashcard(id: string, front: string, back: string): FlashcardData {
+  return {
+    id,
+    front,
+    back,
+    dueDate: new Date().toISOString(),
+    easeFactor: 2.5,
+    interval: 0,
+    repetitions: 0,
+    isNew: true,
+    isDue: true,
+    lapses: 0
+  };
+}

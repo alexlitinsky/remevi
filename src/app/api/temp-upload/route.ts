@@ -1,8 +1,21 @@
 import { NextRequest } from 'next/server';
 import { uploadFileToStorage } from '@/lib/storage';
+import { currentUser } from '@clerk/nextjs/server';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await currentUser();
+    if (!user?.id) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    // Rate limiting
+    const rateLimitResult = await rateLimit(user.id);
+    if (rateLimitResult.error) {
+      return rateLimitResult.error;
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     if (!file) {

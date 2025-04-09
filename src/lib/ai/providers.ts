@@ -1,6 +1,7 @@
 import { openai } from "@ai-sdk/openai";
-import {fireworks} from "@ai-sdk/fireworks";
+import { deepseek } from "@ai-sdk/deepseek";
+import { LanguageModelV1 } from "ai";
 
-export const openaiProvider = openai("gpt-4o-mini");
-export const openaiResponsesProvider = openai.responses("gpt-4o-mini");
-export const fireworksProvider = fireworks("accounts/fireworks/models/deepseek-v3");
+export const openai4oMiniResponsesProvider = openai.responses("gpt-4o-mini");
+export const openai4oResponsesProvider = openai.responses("gpt-4o-2024-08-06");
+export const deepseekProvider = deepseek("deepseek-chat") as LanguageModelV1;
