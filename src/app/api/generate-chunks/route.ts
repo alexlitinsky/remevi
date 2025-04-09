@@ -194,12 +194,8 @@ async function generateMindMap(chunkResults: ChunkResult[], aiModel: string) {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('[POST /api/generate-chunks] Request received');
-  console.log('[POST /api/generate-chunks] Request headers:', JSON.stringify(request.headers));
-  console.log('[POST /api/generate-chunks] Request body:', JSON.stringify(await request.json()));
 
   try {
-    console.log('[POST /api/generate-chunks] Initializing Sentry');
     Sentry.init({
       environment: process.env.NODE_ENV,
       dsn: process.env.SENTRY_DSN,
@@ -207,7 +203,6 @@ export async function POST(request: NextRequest) {
 
     const user = await currentUser();
     if (!user?.id) {
-      console.log('[POST /api/generate-chunks] Unauthorized');
       Sentry.captureMessage('Unauthorized');
       return new Response('Unauthorized', { status: 401 });
     }
@@ -215,7 +210,6 @@ export async function POST(request: NextRequest) {
     // Rate limiting
     const rateLimitResult = await rateLimit(user.id);
     if (rateLimitResult.error) {
-      console.log('[POST /api/generate-chunks] Rate limit exceeded');
       Sentry.captureMessage('Rate limit exceeded');
       return rateLimitResult.error;
     }
@@ -269,19 +263,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.log('[POST /api/generate-chunks] 400 error:', error);
       Sentry.captureMessage(error);
       return new Response(error, { status: 400 });
     }
 
     if (!uploadId || !filePath) {
-      console.log('[POST /api/generate-chunks] Invalid upload data provided');
       Sentry.captureMessage('Invalid upload data provided');
       return new Response('Invalid upload data provided', { status: 400 });
     }
 
     try {
-      console.log('[POST /api/generate-chunks] Getting file from storage');
       // Get file from Supabase storage
       const fileData = await getFileFromStorage(filePath);
       // Convert Blob to Buffer
@@ -324,7 +315,6 @@ export async function POST(request: NextRequest) {
     // Process in background
     (async () => {
       try {
-        console.log('[POST /api/generate-chunks] Building prompt');
         // Build the prompt based on parameters
         const pageRangePrompt = pageRange && metadata.type.includes('pdf')
           ? `Focus only on pages ${pageRange.start} to ${pageRange.end} of the PDF.`
@@ -380,11 +370,9 @@ export async function POST(request: NextRequest) {
         ${pageRangePrompt}`;
 
         // Split PDF into chunks
-        console.log('[POST /api/generate-chunks] Splitting PDF into chunks');
         const chunks = await splitPdfIntoChunks(fileBuffer, pageRange);
         
         // Update total chunks count
-        console.log('[POST /api/generate-chunks] Updating total chunks count');
         await db.deck.update({
           where: { id: deck.id },
           data: {
@@ -395,7 +383,6 @@ export async function POST(request: NextRequest) {
         });
         
         // Process chunks for flashcards
-        console.log('[POST /api/generate-chunks] Processing chunks for flashcards');
         const chunkResults = [];
         const batchSize = 3;
         let successfulChunks = 0;
@@ -419,7 +406,6 @@ export async function POST(request: NextRequest) {
           // Calculate progress (70% for chunk processing)
           const progress = 10 + ((successfulChunks / chunks.length) * 70);
 
-          console.log('[POST /api/generate-chunks] Updating progress');
           await db.deck.update({
             where: { id: deck.id },
             data: {
@@ -436,7 +422,6 @@ export async function POST(request: NextRequest) {
         }
 
         // Combine results
-        console.log('[POST /api/generate-chunks] Combining results');
         const allFlashcards = chunkResults.flatMap(result => result.flashcards);
         const allMCQs = chunkResults.flatMap(result => result.mcqs);
         const allFRQs = chunkResults.flatMap(result => result.frqs);
@@ -453,7 +438,6 @@ export async function POST(request: NextRequest) {
         };
 
         // Use the most common category
-        console.log('[POST /api/generate-chunks] Determining category');
         const category = chunkResults
           .map(r => r.category)
           .reduce((acc, curr) => {
@@ -466,7 +450,6 @@ export async function POST(request: NextRequest) {
           .map(([cat]) => cat)[0];
 
         // Create content for each type in parallel
-        console.log('[POST /api/generate-chunks] Creating content for each type');
         const [, , ] = await Promise.all([
           // Create flashcard content
           Promise.all(allFlashcards.map(async (card, index) => {
@@ -563,7 +546,6 @@ export async function POST(request: NextRequest) {
         ]);
 
         // Update study material status
-        console.log('[POST /api/generate-chunks] Updating study material status');
         await db.studyMaterial.update({
           where: { id: studyMaterial.id },
           data: {
@@ -572,7 +554,6 @@ export async function POST(request: NextRequest) {
         });
 
         // Update deck with category and stats
-        console.log('[POST /api/generate-chunks] Updating deck with category and stats');
         await db.deck.update({
           where: { id: deck.id },
           data: {
@@ -585,11 +566,9 @@ export async function POST(request: NextRequest) {
         });
 
         // Generate mind map in the background
-        console.log('[POST /api/generate-chunks] Generating mind map');
         (async () => {
           try {
             // Update progress to show mind map generation started
-            console.log('[POST /api/generate-chunks] Updating progress to show mind map generation started');
             await db.deck.update({
               where: { id: deck.id },
               data: {
@@ -602,7 +581,6 @@ export async function POST(request: NextRequest) {
             const mindMap = await generateMindMap(chunkResults, aiModel);
             
             // Update deck with mind map once generated
-            console.log('[POST /api/generate-chunks] Updating deck with mind map');
             await db.deck.update({
               where: { id: deck.id },
               data: {
@@ -634,7 +612,6 @@ export async function POST(request: NextRequest) {
         Sentry.captureException(error);
         
         // Update study material status
-        console.log('[POST /api/generate-chunks] Updating study material status');
         await db.studyMaterial.update({
           where: { id: studyMaterial.id },
           data: {
@@ -644,7 +621,6 @@ export async function POST(request: NextRequest) {
         });
         
         // Update deck with error
-        console.log('[POST /api/generate-chunks] Updating deck with error');
         await db.deck.update({
           where: { id: deck.id },
           data: {
@@ -657,7 +633,6 @@ export async function POST(request: NextRequest) {
       }
     })();
 
-    console.log('[POST /api/generate-chunks] Returning response');
     return Response.json({
       deckId: deck.id,
     });
@@ -685,31 +660,26 @@ async function validateFreemiumLimits({
   subscribed: boolean,
   limits: typeof FREEMIUM_LIMITS.FREE | typeof FREEMIUM_LIMITS.PRO
 }) {
-  console.log('[POST /api/generate-chunks] Validating file size');
   // Validate file size
   if (fileMetadata.size > limits.maxFileSize) {
     return { error: 'File size exceeds your plan limit' };
   }
 
-  console.log('[POST /api/generate-chunks] Validating page range');
   // Validate page range
   if (pageRange && (pageRange.end - pageRange.start + 1) > limits.maxPages) {
     return { error: 'Page count exceeds your plan limit' };
   }
 
-  console.log('[POST /api/generate-chunks] Validating AI model');
   // Validate AI model
   if (!limits.allowedAiModels.includes(aiModel)) {
     return { error: 'AI model not available in your plan' };
   }
 
-  console.log('[POST /api/generate-chunks] Validating difficulty');
   // Validate difficulty
   if (!limits.allowedDifficulties.includes(difficulty)) {
     return { error: 'Difficulty level not available in your plan' };
   }
 
-  console.log('[POST /api/generate-chunks] Checking deck count for free users');
   // Check deck count for free users
   if (!subscribed) {
     const deckCount = await db.deck.count({
