@@ -11,7 +11,7 @@ interface PdfMetadataResult {
   };
 }
 
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 // const MAX_PARSING_TIME = 3000; // 3 seconds
 
 export async function POST(request: NextRequest) {
