@@ -480,7 +480,18 @@ export default function ConfigurePage() {
                     )}
                   </div>
                 )}
-
+                {isPDF && fileMetadata.pageCount! > 50 && (
+                  <div className="flex items-start p-4 rounded-lg bg-amber-50 border border-amber-200 mt-4">
+                    <Clock className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-medium text-amber-800">Large PDF Notice</h3>
+                      <p className="text-sm text-amber-700 mt-1">
+                        PDFs over 50 pages may take several minutes to process (~1 minute per 15 pages).
+                        The system will continue working in the background.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {/* Estimated Time */}
                 <div className="flex items-center p-4 rounded-lg bg-primary/5 border border-primary/10">
                   <div className="mr-4 p-2 rounded-full bg-primary/10">
