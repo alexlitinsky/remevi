@@ -130,6 +130,9 @@ export async function POST(request: NextRequest) {
  
       await qstashClient.publishJSON({
         url: targetUrl,
+        headers: {
+          "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET!
+        },
         body: {
           deckId: deck.id,
           studyMaterialId: studyMaterial.id, // <-- Add studyMaterialId
