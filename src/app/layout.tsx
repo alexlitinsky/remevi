@@ -11,6 +11,7 @@ import { Toaster } from "sonner";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { UploadProvider } from "@/contexts/UploadContext";
 import { FeedbackButton } from "@/components/layout/FeedbackButton";
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -62,6 +63,7 @@ export default async function RootLayout({
             <UploadProvider>
               <Header />
               {children}
+              <Analytics />
               <FeedbackButton />
               {user && <PricingButton subscription={subscription} />}
               <Toaster />
