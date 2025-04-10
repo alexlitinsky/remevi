@@ -1,6 +1,6 @@
-// src/app/api/deck-processing/route.ts
+// src/app/api/internal/deck-processing/route.ts
 import { NextRequest } from 'next/server';
-import { verifySignatureAppRouter } from "@upstash/qstash/nextjs"; // Try nextjs path
+import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { db } from '@/lib/db';
 import { getFileFromStorage } from '@/lib/storage';
 import * as Sentry from '@sentry/nextjs';
@@ -25,7 +25,7 @@ async function handler(request: NextRequest) {
     // Extract job data from the request body sent by QStash
     const {
       deckId: currentDeckId,
-      studyMaterialId, // <-- Get studyMaterialId from body
+      studyMaterialId,
       filePath,
       metadata,
       pageRange,
@@ -35,7 +35,7 @@ async function handler(request: NextRequest) {
 
     deckId = currentDeckId; // Assign for use in catch block
 
-    if (!deckId || !studyMaterialId || !filePath || !metadata || !aiModel || !difficulty) { // Added studyMaterialId check
+    if (!deckId || !studyMaterialId || !filePath || !metadata || !aiModel || !difficulty) {
       // Invalid job data received
       return new Response("Invalid job data", { status: 400 });
     }
@@ -122,11 +122,6 @@ async function handler(request: NextRequest) {
           chunkResults.push(...validResults);
           successfulChunks += validResults.length;
 
-          // Optional: Add delay between batches if needed to avoid rate limits
-          // if (i + batchSize < chunks.length) {
-          //   await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
-          // }
-
           // Calculate progress (e.g., 15% to 85% for chunk processing)
           const progress = 15 + ((successfulChunks / chunks.length) * 70);
 
@@ -136,8 +131,6 @@ async function handler(request: NextRequest) {
               isProcessing: true, // Ensure this stays true
               processedChunks: successfulChunks,
               processingProgress: Math.min(progress, 85), // Cap progress for this stage
-              // Optional: Update error field with intermediate progress for debugging
-              // error: `Processed ${successfulChunks}/${chunks.length} chunks...`
             }
           });
         }
@@ -152,7 +145,6 @@ async function handler(request: NextRequest) {
         const allFlashcards = chunkResults.flatMap(result => result.flashcards || []);
         const allMCQs = chunkResults.flatMap(result => result.mcqs || []);
         const allFRQs = chunkResults.flatMap(result => result.frqs || []);
-        // Combined ${allFlashcards.length} flashcards, ${allMCQs.length} MCQs, ${allFRQs.length} FRQs for deck ${deckId}
 
         // Use the imported utility function for difficulty mapping
         const difficultyLevel = getDifficultyFromUserSelection(difficulty);
@@ -176,11 +168,6 @@ async function handler(request: NextRequest) {
 
         // Use Prisma transaction with increased timeout for atomicity
         await db.$transaction(async (tx) => {
-            // Delete existing content for this deck first? Or assume it's a new deck.
-            // If re-processing is possible, add deletion logic here:
-            // await tx.deckContent.deleteMany({ where: { deckId: deckId } });
-            // await tx.studyContent.deleteMany({ where: { studyMaterialId: studyMaterial.id }}); // Careful with shared studyMaterial
-
             let orderIndex = 0;
 
             // Create flashcard content
@@ -193,7 +180,7 @@ async function handler(request: NextRequest) {
                     }
                 });
                 await tx.deckContent.create({
-                    data: { deckId: deckId!, studyContentId: studyContent.id, order: orderIndex++ } // Use non-null assertion
+                    data: { deckId: deckId!, studyContentId: studyContent.id, order: orderIndex++ }
                 });
             }
 
@@ -208,7 +195,7 @@ async function handler(request: NextRequest) {
                     }
                 });
                 await tx.deckContent.create({
-                    data: { deckId: deckId!, studyContentId: studyContent.id, order: orderIndex++ } // Use non-null assertion
+                    data: { deckId: deckId!, studyContentId: studyContent.id, order: orderIndex++ }
                 });
             }
 
@@ -223,19 +210,19 @@ async function handler(request: NextRequest) {
                     }
                 });
                 await tx.deckContent.create({
-                    data: { deckId: deckId!, studyContentId: studyContent.id, order: orderIndex++ } // Use non-null assertion
+                    data: { deckId: deckId!, studyContentId: studyContent.id, order: orderIndex++ }
                 });
             }
         }, {
-            maxWait: 30000, // Maximum time Prisma will wait for a transaction
-            timeout: 30000 // Maximum time the transaction can run
+            maxWait: 30000,
+            timeout: 30000
         });
         // Successfully created DB entries for deck ${deckId}
 
         // Update study material status
         await db.studyMaterial.update({
           where: { id: studyMaterial.id },
-          data: { status: 'completed' } // Mark associated material as completed
+          data: { status: 'completed' }
         });
 
         // Update deck status after successful content creation
@@ -243,10 +230,10 @@ async function handler(request: NextRequest) {
           where: { id: deckId },
           data: {
             category: finalCategory,
-            isProcessing: false, // Mark as complete
+            isProcessing: false,
             processingProgress: 100,
             processingStage: 'COMPLETED',
-            error: null // Clear any previous errors
+            error: null
           }
         });
 
@@ -266,7 +253,6 @@ async function handler(request: NextRequest) {
         } catch (mindMapError) {
           // Error generating mind map for deck ${deckId}
           Sentry.captureException(mindMapError);
-          // Mind map failure is non-critical, just log it
         }
 
         // Processing completed successfully for deck ${deckId}
@@ -286,14 +272,14 @@ async function handler(request: NextRequest) {
                 isProcessing: false,
                 processingStage: 'ERROR',
                 error: processingError instanceof Error ? processingError.message : 'Failed to generate study materials',
-                processingProgress: 0 // Reset progress on failure? Or keep last known?
+                processingProgress: 0
             },
         });
         // Also update study material status?
         await db.studyMaterial.update({
             where: { id: studyMaterial.id },
             data: { status: 'error', processingError: 'Failed during background generation' },
-        }); // Best effort
+        });
 
         // Return error response to QStash
         return new Response("Error processing deck", { status: 500 });
@@ -312,7 +298,7 @@ async function handler(request: NextRequest) {
           processingStage: 'ERROR',
           error: 'Unexpected error in processing handler',
         },
-      }); // Best effort
+      });
     }
 
     // Return error response to QStash
@@ -322,6 +308,3 @@ async function handler(request: NextRequest) {
 
 // Wrap the handler with QStash verification
 export const POST = verifySignatureAppRouter(handler);
-
-// Add edge runtime if preferred and compatible with dependencies (pdf-lib might require node)
-// export const runtime = 'edge';

@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       }
       // Ensure the URL starts with https://
       const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
-      const targetUrl = `${baseUrl}/api/deck-processing`;
+      const targetUrl = `${baseUrl}/api/internal/deck-processing`;
  
       // Publishing job to QStash for deck ${deck.id}. Target: ${targetUrl}
  
