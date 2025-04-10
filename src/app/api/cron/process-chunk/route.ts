@@ -3,7 +3,8 @@ import { NextRequest } from 'next/server';
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { db } from '@/lib/db';
 import * as Sentry from '@sentry/nextjs';
-import { processChunk, generateMindMap, ChunkResult, getDifficultyFromUserSelection } from '@/lib/deck-processor';
+import { processChunk, getDifficultyFromUserSelection } from '@/lib/deck-processor';
+import { Client } from "@upstash/qstash";
 
 async function handler(request: NextRequest) {
   try {
@@ -56,13 +57,21 @@ async function handler(request: NextRequest) {
         await db.$transaction(async (tx) => {
           console.log(`Processing chunk ${chunkIndex + 1}/${totalChunks} for deck ${deckId}`);
           
-          // Calculate progress (20% to 85% for chunk processing)
-          const chunkProgress = ((chunkIndex + 1) / totalChunks) * 65;
+          // Get current processed chunks count within the transaction
+          const currentDeckInTx = await tx.deck.findUnique({
+            where: { id: deckId },
+            select: { processedChunks: true }
+          });
+          
+          // Calculate progress based on actual processed chunks
+          const processedCount = (currentDeckInTx?.processedChunks || 0) + 1; // +1 for the current chunk
+          const chunkProgress = (processedCount / totalChunks) * 65; // Use 65% range (20% to 85%)
           const progress = Math.floor(20 + chunkProgress);
           
           console.log(`Progress calculation details:
             - Base: 20%
-            - Increment: ${chunkProgress.toFixed(2)}% (${chunkIndex + 1}/${totalChunks} chunks)
+            - Processed count: ${processedCount}/${totalChunks}
+            - Increment: ${chunkProgress.toFixed(2)}%
             - Total: ${progress}%
             - Current chunk: ${chunkIndex + 1}/${totalChunks}
             - isLastChunk: ${isLastChunk}
@@ -179,119 +188,76 @@ async function handler(request: NextRequest) {
     // Additional logging for last chunk
     console.log(`Chunk ${chunkIndex + 1}/${totalChunks} processed. Is last chunk: ${isLastChunk}`);
     
-    // If this is the last chunk, validate all chunks are processed before generating mind map
-    if (isLastChunk) {
-      console.log('Last chunk received - checking if all chunks processed');
-      // Ensure all chunks have been processed
-      const currentDeck = await db.deck.findUnique({
+    // After processing any chunk, check if all chunks have been processed
+    // This ensures we complete the deck as soon as all chunks are done, regardless of processing order
+    console.log(`Checking if all chunks have been processed after chunk ${chunkIndex + 1}/${totalChunks}`);
+    const currentDeck = await db.deck.findUnique({
+      where: { id: deckId },
+      select: { processedChunks: true, totalChunks: true }
+    });
+    
+    console.log(`Processed chunks: ${currentDeck?.processedChunks}/${currentDeck?.totalChunks}`);
+    
+    // Only proceed with completion if ALL chunks are processed, regardless of which chunk this is
+    if (currentDeck?.processedChunks === currentDeck?.totalChunks) {
+      console.log(`All chunks processed. Marking deck as complete.`);
+      
+      // Mark the deck as COMPLETED immediately (100%)
+      await db.deck.update({
         where: { id: deckId },
-        select: { processedChunks: true, totalChunks: true }
-      });
-      
-      if (currentDeck?.processedChunks !== currentDeck?.totalChunks) {
-        return new Response("Waiting for all chunks to complete", { status: 200 });
-      }
-      
-      // Fetch all study contents for mind map generation
-      const studyContents = await db.studyContent.findMany({
-        where: { studyMaterialId },
-        include: {
-          flashcardContent: true,
-          mcqContent: true,
-          frqContent: true
+        data: {
+          isProcessing: false,
+          processingProgress: 100,
+          processingStage: 'COMPLETED',
+          error: null
         }
       });
       
-      // Convert to chunk results format with proper type assertions
-      const chunkResults: ChunkResult = {
-        summary: studyContents
-          .filter(c => c.type === 'flashcard' && c.flashcardContent)
-          .map(c => `${c.flashcardContent!.front}: ${c.flashcardContent!.back}`)
-          .join('\n\n')
-          .slice(0, 2000), // Limit length
-        flashcards: studyContents
-          .filter(c => c.type === 'flashcard' && c.flashcardContent)
-          .map(c => ({
-            front: c.flashcardContent!.front,
-            back: c.flashcardContent!.back,
-            topic: extractTopic(c.flashcardContent!.front)
-          })),
-        mcqs: studyContents
-          .filter(c => c.type === 'mcq' && c.mcqContent)
-          .map(c => ({
-            question: c.mcqContent!.question,
-            options: c.mcqContent!.options as string[], // Type assertion
-            correctOptionIndex: c.mcqContent!.correctOptionIndex,
-            explanation: c.mcqContent!.explanation || '',
-            topic: extractTopic(c.mcqContent!.question),
-            difficulty: (c.difficultyLevel || 'medium') as 'easy' | 'medium' | 'hard'
-          })),
-        frqs: studyContents
-          .filter(c => c.type === 'frq' && c.frqContent)
-          .map(c => ({
-            question: c.frqContent!.question,
-            answers: c.frqContent!.answers as string[], // Type assertion
-            caseSensitive: c.frqContent!.caseSensitive,
-            explanation: c.frqContent!.explanation || '',
-            topic: extractTopic(c.frqContent!.question),
-            difficulty: (c.difficultyLevel || 'medium') as 'easy' | 'medium' | 'hard'
-          })),
-        category: 'general'
-      };
-      
-      // Validate content before mind map generation
-      if (studyContents.length === 0) {
-        throw new Error('No study content available for mind map generation');
-      }
-
-      if (chunkResults.flashcards.length + chunkResults.mcqs.length + chunkResults.frqs.length === 0) {
-        throw new Error('No valid flashcards, MCQs or FRQs found for mind map');
-      }
-
-      console.log('Starting mind map generation with:', {
-        studyContentsCount: studyContents.length,
-        flashcards: chunkResults.flashcards.length,
-        mcqs: chunkResults.mcqs.length,
-        frqs: chunkResults.frqs.length
+      // Update study material status
+      await db.studyMaterial.update({
+        where: { id: studyMaterialId },
+        data: { status: 'completed' }
       });
-
-      // Generate mind map
+      
+      console.log('Deck status updated to COMPLETED at:', new Date().toISOString());
+      
+      // Dispatch mind map generation as a separate background task
       try {
-        console.log('Starting mind map generation at:', new Date().toISOString());
-        const mindMap = await generateMindMap([chunkResults], aiModel);
-        console.log('Mind map generation completed at:', new Date().toISOString());
+        const qstashClient = new Client({ token: process.env.QSTASH_TOKEN! });
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
         
-        // Update deck with mind map
-        await db.deck.update({
-          where: { id: deckId },
-          data: {
-            mindMap: mindMap ? { nodes: mindMap.nodes, connections: mindMap.connections } : { nodes: [], connections: [] },
-            isProcessing: false,
-            processingProgress: 100,
-            processingStage: 'COMPLETED',
-            error: null
-          }
-        });
-        console.log('Deck status updated to COMPLETED at:', new Date().toISOString());
+        if (!appUrl) {
+          throw new Error('Configuration error: App URL not set.');
+        }
         
-        // Update study material status
-        await db.studyMaterial.update({
-          where: { id: studyMaterialId },
-          data: { status: 'completed' }
+        const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
+        const targetUrl = `${baseUrl}/api/cron/generate-mind-map`;
+        
+        console.log(`Dispatching mind map generation for deck ${deckId}`);
+        
+        await qstashClient.publishJSON({
+          url: targetUrl,
+          headers: {
+            "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET!
+          },
+          body: {
+            deckId: deckId,
+            studyMaterialId: studyMaterialId,
+            aiModel: aiModel
+          },
+          retries: 3,
         });
-      } catch (mindMapError) {
-        console.error('MindMap Generation Failed:', mindMapError);
-        Sentry.captureException(mindMapError);
-        await db.deck.update({
-          where: { id: deckId },
-          data: {
-            isProcessing: false,
-            processingProgress: 100, // Force completion
-            processingStage: 'COMPLETED_WITH_WARNINGS',
-            error: `Mind map failed: ${mindMapError instanceof Error ? mindMapError.message : 'Unknown error'}`
-          }
-        });
+        
+        console.log(`Mind map generation dispatched for deck ${deckId}`);
+      } catch (qstashError) {
+        console.error('Failed to dispatch mind map generation:', qstashError);
+        Sentry.captureException(qstashError);
+        
+        // Even if mind map dispatch fails, the deck is already marked as complete
+        // Just log the error, no need to update the deck status
       }
+    } else {
+      console.log(`Not all chunks processed yet (${currentDeck?.processedChunks}/${currentDeck?.totalChunks}). Waiting for remaining chunks.`);
     }
 
     return new Response("Success", { status: 200 });
@@ -304,18 +270,6 @@ async function handler(request: NextRequest) {
     
     return new Response("Error processing chunk", { status: 500 });
   }
-}
-
-// Helper function to extract a meaningful topic from text
-function extractTopic(text: string): string {
-  const stopWords = ['the', 'a', 'an', 'in', 'on', 'at', 'for', 'to', 'of', 'and', 'is', 'are'];
-  const words = text
-    .replace(/[^\w\s]/g, '')
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(word => word.length > 3 && !stopWords.includes(word));
-  
-  return words.slice(0, 3).join(' ') || text.slice(0, 15);
 }
 
 export const POST = verifySignatureAppRouter(handler);

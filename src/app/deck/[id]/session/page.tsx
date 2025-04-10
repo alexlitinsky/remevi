@@ -9,7 +9,7 @@ import { DeckCompletionScreen } from "@/components/session/DeckCompletionScreen"
 import { StudyDeckHeader } from "@/components/session/StudyDeckHeader";
 import { FlashcardContainer } from "@/components/session/FlashcardContainer";
 import { StudyActionButtons } from "@/components/session/StudyActionButtons";
-import { SettingsModal, MindMapModal } from "@/components/session/StudyModals";
+import { SettingsModal } from "@/components/session/StudyModals";
 
 // Client-side wrapper component that doesn't receive params directly
 export default function DeckStudyPage() {
@@ -33,7 +33,6 @@ export default function DeckStudyPage() {
     isLoadingCards,
     error,
     showSettings,
-    showMindMap,
     lastEarnedPoints,
     calculateProgress,
     getCardsReviewed,
@@ -48,7 +47,6 @@ export default function DeckStudyPage() {
     restartDeck,
     endSession,
     toggleSettings,
-    toggleMindMap
   } = useStudySessionStore();
 
   // Set deck ID and initialize session when the component mounts
@@ -85,7 +83,7 @@ export default function DeckStudyPage() {
           // Only trigger full reload if processing is complete
           if (!updatedDeck.isProcessing) {
             setDeckId(deckId);
-            initSession();
+            initSession(); // Reload cards and session data
           } else {
             // Just update the deck processing status without reinitializing
             useStudySessionStore.setState(state => ({
@@ -98,12 +96,10 @@ export default function DeckStudyPage() {
                 processingStage: updatedDeck.processingStage,
                 processedChunks: updatedDeck.processedChunks,
                 totalChunks: updatedDeck.totalChunks,
-                mindMap: updatedDeck.mindMap, // Make sure this is included
+                // mindMap removed from session state
                 isProcessing: true
               }
             }));
-
-
           }
         } catch (error) {
           console.error('Error polling deck status:', error);
@@ -203,8 +199,6 @@ export default function DeckStudyPage() {
 {/* Floating Action Buttons */}
 <StudyActionButtons
   onShowSettings={() => toggleSettings(true)}
-  onToggleMindMap={() => toggleMindMap(true)}
-  mindMapAvailable={true} // You may need to implement logic to determine when mind map is available
 />
 
       </main>
@@ -218,12 +212,6 @@ export default function DeckStudyPage() {
         deckId={deckId}
       />
 
-    <MindMapModal
-      isVisible={showMindMap}
-      onClose={() => toggleMindMap(false)}
-      nodes={deck?.mindMap?.nodes || []}
-      connections={deck?.mindMap?.connections || []}
-    />
     </div>
   );
 } 

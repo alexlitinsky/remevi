@@ -1,7 +1,7 @@
 import { XCircle, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
-import { useState } from "react"
+import { useState} from "react" 
 import { Slider } from "@/components/ui/slider"
 
 interface MindMapModalProps {
@@ -67,7 +67,7 @@ export function MindMapModal({
   // 1. First process main nodes
   const mainNodesWithPositions = mainNodes.map((node, index) => {
     const angle = mainNodes.length > 1 ? (2 * Math.PI * index) / mainNodes.length : 0;
-    const radius = mainNodes.length > 1 ? 150 : 0;
+    const radius = mainNodes.length > 1 ? 200 : 0; // Increased radius
     return {
       ...node,
       x: 600 + radius * Math.cos(angle),
@@ -101,8 +101,8 @@ export function MindMapModal({
         
         return {
           ...node,
-          x: mainNode.x + 300 * Math.cos(angle),
-          y: mainNode.y + 300 * Math.sin(angle),
+          x: mainNode.x + 350 * Math.cos(angle), // Increased radius
+          y: mainNode.y + 350 * Math.sin(angle), // Increased radius
           type: nodeTypeMap[node.id]
         };
       }
@@ -113,8 +113,8 @@ export function MindMapModal({
     const angle = (2 * Math.PI * subtopicIndex) / subtopicNodes.length;
     return {
       ...node,
-      x: 600 + 400 * Math.cos(angle),
-      y: 400 + 400 * Math.sin(angle),
+      x: 600 + 450 * Math.cos(angle), // Increased radius
+      y: 400 + 450 * Math.sin(angle), // Increased radius
       type: nodeTypeMap[node.id]
     };
   });
@@ -144,7 +144,7 @@ export function MindMapModal({
         
         const arcLength = Math.PI;
         const angle = -Math.PI/4 + (detailIndex / Math.max(1, count)) * arcLength;
-        const radius = 180;
+        const radius = 200; // Increased radius
         
         return {
           ...node,
@@ -160,8 +160,8 @@ export function MindMapModal({
     const angle = (2 * Math.PI * detailIndex) / Math.max(1, detailNodes.length);
     return {
       ...node,
-      x: 600 + 500 * Math.cos(angle),
-      y: 400 + 500 * Math.sin(angle),
+      x: 600 + 550 * Math.cos(angle), // Increased radius
+      y: 400 + 550 * Math.sin(angle), // Increased radius
       type: nodeTypeMap[node.id]
     };
   });
@@ -245,8 +245,8 @@ export function MindMapModal({
                         y1={y1}
                         x2={x2}
                         y2={y2}
-                        stroke="rgba(59, 130, 246, 0.5)"
-                        strokeWidth={2}
+                        stroke="rgba(59, 130, 246, 0.3)" // Lighter stroke
+                        strokeWidth={1.5} // Thinner stroke
                       />
                       {conn.label && (
                         <text
@@ -269,14 +269,16 @@ export function MindMapModal({
               {nodes.map(node => (
                 <div
                   key={node.id}
-                  className={`absolute bg-blue-600 text-white text-sm rounded-lg px-2 py-1 shadow-lg cursor-help transform -translate-x-1/2 -translate-y-1/2 ${
-                    node.type === 'main' ? 'bg-blue-700 font-bold' : 
-                    node.type === 'subtopic' ? 'bg-blue-600' : 'bg-blue-500'
+                  className={`absolute text-white text-xs rounded-md px-2 py-1 shadow-md cursor-help transform -translate-x-1/2 -translate-y-1/2 border ${ // Adjusted size, added border
+                    node.type === 'main' ? 'bg-blue-700 border-blue-500 font-semibold' :
+                    node.type === 'subtopic' ? 'bg-blue-600 border-blue-400' :
+                    'bg-blue-500 border-blue-300'
                   }`}
                   style={{
                     left: `${node.x + offsetX}px`,
                     top: `${node.y + offsetY}px`,
-                    maxWidth: '200px',
+                    maxWidth: '150px', // Reduced max width for better wrapping
+                    wordBreak: 'break-word', // Ensure text wraps
                   }}
                   title={node.label}
                 >
@@ -404,4 +406,4 @@ export function SettingsModal({
       </motion.div>
     </motion.div>
   );
-} 
+}
