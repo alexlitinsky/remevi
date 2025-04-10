@@ -5,14 +5,14 @@ export const FREEMIUM_LIMITS = {
   FREE: {
     maxPages: 30,
     maxDecks: Infinity,
-    maxFileSize: 8 * 1024 * 1024, // 8MB
+    maxFileSize: 5 * 1024 * 1024, // 5MB
     allowedDifficulties: ["low"] as Difficulty[],
     allowedAiModels: ["standard"] as AiModel[],
   },
   PRO: {
     maxPages: Infinity,
     maxDecks: Infinity,
-    maxFileSize: 32 * 1024 * 1024, // 32MB
+    maxFileSize: 25 * 1024 * 1024, // 25MB
     allowedDifficulties: ["low", "moderate", "high"] as Difficulty[],
     allowedAiModels: ["standard", "advanced"] as AiModel[],
   },
