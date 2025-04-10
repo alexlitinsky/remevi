@@ -321,10 +321,7 @@ async function handler(request: NextRequest) {
 }
 
 // Wrap the handler with QStash verification
-export const POST = verifySignatureAppRouter(handler, {
-  currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY,
-  nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY
-});
+export const POST = verifySignatureAppRouter(handler);
 
 // Add edge runtime if preferred and compatible with dependencies (pdf-lib might require node)
 // export const runtime = 'edge';
