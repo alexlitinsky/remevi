@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       await checkAndUpdateUploadLimit();
     } catch (error) {
       Sentry.captureException(error);
-      return new Response(error instanceof Error ? error.message : 'Upload limit exceeded', { 
+      return new Response('Upload limit exceeded, please upgrade to a paid plan.', { 
         status: 400 
       });
     }
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       }
       // Ensure the URL starts with https://
       const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
-      const targetUrl = `${baseUrl}/api/internal/deck-processing`;
+      const targetUrl = `${baseUrl}/api/cron/dispatch-processing`;
  
       // Publishing job to QStash for deck ${deck.id}. Target: ${targetUrl}
  

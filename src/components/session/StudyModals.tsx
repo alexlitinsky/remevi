@@ -227,7 +227,7 @@ export function MindMapModal({
             }}>
               {/* Draw connections */}
               <svg className="absolute top-0 left-0" width={width} height={height}>
-                {connections.map(conn => {
+                {connections.map((conn, index) => {
                   const source = nodes.find(n => n.id === conn.source);
                   const target = nodes.find(n => n.id === conn.target);
                   
@@ -239,7 +239,7 @@ export function MindMapModal({
                   const y2 = target.y + offsetY;
                   
                   return (
-                    <g key={`${conn.source}-${conn.target}`}>
+                    <g key={`${conn.source}-${conn.target}-${conn.type}-${index}`}>
                       <line
                         x1={x1}
                         y1={y1}
@@ -295,7 +295,6 @@ export function SettingsModal({
   isVisible,
   onClose,
   onRefreshCards,
-  deckId
 }: SettingsModalProps) {
   const [newCardsPerDay, setNewCardsPerDay] = useState(5);
   const [reviewsPerDay, setReviewsPerDay] = useState(50);
@@ -307,8 +306,8 @@ export function SettingsModal({
     setIsSaving(true);
     
     try {
-      await fetch(`/api/decks/${deckId}/settings`, {
-        method: "PUT",
+      await fetch(`/api/users/me/preferences`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           newCardsPerDay,

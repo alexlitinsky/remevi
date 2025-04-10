@@ -20,7 +20,7 @@ interface FlashcardProps {
 // Memoize the card sides to prevent unnecessary re-renders
 const CardFront = memo(({ content, onClick }: { content: string, onClick: () => void }) => (
   <Card
-    className="absolute w-full h-full backface-hidden cursor-pointer"
+    className="absolute w-full h-full backface-hidden cursor-pointer bg-card"
     onClick={onClick}
   >
     <CardContent className="flex items-center justify-center p-8 text-center min-h-[300px]">
@@ -32,7 +32,7 @@ CardFront.displayName = 'CardFront';
 
 const CardBack = memo(({ content, onClick }: { content: string, onClick: () => void }) => (
   <Card
-    className="absolute w-full h-full backface-hidden cursor-pointer rotate-y-180"
+    className="absolute w-full h-full backface-hidden cursor-pointer rotate-y-180 bg-card"
     onClick={onClick}
   >
     <CardContent className="flex items-center justify-center p-8 text-center min-h-[300px]">
@@ -125,14 +125,14 @@ export function Flashcard({
 
       <div className="relative min-h-[300px] perspective-1000">
         <div
-          className={cn(
-            "relative w-full h-full transition-transform duration-300 will-change-transform", // Slightly slower transition with will-change
-            "transform-style-3d",
-            showBack ? "rotate-y-180" : ""
-          )}
           style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            transition: 'transform 300ms',
             transformStyle: 'preserve-3d',
-            transform: showBack ? 'rotateY(180deg) translateZ(0)' : 'translateZ(0)'
+            transform: showBack ? 'rotateY(180deg) translateZ(0)' : 'rotateY(0deg) translateZ(0)',
+            backfaceVisibility: 'hidden'
           }}
         >
           {/* Use memoized components */}

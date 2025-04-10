@@ -28,7 +28,6 @@ export async function splitPdfIntoChunks(fileBuffer: Buffer, pageRange?: { start
   const endPage = Math.min(pageRange?.end ?? totalPages, totalPages);
   const chunks: Buffer[] = [];
 
-  console.log(`Processing pages ${startPage + 1} to ${endPage} in chunks of ${PAGES_PER_CHUNK} pages`);
 
   // Process pages in chunks
   for (let i = startPage; i < endPage; i += PAGES_PER_CHUNK) {
@@ -37,7 +36,6 @@ export async function splitPdfIntoChunks(fileBuffer: Buffer, pageRange?: { start
       const chunkEnd = Math.min(i + PAGES_PER_CHUNK, endPage);
       
       const pageIndices = Array.from({ length: chunkEnd - i }, (_, idx) => i + idx);
-      console.log(`Copying pages: ${pageIndices.join(', ')}`);
       
       const pages = await chunkDoc.copyPages(pdfDoc, pageIndices);
       pages.forEach((page: PDFPage) => chunkDoc.addPage(page));
@@ -45,10 +43,8 @@ export async function splitPdfIntoChunks(fileBuffer: Buffer, pageRange?: { start
       const chunkBytes = await chunkDoc.save();
       chunks.push(Buffer.from(chunkBytes));
       
-      console.log(`Successfully processed chunk ${chunks.length}`);
     } catch (error) {
       Sentry.captureException(error);
-      console.error(`Failed to process chunk starting at page ${i + 1}:`, error);
       throw new Error(`PDF processing failed at page ${i + 1}`);
     }
   }
@@ -67,7 +63,6 @@ export async function processChunk(
   aiModel: string
 ) {
   const chunkPrompt = `Process part ${chunkIndex + 1} of ${totalChunks} of the document.\n\n${difficultyPrompt}`;
-  console.log(chunkPrompt);
   
   try {
     const result = await generateObject({
@@ -117,10 +112,8 @@ export async function processChunk(
       temperature: 0.7
     });
 
-    console.log('Processed chunk:', result.object);
     return result.object;
   } catch (error) {
-    console.error(`Error processing chunk ${chunkIndex + 1}/${totalChunks}:`, error);
     Sentry.captureException(error);
     return {
       summary: '',
@@ -206,10 +199,8 @@ export async function generateMindMap(chunkResults: ChunkResult[], aiModel: stri
       temperature: 0.5
     });
 
-    console.log('Generated mind map:', result.object.mindMap);
     return result.object.mindMap;
   } catch (error) {
-    console.error('Error generating mind map:', error);
     Sentry.captureException(error);
     return { nodes: [], connections: [] };
   }
