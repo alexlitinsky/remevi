@@ -124,13 +124,16 @@ export function Flashcard({
       </AnimatePresence>
 
       <div className="relative min-h-[300px] perspective-1000">
-        <div 
+        <div
           className={cn(
-            "relative w-full h-full transition-transform duration-200", // Faster transition
+            "relative w-full h-full transition-transform duration-300 will-change-transform", // Slightly slower transition with will-change
             "transform-style-3d",
             showBack ? "rotate-y-180" : ""
           )}
-          style={{ transformStyle: 'preserve-3d' }}
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: showBack ? 'rotateY(180deg) translateZ(0)' : 'translateZ(0)'
+          }}
         >
           {/* Use memoized components */}
           <CardFront content={front} onClick={onFlip} />
