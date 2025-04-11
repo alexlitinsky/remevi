@@ -1,4 +1,3 @@
-// src/app/api/cron/dispatch-processing/route.ts
 import { NextRequest } from 'next/server';
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { db } from '@/lib/db';
@@ -6,6 +5,35 @@ import { getFileFromStorage } from '@/lib/storage';
 import * as Sentry from '@sentry/nextjs';
 import { splitPdfIntoChunks, buildDifficultyPrompt } from '@/lib/deck-processor';
 import { Client } from "@upstash/qstash";
+
+// Calculate safe message size (500KB max for parts)
+const MAX_PART_SIZE = 500 * 1024; // 500KB
+const MAX_RETRIES = 3;
+
+async function publishWithRetry(
+  qstashClient: Client,
+  url: string,
+  headers: Record<string, string>,
+  body: any,
+  attempt = 1
+): Promise<void> {
+  try {
+    await qstashClient.publishJSON({
+      url,
+      headers,
+      body,
+      retries: 3,
+    });
+    console.log(`Successfully queued part ${body.partIndex + 1}/${body.totalParts} for chunk ${body.chunkIndex + 1}/${body.totalChunks}`);
+  } catch (error) {
+    console.error(`Failed to queue part ${body.partIndex + 1}/${body.totalParts} (attempt ${attempt}):`, error);
+    if (attempt < MAX_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      return publishWithRetry(qstashClient, url, headers, body, attempt + 1);
+    }
+    throw error;
+  }
+}
 
 async function handler(request: NextRequest) {
   let deckId: string | undefined;
@@ -28,7 +56,7 @@ async function handler(request: NextRequest) {
       return new Response("Invalid job data", { status: 400 });
     }
 
-    // Fetch the study material
+    // Fetch study material and get file buffer
     const studyMaterial = await db.studyMaterial.findUnique({
       where: { id: studyMaterialId }
     });
@@ -41,7 +69,6 @@ async function handler(request: NextRequest) {
       return new Response("Study material not found", { status: 404 });
     }
 
-    // Get file buffer from storage
     let fileBuffer: Buffer;
     try {
       const fileData = await getFileFromStorage(filePath);
@@ -56,7 +83,7 @@ async function handler(request: NextRequest) {
       return new Response('Failed to access file', { status: 500 });
     }
 
-    // Split PDF into chunks
+    // Split PDF and update status
     await db.deck.update({ 
       where: { id: deckId }, 
       data: { processingStage: 'CHUNKING', processingProgress: 10 } 
@@ -64,7 +91,6 @@ async function handler(request: NextRequest) {
     
     const chunks = await splitPdfIntoChunks(fileBuffer, pageRange);
     
-    // Update total chunks count
     await db.deck.update({
       where: { id: deckId },
       data: {
@@ -74,14 +100,7 @@ async function handler(request: NextRequest) {
       }
     });
 
-    // Build the difficulty prompt
-    const difficultyPrompt = buildDifficultyPrompt(
-      difficulty,
-      pageRange,
-      metadata.type
-    );
-
-    // Queue each chunk for processing
+    const difficultyPrompt = buildDifficultyPrompt(difficulty, pageRange, metadata.type);
     const qstashClient = new Client({ token: process.env.QSTASH_TOKEN! });
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
     
@@ -96,36 +115,54 @@ async function handler(request: NextRequest) {
     const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
     const targetUrl = `${baseUrl}/api/cron/process-chunk`;
 
-    // Queue each chunk as a separate job
+    // Queue each chunk with improved error handling
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
-      
-      // Convert Buffer to base64 string for transmission
       const base64Chunk = chunk.toString('base64');
-      
       const isLast = i === chunks.length - 1;
-      console.log(`Queueing chunk ${i + 1}/${chunks.length} for deck ${deckId}. Last chunk: ${isLast}`);
       
-      await qstashClient.publishJSON({
-        url: targetUrl,
-        headers: {
-          "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET!
-        },
-        body: {
-          deckId: deckId,
+      // Calculate safe chunk parts
+      const chunkParts = [];
+      let position = 0;
+      while (position < base64Chunk.length) {
+        const partSize = Math.min(MAX_PART_SIZE, base64Chunk.length - position);
+        chunkParts.push(base64Chunk.substr(position, partSize));
+        position += partSize;
+      }
+
+      console.log(`Queueing chunk ${i + 1}/${chunks.length} (${chunkParts.length} parts)`);
+
+      // Send each part with retry logic
+      for (let partIndex = 0; partIndex < chunkParts.length; partIndex++) {
+        const messageBody = {
+          deckId,
           studyMaterialId: studyMaterial.id,
           chunkIndex: i,
           totalChunks: chunks.length,
-          chunk: base64Chunk,
-          difficultyPrompt: difficultyPrompt,
-          aiModel: aiModel,
-          isLastChunk: isLast
-        },
-        retries: 3,
-      });
+          chunkPart: chunkParts[partIndex],
+          totalParts: chunkParts.length,
+          partIndex,
+          difficultyPrompt,
+          aiModel,
+          isLastChunk: isLast && (partIndex === chunkParts.length - 1)
+        };
+
+        try {
+          await publishWithRetry(
+            qstashClient,
+            targetUrl,
+            {
+              "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET!
+            },
+            messageBody
+          );
+        } catch (error) {
+          console.error(`Failed to queue part ${partIndex + 1}/${chunkParts.length} after ${MAX_RETRIES} attempts`);
+          throw error;
+        }
+      }
     }
 
-    // Update deck status to indicate chunks are queued
     await db.deck.update({
       where: { id: deckId },
       data: {

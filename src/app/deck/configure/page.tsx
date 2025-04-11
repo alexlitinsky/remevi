@@ -1,5 +1,7 @@
 "use client"
 
+import { uploadFileToStorage } from '@/lib/storage';
+
 import type React from "react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -109,25 +111,20 @@ export default function ConfigurePage() {
     try {
       setGenerationStep("Uploading file...");
       setGenerationProgress(10);
-      const formData = new FormData();
-      formData.append('file', uploadedFile);
+      
+      // Convert file to buffer and upload directly
+      const buffer = Buffer.from(await uploadedFile.arrayBuffer());
+      const { filePath: storagePath, fileId } = await uploadFileToStorage(
+        buffer,
+        uploadedFile.name,
+        uploadedFile.type
+      );
 
-      const uploadResponse = await fetch('/api/temp-upload', {
-        method: 'POST',
-        body: formData,
-      });
 
-      setGenerationProgress(40);
-
-      if (!uploadResponse.ok) {
-        const errorJson = await uploadResponse.json().catch(() => ({}));
-        throw new Error(errorJson.message || 'Failed to upload file');
-      }
-
-      const uploadResult = await uploadResponse.json();
-      uploadId = uploadResult.uploadId;
-      filePath = uploadResult.filePath;
       setGenerationProgress(50);
+      
+      uploadId = fileId;
+      filePath = storagePath;
 
       setGenerationStep("Preparing generation...");
       const generatePayload = {
@@ -149,7 +146,8 @@ export default function ConfigurePage() {
 
       if (!generateResponse.ok) {
         const errorJson = await generateResponse.json().catch(() => ({}));
-        const errorMessage = errorJson.error || 'Failed to start generation';
+        console.log('errorJson', errorJson);
+        const errorMessage = errorJson.error || 'You\'ve exceeded your plan limit';
         if (errorMessage.includes('not available in your plan') || errorMessage.includes('exceeds your plan')) {
           setShowPricing(true);
         }
