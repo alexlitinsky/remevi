@@ -302,7 +302,6 @@ async function handler(request: NextRequest) {
         break; // Exit retry loop on success
 
       } catch (txError) {
-        lastError = txError;
         retryCount++;
         console.error(`Transaction FAILED for chunk ${chunkIndex + 1}/${totalChunks} (Attempt ${retryCount}):`, txError);
         // Implement exponential backoff for retries

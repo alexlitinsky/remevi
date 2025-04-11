@@ -93,7 +93,7 @@ export default function DeckStudyPage() {
               isLoading: false, // Ensure loading state is off
             }));
             // Optionally, try re-initializing to fetch any available cards
-            // initSession(); // Uncomment if you want to force a card fetch after timeout
+            initSession(); // Uncomment if you want to force a card fetch after timeout
             return;
           }
 
