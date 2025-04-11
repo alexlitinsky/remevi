@@ -231,77 +231,71 @@ async function handler(request: NextRequest) {
           });
           let nextOrder = lastContent ? lastContent.order + 1 : 0;
 
-          for (const card of result.flashcards || []) {
-            await tx.studyContent.create({
-              data: {
-                studyMaterialId,
-                type: 'flashcard',
-                flashcardContent: {
-                  create: {
-                    front: card.front,
-                    back: card.back
-                  }
-                },
-                deckContent: {
-                  create: {
-                    deckId,
-                    order: nextOrder++
-                  }
+          // Process flashcards in batches of 10
+          for (let i = 0; i < (result.flashcards || []).length; i += 10) {
+            const batch = (result.flashcards || []).slice(i, i + 10);
+            await Promise.all(batch.map((card: { front: string; back: string; topic: string }) =>
+              tx.studyContent.create({
+                data: {
+                  studyMaterialId,
+                  type: 'flashcard',
+                  flashcardContent: { create: { front: card.front, back: card.back } },
+                  deckContent: { create: { deckId, order: nextOrder++ } }
                 }
-              }
-            });
+              })
+            ));
           }
-          for (const mcq of result.mcqs || []) {
-            await tx.studyContent.create({
-              data: {
-                studyMaterialId,
-                type: 'mcq',
-                difficultyLevel: mcq.difficulty || difficultyLevel,
-                mcqContent: {
-                  create: {
-                    question: mcq.question,
-                    options: mcq.options,
-                    correctOptionIndex: mcq.correctOptionIndex,
-                    explanation: mcq.explanation || ''
-                  }
-                },
-                deckContent: {
-                  create: {
-                    deckId,
-                    order: nextOrder++
-                  }
+
+          // Process MCQs in batches of 5
+          for (let i = 0; i < (result.mcqs || []).length; i += 5) {
+            const batch = (result.mcqs || []).slice(i, i + 5);
+            await Promise.all(batch.map((mcq: { question: string; options: string[]; correctOptionIndex: number; explanation: string; topic: string; difficulty: 'easy' | 'medium' | 'hard'; }) =>
+              tx.studyContent.create({
+                data: {
+                  studyMaterialId,
+                  type: 'mcq',
+                  difficultyLevel: mcq.difficulty || difficultyLevel,
+                  mcqContent: {
+                    create: {
+                      question: mcq.question,
+                      options: mcq.options,
+                      correctOptionIndex: mcq.correctOptionIndex,
+                      explanation: mcq.explanation || ''
+                    }
+                  },
+                  deckContent: { create: { deckId, order: nextOrder++ } }
                 }
-              }
-            });
+              })
+            ));
           }
-          for (const frq of result.frqs || []) {
-            await tx.studyContent.create({
-              data: {
-                studyMaterialId,
-                type: 'frq',
-                difficultyLevel: frq.difficulty || difficultyLevel,
-                frqContent: {
-                  create: {
-                    question: frq.question,
-                    answers: frq.answers,
-                    caseSensitive: frq.caseSensitive,
-                    explanation: frq.explanation || ''
-                  }
-                },
-                deckContent: {
-                  create: {
-                    deckId,
-                    order: nextOrder++
-                  }
+
+          // Process FRQs in batches of 3
+          for (let i = 0; i < (result.frqs || []).length; i += 3) {
+            const batch = (result.frqs || []).slice(i, i + 3);
+            await Promise.all(batch.map((frq: { question: string; answers: string[]; caseSensitive: boolean; explanation: string; topic: string; difficulty: 'easy' | 'medium' | 'hard'; }) =>
+              tx.studyContent.create({
+                data: {
+                  studyMaterialId,
+                  type: 'frq',
+                  difficultyLevel: frq.difficulty || difficultyLevel,
+                  frqContent: {
+                    create: {
+                      question: frq.question,
+                      answers: frq.answers,
+                      caseSensitive: frq.caseSensitive,
+                      explanation: frq.explanation || ''
+                    }
+                  },
+                  deckContent: { create: { deckId, order: nextOrder++ } }
                 }
-              }
-            });
+              })
+            ));
           }
 
         }, {
-          maxWait: 60000, // milliseconds
-          timeout: 60000, // milliseconds
-          isolationLevel: 'ReadCommitted' // Consider 'Serializable' if high contention persists
+          maxWait: 300000, // 5 minutes
+          timeout: 300000, // 5 minutes
+          isolationLevel: 'ReadCommitted'
         });
 
         console.log(`Transaction SUCCEEDED for chunk ${chunkIndex + 1}/${totalChunks}`);
@@ -319,7 +313,26 @@ async function handler(request: NextRequest) {
     }
 
     if (retryCount === MAX_RETRIES) {
-      throw lastError;
+      // Log which items failed to create
+      const createdCount = await db.studyContent.count({
+        where: { studyMaterialId }
+      });
+      console.error(`Failed to create all content items. Created ${createdCount} out of expected ${
+        (result.flashcards?.length || 0) +
+        (result.mcqs?.length || 0) +
+        (result.frqs?.length || 0)
+      }`);
+
+      await db.deck.update({
+        where: { id: deckId },
+        data: {
+          isProcessing: false,
+          processingStage: 'PARTIAL_COMPLETION',
+          error: `Partial completion - some content items failed to save`
+        }
+      });
+
+      return new Response("Partial completion", { status: 206 });
     }
 
     const currentDeck = await db.deck.findUnique({

@@ -257,9 +257,9 @@ export function buildDifficultyPrompt(difficulty: Difficulty, pageRange?: { star
 
   ${difficulty === 'low' ? `LOW DIFFICULTY:
   - Generate per chunk:
-    * 15-25 flashcards focusing on foundational concepts
-    * 5-8 multiple choice questions
-    * 3-5 free response questions
+    * 8-13 flashcards focusing on foundational concepts
+    * 2-4 multiple choice questions
+    * 1-2 free response questions
   - Each item should cover a single, essential concept
   - Focus on: Core terminology, main ideas, basic principles
   - MCQs: Clear questions with straightforward distractors
@@ -267,9 +267,9 @@ export function buildDifficultyPrompt(difficulty: Difficulty, pageRange?: { star
   
   : difficulty === 'moderate' ? `MODERATE DIFFICULTY:
   - Generate per chunk:
-    * 25-35 flashcards with balanced depth
-    * 8-12 multiple choice questions
-    * 5-8 free response questions
+    * 13-18 flashcards with balanced depth
+    * 4-6 multiple choice questions
+    * 3-4 free response questions
   - Mix of basic and intermediate concepts
   - Focus on: Key concepts, supporting details, relationships between ideas
   - MCQs: Include application and analysis questions
@@ -277,9 +277,9 @@ export function buildDifficultyPrompt(difficulty: Difficulty, pageRange?: { star
   
   : `HIGH DIFFICULTY:
   - Generate per chunk:
-    * 35-45 flashcards for comprehensive coverage
-    * 12-15 multiple choice questions
-    * 8-12 free response questions
+    * 18-24 flashcards for comprehensive coverage
+    * 6-7 multiple choice questions
+    * 4-6 free response questions
   - Include basic, intermediate, and advanced concepts
   - Focus on: Deep understanding, nuanced details, practical applications
   - MCQs: Complex scenarios with nuanced answer choices
