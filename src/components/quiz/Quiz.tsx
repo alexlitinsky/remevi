@@ -62,8 +62,8 @@ export function Quiz({ deckId }: QuizProps) {
 
   return (
     <div className="container mx-auto py-8">
-      {view === 'config' && <QuizConfigModal deckId={params.id as string} hasStarted={hasStarted} />}
-      {view === 'quiz' && <QuizQuestion deckTitle={deckTitle} deckId={params.id as string} />}
+      {view === 'config' && <QuizConfigModal deckId={params!.id as string} hasStarted={hasStarted} />}
+      {view === 'quiz' && <QuizQuestion deckTitle={deckTitle} deckId={params!.id as string} />}
       {view === 'results' && <QuizResults />}
     </div>
   );
