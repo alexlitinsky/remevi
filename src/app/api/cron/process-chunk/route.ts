@@ -5,54 +5,10 @@ import * as Sentry from '@sentry/nextjs';
 import { processChunk, getDifficultyFromUserSelection } from '@/lib/deck-processor';
 import { Client } from "@upstash/qstash";
 
-// Persistent chunk storage with timeout
-const chunkStorage = new Map<string, {
-  parts: string[],
-  received: number,
-  lastUpdated: number,
-  missingParts: Set<number>,
-  timeout: number
-}>();
-
-const CHUNK_TIMEOUT = 60 * 60 * 1000; // 1 hour timeout
-
-function cleanupExpiredChunks() {
-  const now = Date.now();
-  for (const [key, data] of chunkStorage.entries()) {
-    if (now - data.lastUpdated > data.timeout) {
-      console.log(`Cleaning up expired chunk parts: ${key}`);
-      chunkStorage.delete(key);
-    }
-  }
-}
-
-// async function handleMissingParts(deckId: string, chunkIndex: number) {
-//   const storageKey = `${deckId}-${chunkIndex}`;
-//   const chunkData = chunkStorage.get(storageKey);
-  
-//   if (!chunkData) return false;
-  
-//   const now = Date.now();
-//   if (now - chunkData.lastUpdated > 10 * 60 * 1000) {
-//     console.log(`Chunk ${chunkIndex} for deck ${deckId} has missing parts: ${Array.from(chunkData.missingParts)}`);
-    
-//     await db.deck.update({
-//       where: { id: deckId },
-//       data: {
-//         error: `Processing incomplete: Chunk ${chunkIndex + 1} missing ${chunkData.missingParts.size} parts`,
-//         processingStage: 'ERROR',
-//         isProcessing: false
-//       }
-//     });
-    
-//     return true;
-//   }
-  
-//   return false;
-// }
+// Removed in-memory chunk storage logic - replaced with DB storage
 
 async function handler(request: NextRequest) {
-  cleanupExpiredChunks();
+  // cleanupExpiredChunks(); // No longer needed with DB storage + potential separate cleanup job
 
   try {
     const body = await request.json();
@@ -75,55 +31,162 @@ async function handler(request: NextRequest) {
       return new Response("Invalid chunk data", { status: 400 });
     }
 
-    let fullChunk: string;
+    let fullChunk: string | null = null; // Initialize as null
+
+    // Logic for handling chunk parts using the database
     if (chunkPart !== undefined && totalParts !== undefined && partIndex !== undefined) {
-      const storageKey = `${currentDeckId}-${currentChunkIndex}`;
-      let stored = chunkStorage.get(storageKey);
-      
-      if (!stored) {
-        const missingParts = new Set<number>();
-        for (let i = 0; i < totalParts; i++) missingParts.add(i);
-        
-        stored = {
-          parts: Array(totalParts).fill(''),
-          received: 0,
-          lastUpdated: Date.now(),
-          missingParts,
-          timeout: CHUNK_TIMEOUT
-        };
-        chunkStorage.set(storageKey, stored);
-      }
+      console.log(`Received part ${partIndex + 1}/${totalParts} for chunk ${currentChunkIndex + 1}/${currentTotalChunks} (Deck: ${currentDeckId})`);
 
-      stored.parts[partIndex] = chunkPart;
-      stored.received++;
-      stored.lastUpdated = Date.now();
-      stored.missingParts.delete(partIndex);
+      // Insert the received part into the database
+      await db.chunkPartStorage.create({
+        data: {
+          deckId: currentDeckId,
+          chunkIndex: currentChunkIndex,
+          partIndex: partIndex,
+          totalParts: totalParts,
+          partData: chunkPart, // Store the base64 part
+        },
+      });
 
-      console.log(`Received part ${partIndex + 1}/${totalParts} for chunk ${currentChunkIndex + 1}/${currentTotalChunks}`);
-      
-      if (stored.received < totalParts) {
-        return new Response("Chunk part received", { status: 200 });
+      // Check if all parts for this chunk have been received
+      const receivedCount = await db.chunkPartStorage.count({
+        where: {
+          deckId: currentDeckId,
+          chunkIndex: currentChunkIndex,
+        },
+      });
+
+      console.log(`DB count for chunk ${currentChunkIndex + 1}: ${receivedCount}/${totalParts}`);
+
+      if (receivedCount < totalParts) {
+        // Not all parts received yet, acknowledge receipt
+        return new Response("Chunk part received and stored", { status: 200 });
+      } else if (receivedCount === totalParts) {
+        // All parts potentially received, attempt assembly
+        console.log(`Attempting assembly for chunk ${currentChunkIndex + 1}`);
+        try {
+          const assembledParts = await db.$transaction(async (tx) => {
+            // Find all parts for this chunk within the transaction
+            const parts = await tx.chunkPartStorage.findMany({
+              where: {
+                deckId: currentDeckId,
+                chunkIndex: currentChunkIndex,
+              },
+              orderBy: {
+                partIndex: 'asc', // Ensure correct order
+              },
+              select: { partData: true, partIndex: true } // Select only needed data
+            });
+
+            // Verify count *inside* transaction to prevent race conditions
+            if (parts.length !== totalParts) {
+              // Should not happen if count check outside was correct, but safety check
+              console.error(`Concurrency issue? Expected ${totalParts} parts, found ${parts.length} in transaction for chunk ${currentChunkIndex + 1}.`);
+              throw new Error(`Part count mismatch during assembly for chunk ${currentChunkIndex + 1}. Expected ${totalParts}, found ${parts.length}.`);
+            }
+
+            // Delete the parts now that we have them
+            await tx.chunkPartStorage.deleteMany({
+              where: {
+                deckId: currentDeckId,
+                chunkIndex: currentChunkIndex,
+              },
+            });
+
+            return parts; // Return the ordered parts
+          });
+
+          // Join the parts outside the transaction
+          fullChunk = assembledParts.map(p => p.partData).join('');
+          console.log(`Successfully assembled chunk ${currentChunkIndex + 1} from DB parts.`);
+
+        } catch (assemblyError) {
+          console.error(`Failed to assemble chunk ${currentChunkIndex + 1} from DB:`, assemblyError);
+          Sentry.captureException(assemblyError);
+          // Mark deck as error? Or just let QStash retry? For now, return error.
+          await db.deck.update({
+            where: { id: currentDeckId },
+            data: { isProcessing: false, processingStage: 'ERROR', error: `Failed to assemble chunk ${currentChunkIndex + 1} from parts.` }
+          });
+          return new Response(`Failed to assemble chunk ${currentChunkIndex + 1}`, { status: 500 });
+        }
+      } else {
+        // receivedCount > totalParts - indicates a problem, maybe duplicate messages?
+        console.warn(`Received more parts (${receivedCount}) than expected (${totalParts}) for chunk ${currentChunkIndex + 1}. Cleaning up and failing.`);
+        await db.chunkPartStorage.deleteMany({ where: { deckId: currentDeckId, chunkIndex: currentChunkIndex } });
+        await db.deck.update({
+            where: { id: currentDeckId },
+            data: { isProcessing: false, processingStage: 'ERROR', error: `Inconsistent part count for chunk ${currentChunkIndex + 1}.` }
+        });
+        return new Response(`Inconsistent part count for chunk ${currentChunkIndex + 1}`, { status: 400 });
       }
-      
-      fullChunk = stored.parts.join('');
-      chunkStorage.delete(storageKey);
-      console.log(`All parts received for chunk ${currentChunkIndex + 1}/${currentTotalChunks}`);
     } else if (base64Chunk) {
+      // Handling for non-chunked messages (if applicable)
+      console.log(`Processing non-parted chunk ${currentChunkIndex + 1}`);
       fullChunk = base64Chunk;
     } else {
-      return new Response("Missing chunk data", { status: 400 });
+      // Invalid request if neither chunkPart nor base64Chunk is present
+      return new Response("Missing chunk data (part or full)", { status: 400 });
+    }
+
+    // Ensure fullChunk is not null before proceeding
+    if (fullChunk === null) {
+      console.error(`fullChunk is null after assembly logic for chunk ${currentChunkIndex + 1}. This should not happen.`);
+      await db.deck.update({
+          where: { id: currentDeckId },
+          data: { isProcessing: false, processingStage: 'ERROR', error: `Internal error: Failed to prepare chunk ${currentChunkIndex + 1} for processing.` }
+      });
+      return new Response(`Internal error preparing chunk ${currentChunkIndex + 1}`, { status: 500 });
     }
 
     const deckId: string = currentDeckId;
     const chunkIndex: number = currentChunkIndex;
     const totalChunks: number = currentTotalChunks;
 
-    const chunkBuffer = Buffer.from(fullChunk, 'base64');
-    const result = await processChunk(chunkBuffer, chunkIndex, totalChunks, difficultyPrompt, aiModel);
+    let chunkBuffer: Buffer;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let result: any; // Replace 'any' with your actual ChunkResult type if available
 
+    try {
+      // Attempt to decode the reassembled chunk
+      chunkBuffer = Buffer.from(fullChunk, 'base64');
+      console.log(`Successfully decoded base64 for chunk ${chunkIndex + 1}`);
+
+      // Attempt to process the chunk with the AI
+      result = await processChunk(chunkBuffer, chunkIndex, totalChunks, difficultyPrompt, aiModel);
+      console.log(`Successfully processed chunk ${chunkIndex + 1} with AI`);
+
+    } catch (processingError) {
+      console.error(`Error during decoding or AI processing for chunk ${chunkIndex + 1} (Deck: ${deckId}):`, processingError);
+      Sentry.captureException(processingError); // Log error to Sentry
+
+      // Mark the deck as failed due to this error
+      await db.deck.update({
+        where: { id: deckId },
+        data: {
+          isProcessing: false,
+          processingStage: 'ERROR',
+          error: `Failed during decoding or AI processing for chunk ${chunkIndex + 1}. Error: ${processingError instanceof Error ? processingError.message : String(processingError)}`
+        }
+      });
+
+      // Return an error response to QStash to prevent retries for this message
+      return new Response(`Processing error for chunk ${chunkIndex + 1}`, { status: 500 });
+    }
+
+    // Check if AI result is valid (moved after the try...catch)
     const isValidResult = result && (result.flashcards?.length > 0 || result.mcqs?.length > 0 || result.frqs?.length > 0);
     if (!isValidResult) {
-      throw new Error(`Failed to generate valid content for chunk ${chunkIndex + 1}/${totalChunks}`);
+      console.error(`AI processing returned invalid result for chunk ${chunkIndex + 1}/${totalChunks} for deck ${deckId}`);
+      await db.deck.update({
+        where: { id: deckId },
+        data: {
+          isProcessing: false,
+          processingStage: 'ERROR',
+          error: `AI failed to generate valid content for chunk ${chunkIndex + 1}/${totalChunks}`
+        }
+      });
+      return new Response(`AI failed for chunk ${chunkIndex + 1}`, { status: 500 });
     }
 
     const difficultyLevel = getDifficultyFromUserSelection(difficulty);
@@ -135,35 +198,39 @@ async function handler(request: NextRequest) {
     while (retryCount < MAX_RETRIES) {
       try {
         await db.$transaction(async (tx) => {
-          console.log(`Processing chunk ${chunkIndex + 1}/${totalChunks} for deck ${deckId}`);
-          
-          const currentDeckInTx = await tx.deck.findUnique({
-            where: { id: deckId },
-            select: { processedChunks: true }
-          });
-          
-          const processedCount = (currentDeckInTx?.processedChunks || 0) + 1;
-          const chunkProgress = (processedCount / totalChunks) * 65;
-          const progress = Math.floor(20 + chunkProgress);
-          
-          console.log(`Updating progress to ${progress}% for chunk ${chunkIndex + 1}/${totalChunks}`);
-          
-          await tx.deck.update({
+          console.log(`Attempting transaction for chunk ${chunkIndex + 1}/${totalChunks} (Deck: ${deckId}, Attempt: ${retryCount + 1})`);
+
+          // 1. Atomically increment processedChunks and get the updated deck
+          const updatedDeck = await tx.deck.update({
             where: { id: deckId },
             data: {
               processedChunks: { increment: 1 },
-              processingProgress: Math.min(progress, 85),
-            }
+            },
+            select: { processedChunks: true } // Select the NEW count
           });
-          
+
+          // 2. Calculate progress based on the *new* count
+          const processedCount = updatedDeck.processedChunks;
+          // Base progress starts at 20 (after dispatch), max progress before completion is 85
+          const chunkProgress = totalChunks > 0 ? (processedCount / totalChunks) * 65 : 0;
+          const progress = Math.min(Math.floor(20 + chunkProgress), 85);
+
+          console.log(`Chunk ${chunkIndex + 1}/${totalChunks} processed. New count: ${processedCount}. Updating progress to ${progress}%`);
+
+          // 3. Update the progress field with the reliable value
+          await tx.deck.update({
+             where: { id: deckId },
+             data: { processingProgress: progress }
+          });
+
+          // 4. Create study content (logic remains the same)
           const lastContent = await tx.deckContent.findFirst({
             where: { deckId },
             orderBy: { order: 'desc' },
             select: { order: true }
           });
-          
           let nextOrder = lastContent ? lastContent.order + 1 : 0;
-          
+
           for (const card of result.flashcards || []) {
             await tx.studyContent.create({
               data: {
@@ -184,7 +251,6 @@ async function handler(request: NextRequest) {
               }
             });
           }
-          
           for (const mcq of result.mcqs || []) {
             await tx.studyContent.create({
               data: {
@@ -208,7 +274,6 @@ async function handler(request: NextRequest) {
               }
             });
           }
-          
           for (const frq of result.frqs || []) {
             await tx.studyContent.create({
               data: {
@@ -232,17 +297,23 @@ async function handler(request: NextRequest) {
               }
             });
           }
+
         }, {
-          maxWait: 60000,
-          timeout: 60000,
-          isolationLevel: 'ReadCommitted'
+          maxWait: 60000, // milliseconds
+          timeout: 60000, // milliseconds
+          isolationLevel: 'ReadCommitted' // Consider 'Serializable' if high contention persists
         });
-        break;
+
+        console.log(`Transaction SUCCEEDED for chunk ${chunkIndex + 1}/${totalChunks}`);
+        break; // Exit retry loop on success
+
       } catch (txError) {
         lastError = txError;
         retryCount++;
+        console.error(`Transaction FAILED for chunk ${chunkIndex + 1}/${totalChunks} (Attempt ${retryCount}):`, txError);
+        // Implement exponential backoff for retries
         if (retryCount < MAX_RETRIES) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000)); // Exponential backoff
         }
       }
     }

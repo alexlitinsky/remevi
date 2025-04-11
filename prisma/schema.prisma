@@ -11,7 +11,7 @@ datasource db {
 // User management
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
+  email     String
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -408,4 +408,18 @@ model RecoveryLog {
   @@index([userId])
   @@index([sessionId])
   @@index([timestamp])
+}
+
+// Temporary storage for chunk parts during processing
+model ChunkPartStorage {
+  id         String   @id @default(cuid())
+  deckId     String   // ID of the deck being processed
+  chunkIndex Int      // Index of the chunk this part belongs to
+  partIndex  Int      // Index of this specific part within the chunk
+  totalParts Int      // Total number of parts for this chunk
+  partData   String   // Base64 encoded part data (use Bytes if storing raw binary)
+  createdAt  DateTime @default(now())
+
+  @@index([deckId, chunkIndex, partIndex]) // Index for efficient querying
+  @@index([createdAt]) // Index for potential cleanup jobs
 }
