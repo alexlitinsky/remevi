@@ -193,7 +193,6 @@ async function handler(request: NextRequest) {
 
     const MAX_RETRIES = 3;
     let retryCount = 0;
-    let lastError: unknown;
 
     while (retryCount < MAX_RETRIES) {
       try {
