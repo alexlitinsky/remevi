@@ -7,7 +7,7 @@ import { Difficulty } from '@/types/difficulty';
 import { FREEMIUM_LIMITS } from '@/lib/constants';
 import * as Sentry from '@sentry/nextjs';
 
-const PAGES_PER_CHUNK = 5;
+const PAGES_PER_CHUNK = 2;
 
 /**
  * Helper function to remove file extension from a filename
