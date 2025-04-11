@@ -44,4 +44,5 @@ export interface DeckData {
   };
   processingProgress: number;
   processingStage: string;
-} 
+  processingStartTime?: string; // Optional ISO date string
+}
