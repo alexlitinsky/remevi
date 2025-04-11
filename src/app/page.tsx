@@ -182,27 +182,29 @@ export default function Home() {
       type: file.type,
       size: file.size,
     };
+    console.log('Extracting metadata for file:', file.name);
 
     if (file.type === 'application/pdf') {
       try {
-        const arrayBuffer = await file.arrayBuffer();
+        const formData = new FormData();
+        formData.append('file', file);
+        console.log('Sending PDF data to server via FormData...');
+
         const response = await fetch('/api/extract-pdf-metadata', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/octet-stream',
-          },
-          body: arrayBuffer,
+          body: formData,
         });
 
         if (!response.ok) {
-          throw new Error('Failed to extract PDF metadata');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to extract PDF metadata');
         }
 
         const { pageCount } = await response.json();
         metadata.pageCount = pageCount;
       } catch (error) {
         console.error('Error extracting PDF metadata:', error);
-        toast.error('Error reading PDF file. Please try again.');
+        toast.error(error instanceof Error ? error.message : 'Error reading PDF file. Please try again.');
         throw error;
       }
     }
