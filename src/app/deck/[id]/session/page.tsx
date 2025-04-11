@@ -15,7 +15,7 @@ import { SettingsModal } from "@/components/session/StudyModals";
 export default function DeckStudyPage() {
   // Get params from the useParams() hook
   const params = useParams();
-  const deckId = params!.id as string;
+  const deckId = params.id as string;
   
   const router = useRouter();
   const {

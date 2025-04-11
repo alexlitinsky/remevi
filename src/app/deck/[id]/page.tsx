@@ -52,7 +52,7 @@ export default function DeckPage() {
   const [showMindMap, setShowMindMap] = useState(false); // State for mind map modal
 
   // const deckId = params ? (typeof params.id === 'string' ? params.id : (Array.isArray(params.id) ? params.id[0] : '')) : '';
-  const deckId = params!.id as string;
+  const deckId = params.id as string;
   
   // Add useSessionStats hook
   const { streak } = useSessionStats(deckId);

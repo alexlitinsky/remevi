@@ -17,7 +17,7 @@ export function PricingButton({ subscription }: PricingButtonProps) {
 
   useEffect(() => {
     // Handle checkout success/error
-    const checkout = searchParams!.get("checkout");
+    const checkout = searchParams.get("checkout");
     if (checkout === "success") {
       toast.success("Successfully subscribed!");
     } else if (checkout === "cancelled") {

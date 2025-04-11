@@ -42,6 +42,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { AchievementProgressBar } from '@/components/achievements/AchievementProgressBar';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 
 interface Deck {
   id: string;
@@ -186,22 +187,13 @@ export default function Home() {
 
     if (file.type === 'application/pdf') {
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-        console.log('Sending PDF data to server via FormData...');
-
-        const response = await fetch('/api/extract-pdf-metadata', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to extract PDF metadata');
-        }
-
-        const { pageCount } = await response.json();
-        metadata.pageCount = pageCount;
+      // Set the PDF worker script (required for client-side use)
+      GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+      
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await getDocument({ data: arrayBuffer }).promise;
+      
+      metadata.pageCount = pdf.numPages;
       } catch (error) {
         console.error('Error extracting PDF metadata:', error);
         toast.error(error instanceof Error ? error.message : 'Error reading PDF file. Please try again.');

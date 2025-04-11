@@ -8,7 +8,7 @@ export default function QuizPage() {
   
   return (
     <div className="container max-w-4xl mx-auto py-6 space-y-8">
-      <Quiz deckId={params!.id as string} />
+      <Quiz deckId={params.id as string} />
     </div>
   );
 }
