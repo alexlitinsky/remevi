@@ -26,30 +26,30 @@ function cleanupExpiredChunks() {
   }
 }
 
-async function handleMissingParts(deckId: string, chunkIndex: number) {
-  const storageKey = `${deckId}-${chunkIndex}`;
-  const chunkData = chunkStorage.get(storageKey);
+// async function handleMissingParts(deckId: string, chunkIndex: number) {
+//   const storageKey = `${deckId}-${chunkIndex}`;
+//   const chunkData = chunkStorage.get(storageKey);
   
-  if (!chunkData) return false;
+//   if (!chunkData) return false;
   
-  const now = Date.now();
-  if (now - chunkData.lastUpdated > 10 * 60 * 1000) {
-    console.log(`Chunk ${chunkIndex} for deck ${deckId} has missing parts: ${Array.from(chunkData.missingParts)}`);
+//   const now = Date.now();
+//   if (now - chunkData.lastUpdated > 10 * 60 * 1000) {
+//     console.log(`Chunk ${chunkIndex} for deck ${deckId} has missing parts: ${Array.from(chunkData.missingParts)}`);
     
-    await db.deck.update({
-      where: { id: deckId },
-      data: {
-        error: `Processing incomplete: Chunk ${chunkIndex + 1} missing ${chunkData.missingParts.size} parts`,
-        processingStage: 'ERROR',
-        isProcessing: false
-      }
-    });
+//     await db.deck.update({
+//       where: { id: deckId },
+//       data: {
+//         error: `Processing incomplete: Chunk ${chunkIndex + 1} missing ${chunkData.missingParts.size} parts`,
+//         processingStage: 'ERROR',
+//         isProcessing: false
+//       }
+//     });
     
-    return true;
-  }
+//     return true;
+//   }
   
-  return false;
-}
+//   return false;
+// }
 
 async function handler(request: NextRequest) {
   cleanupExpiredChunks();
@@ -67,7 +67,6 @@ async function handler(request: NextRequest) {
       partIndex,
       difficultyPrompt,
       aiModel,
-      isLastChunk,
       difficulty = 'moderate'
     } = body;
 

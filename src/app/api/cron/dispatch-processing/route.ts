@@ -14,6 +14,7 @@ async function publishWithRetry(
   qstashClient: Client,
   url: string,
   headers: Record<string, string>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: any,
   attempt = 1
 ): Promise<void> {

@@ -1,6 +1,6 @@
 "use client"
 
-import { uploadFileToStorage } from '@/lib/storage';
+import { uploadFileToStorage } from '@/lib/upload';
 
 import type React from "react"
 import { useRouter } from "next/navigation"

@@ -1,4 +1,4 @@
-import { supabase, supabaseAnon } from './supabase';
+import { supabase } from './supabase';
 import { randomUUID } from 'crypto';
 
 /**
@@ -20,7 +20,7 @@ export async function uploadFileToStorage(
   
 
   // Upload file to Supabase storage
-  const { error } = await supabaseAnon
+  const { error } = await supabase
     .storage
     .from(bucket)
     .upload(filePath, fileBuffer, {
