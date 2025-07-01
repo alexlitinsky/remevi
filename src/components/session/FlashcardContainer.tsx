@@ -72,15 +72,15 @@ export function FlashcardContainer({
   const progress = cards.length > 0 ? currentCardIndex / cards.length : 0;
   
   return (
-    <div className="w-full max-w-4xl flex flex-col items-center">
+    <div className="w-full max-w-4xl flex flex-col items-center bg-background">
       <AnimatePresence mode="wait">
         <motion.div
           key={`card-container-${currentCardIndex}-${currentCard.id}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }} 
-          className="w-full mb-8"
+          transition={{ duration: 0.15 }}
+          className="w-full mb-8 bg-card rounded-lg overflow-hidden"
         >
           <Flashcard
             key={`card-${currentCardIndex}-${currentCard.id}`}

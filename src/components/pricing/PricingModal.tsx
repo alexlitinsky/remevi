@@ -23,12 +23,14 @@ const FEATURES = [
   "Unlimited Pages per Document",
   "Advanced AI Models",
   "Higher Question Ranges",
+  "Up to 25MB File Size per Document",
 ];
 const FREE_FEATURES = [
   "Up to 10 Generations",
   "Up to 30 Pages per Document",
   "Standard AI Models",
   "Lower Question Ranges",
+  "Up to 5MB File Size per Document",
 ];
 
 export function PricingModal({ open, onOpenChange, subscription }: PricingModalProps) {

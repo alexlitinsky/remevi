@@ -7,7 +7,8 @@ import { Card } from '@/components/ui/card';
 import { StudyStats } from '@/components/deck/StudyStats';
 import { QuizStats } from '@/components/deck/QuizStats';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Sparkles, Clock, Calendar, Trash2, ArrowLeft, BarChart3 } from 'lucide-react';
+import { ArrowRight, BookOpen, Sparkles, Clock, Calendar, Trash2, ArrowLeft, BarChart3, Network } from 'lucide-react'; // Added Network icon
+import { MindMapModal } from '@/components/session/StudyModals'; // Import MindMapModal
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,11 @@ import {
 import { toast } from 'sonner';
 import { useSessionStats } from '@/hooks/deck/useSessionStats';
 
+interface MindMapData {
+  nodes: { id: string; label: string; type: 'main' | 'subtopic' | 'detail' }[];
+  connections: { source: string; target: string; label?: string; type: string }[];
+}
+
 interface Deck {
   id: string;
   title: string;
@@ -34,6 +40,7 @@ interface Deck {
   error?: string;
   category?: string;
   studyStreak?: number;
+  mindMap?: MindMapData; // Added mindMap property
 }
 
 export default function DeckPage() {
@@ -42,8 +49,10 @@ export default function DeckPage() {
   const [deck, setDeck] = useState<Deck | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showMindMap, setShowMindMap] = useState(false); // State for mind map modal
 
-  const deckId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
+  // const deckId = params ? (typeof params.id === 'string' ? params.id : (Array.isArray(params.id) ? params.id[0] : '')) : '';
+  const deckId = params.id as string;
   
   // Add useSessionStats hook
   const { streak } = useSessionStats(deckId);
@@ -73,9 +82,10 @@ export default function DeckPage() {
             dueCards: statsData.dueCards,
             flashcardCount: flashcardCount,
             totalProgress: Math.round(statsData.masteryLevel || 0),
-            lastStudied: statsData.reviewsByDate 
+            lastStudied: statsData.reviewsByDate
               ? Object.keys(statsData.reviewsByDate).sort().pop()
-              : undefined
+              : undefined,
+            mindMap: deckData.mindMap // Include mindMap data
           });
         }
       } catch (error) {
@@ -173,97 +183,109 @@ export default function DeckPage() {
 
           {/* Header Section */}
           <div className="flex flex-col gap-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline" className="text-xs font-medium px-2 py-0.5">
-                    {deck.category || 'Uncategorized'}
+            {/* Title and Metadata */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="text-xs font-medium px-2 py-0.5">
+                  {deck.category || 'Uncategorized'}
+                </Badge>
+                {daysSinceLastStudied !== null && daysSinceLastStudied <= 2 && (
+                  <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20 text-xs">
+                    Recently studied
                   </Badge>
-                  {daysSinceLastStudied !== null && daysSinceLastStudied <= 2 && (
-                    <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20 text-xs">
-                      Recently studied
-                    </Badge>
-                  )}
-                </div>
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">{deck.title}</h1>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-muted-foreground text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-4 w-4" />
-                    <span>Created {formattedCreatedDate}</span>
-                  </div>
-                  {formattedLastStudied && (
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-4 w-4" />
-                      <span>Last studied {formattedLastStudied}</span>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
-              
-              {/* Action Buttons - Placed in the same row as the title */}
-              <div className="flex flex-wrap gap-3 md:flex-nowrap mt-4 md:mt-0">
-                <Button 
-                  size="lg" 
-                  onClick={() => router.push(`/deck/${deckId}/session`)} 
-                  className="gap-2 cursor-pointer bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  Start Studying
-                </Button>
-                <Button 
-                  size="lg" 
-                  onClick={() => router.push(`/deck/${deckId}/quiz`)} 
-                  className="gap-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  Start Quiz
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
-                      className="gap-2 cursor-pointer border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive bg-red-500" 
-                      disabled={isDeleting}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] max-w-[400px] overflow-y-auto p-0 bg-black">
-                    <div className="px-6 pt-6">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="text-center text-2xl font-bold tracking-tight">Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-center mt-2">
-                          This action cannot be undone. This will permanently delete your deck
-                          and all associated study materials.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                    </div>
-
-                    <div className="p-6">
-                      <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
-                        <AlertDialogCancel className="sm:mt-0">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDelete}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          disabled={isDeleting}
-                        >
-                          {isDeleting ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                              Deleting...
-                            </>
-                          ) : (
-                            'Delete Deck'
-                          )}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </div>
-                  </AlertDialogContent>
-                </AlertDialog>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">{deck.title}</h1>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-muted-foreground text-sm">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  <span>Created {formattedCreatedDate}</span>
+                </div>
+                {formattedLastStudied && (
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    <span>Last studied {formattedLastStudied}</span>
+                  </div>
+                )}
               </div>
             </div>
+            
+            {/* Action Buttons - Moved below title/metadata */}
+            <div className="flex flex-wrap justify-center gap-3 mt-3"> {/* Reduced spacing: mt-6 pt-6 -> mt-3 */}
+              <Button
+                size="lg"
+                onClick={() => router.push(`/deck/${deckId}/session`)}
+                className="gap-2 cursor-pointer bg-green-600 hover:bg-green-700 text-white"
+              >
+                <BookOpen className="h-4 w-4" />
+                Start Studying
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => router.push(`/deck/${deckId}/quiz`)}
+                className="gap-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Start Quiz
+              </Button>
+              {/* Mind Map Button */}
+              {!deck.isProcessing && deck.mindMap && deck.mindMap.nodes.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setShowMindMap(true)}
+                  className="gap-2 cursor-pointer bg-purple-600 hover:bg-purple-700 text-white border-purple-700" // Added purple color
+                >
+                  <Network className="h-4 w-4" />
+                  View Mind Map
+                </Button>
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="gap-2 cursor-pointer bg-red-600 hover:bg-red-700 text-white border-red-700" // Changed to red background
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="fixed inset-0 m-auto h-fit max-h-[90vh] max-w-[400px] overflow-y-auto p-0 bg-black">
+                  <div className="px-6 pt-6">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-center text-2xl font-bold tracking-tight">Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-center mt-2">
+                        This action cannot be undone. This will permanently delete your deck
+                        and all associated study materials.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                  </div>
+
+                  <div className="p-6">
+                    <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
+                      <AlertDialogCancel className="sm:mt-0">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                            Deleting...
+                          </>
+                        ) : (
+                          'Delete Deck'
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </div>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+            
           </div>
 
           {/* Quick Stats */}
@@ -368,6 +390,14 @@ export default function DeckPage() {
           {!deck.isProcessing && <QuizStats deckId={deckId} />}
         </div>
       </div>
+      
+      {/* Mind Map Modal */}
+      <MindMapModal
+        isVisible={showMindMap}
+        onClose={() => setShowMindMap(false)}
+        nodes={deck?.mindMap?.nodes || []}
+        connections={deck?.mindMap?.connections || []}
+      />
     </main>
   );
 }

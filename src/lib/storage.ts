@@ -1,6 +1,5 @@
 import { supabase } from './supabase';
 import { randomUUID } from 'crypto';
-import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 
 /**
  * Uploads a file to Supabase storage
@@ -19,16 +18,6 @@ export async function uploadFileToStorage(
   const fileExt = fileName.split('.').pop() || '';
   const filePath = `${fileId}.${fileExt}`;
   
-  // Get page count for PDFs
-  let pageCount: number | undefined;
-  if (fileType.includes('pdf')) {
-    try {
-      const pdfData = await pdfParse(fileBuffer);
-      pageCount = pdfData.numpages;
-    } catch (error) {
-      console.error('Error counting PDF pages:', error);
-    }
-  }
 
   // Upload file to Supabase storage
   const { error } = await supabase
@@ -52,7 +41,6 @@ export async function uploadFileToStorage(
       originalName: fileName,
       type: fileType,
       size: fileBuffer.length,
-      pageCount
     }
   };
 }

@@ -77,7 +77,7 @@ export function ErrorState({ message, description, onReturnToHome }: ErrorStateP
           </p>
         </div>
         
-        <Button onClick={onReturnToHome} className="mt-4">
+        <Button onClick={onReturnToHome} className="mt-4 cursor-pointer">
           Return to Home
         </Button>
       </motion.div>
@@ -168,7 +168,7 @@ export const ProcessingState = ({ deck }: { deck?: ProcessingDeck }) => {
         <Button
           onClick={() => router.push('/')}
           variant="outline"
-          className="mt-8"
+          className="mt-8 cursor-pointer"
         >
           Return to Home
         </Button>

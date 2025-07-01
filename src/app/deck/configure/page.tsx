@@ -1,5 +1,7 @@
 "use client"
 
+import { uploadFileToStorage } from '@/lib/upload';
+
 import type React from "react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -109,25 +111,20 @@ export default function ConfigurePage() {
     try {
       setGenerationStep("Uploading file...");
       setGenerationProgress(10);
-      const formData = new FormData();
-      formData.append('file', uploadedFile);
+      
+      // Convert file to buffer and upload directly
+      const buffer = Buffer.from(await uploadedFile.arrayBuffer());
+      const { filePath: storagePath, fileId } = await uploadFileToStorage(
+        buffer,
+        uploadedFile.name,
+        uploadedFile.type
+      );
 
-      const uploadResponse = await fetch('/api/temp-upload', {
-        method: 'POST',
-        body: formData,
-      });
 
-      setGenerationProgress(40);
-
-      if (!uploadResponse.ok) {
-        const errorJson = await uploadResponse.json().catch(() => ({}));
-        throw new Error(errorJson.message || 'Failed to upload file');
-      }
-
-      const uploadResult = await uploadResponse.json();
-      uploadId = uploadResult.uploadId;
-      filePath = uploadResult.filePath;
       setGenerationProgress(50);
+      
+      uploadId = fileId;
+      filePath = storagePath;
 
       setGenerationStep("Preparing generation...");
       const generatePayload = {
@@ -149,7 +146,8 @@ export default function ConfigurePage() {
 
       if (!generateResponse.ok) {
         const errorJson = await generateResponse.json().catch(() => ({}));
-        const errorMessage = errorJson.error || 'Failed to start generation';
+        console.log('errorJson', errorJson);
+        const errorMessage = errorJson.error || 'You\'ve exceeded your plan limit';
         if (errorMessage.includes('not available in your plan') || errorMessage.includes('exceeds your plan')) {
           setShowPricing(true);
         }
@@ -480,7 +478,18 @@ export default function ConfigurePage() {
                     )}
                   </div>
                 )}
-
+                {isPDF && fileMetadata.pageCount! > 50 && (
+                  <div className="flex items-start p-4 rounded-lg bg-amber-50 border border-amber-200 mt-4">
+                    <Clock className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-medium text-amber-800">Large PDF Notice</h3>
+                      <p className="text-sm text-amber-700 mt-1">
+                        PDFs over 50 pages may take several minutes to process (~1 minute per 15 pages).
+                        The system will continue working in the background.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {/* Estimated Time */}
                 <div className="flex items-center p-4 rounded-lg bg-primary/5 border border-primary/10">
                   <div className="mr-4 p-2 rounded-full bg-primary/10">

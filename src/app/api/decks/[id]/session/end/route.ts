@@ -53,43 +53,38 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // Get user's timezone
-    const userTimezone = req.headers.get('x-user-timezone') || 'UTC';
-    const userDate = new Date(endTime.toLocaleString('en-US', { timeZone: userTimezone }));
-    userDate.setHours(0, 0, 0, 0);
+    // Standardize on UTC for date comparisons
+    const todayUTC = new Date();
+    todayUTC.setUTCHours(0, 0, 0, 0);
 
-    // Get or create user progress
+    // Get user progress
     const userProgress = await db.userProgress.findUnique({
       where: { userId: user.id }
     });
 
-    let newStreak = 1; // Default to 1 for first time studying
+    // Calculate new streak
+    let newStreak = 1;
+    const ONE_DAY_MS = 86400000; // 24 hours in milliseconds
 
-    if (userProgress) {
-      const lastStudyDate = userProgress.lastStudyDate;
-      if (lastStudyDate) {
-        const lastStudyDay = new Date(lastStudyDate);
-        lastStudyDay.setHours(0, 0, 0, 0);
-        const yesterday = new Date(userDate);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        if (lastStudyDay.getTime() === userDate.getTime()) {
-          // Already studied today, keep current streak
-          newStreak = userProgress.streak;
-        } else if (lastStudyDay.getTime() === yesterday.getTime()) {
-          // Studied yesterday, increment streak
-          newStreak = userProgress.streak + 1;
-        } else if (lastStudyDay.getTime() > yesterday.getTime()) {
-          // Studied today but timezone shifted, keep streak
-          newStreak = userProgress.streak;
-        } else {
-          // More than 1 day gap, reset streak to 1
-          newStreak = 1;
-        }
+    if (userProgress?.lastStudyDate) {
+      const lastStudyUTC = new Date(userProgress.lastStudyDate);
+      lastStudyUTC.setUTCHours(0, 0, 0, 0);
+
+      const daysSinceLastStudy = Math.floor(
+        (todayUTC.getTime() - lastStudyUTC.getTime()) / ONE_DAY_MS
+      );
+
+      if (daysSinceLastStudy === 0) {
+        // Already studied today - maintain streak
+        newStreak = userProgress.streak;
+      } else if (daysSinceLastStudy === 1) {
+        // Studied yesterday - increment streak
+        newStreak = userProgress.streak + 1;
       }
+      // All other cases (daysSinceLastStudy > 1) will reset to 1
     }
 
-    // Update user progress
+    // Update user progress with UTC date
     await db.userProgress.upsert({
       where: {
         userId: user.id
@@ -97,11 +92,11 @@ export async function POST(req: NextRequest) {
       create: {
         userId: user.id,
         streak: newStreak,
-        lastStudyDate: userDate
+        lastStudyDate: todayUTC
       },
       update: {
         streak: newStreak,
-        lastStudyDate: userDate
+        lastStudyDate: todayUTC
       }
     });
 
@@ -110,4 +105,4 @@ export async function POST(req: NextRequest) {
     console.error("Error ending study session:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
-} 
+}

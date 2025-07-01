@@ -9,7 +9,7 @@ import { DeckCompletionScreen } from "@/components/session/DeckCompletionScreen"
 import { StudyDeckHeader } from "@/components/session/StudyDeckHeader";
 import { FlashcardContainer } from "@/components/session/FlashcardContainer";
 import { StudyActionButtons } from "@/components/session/StudyActionButtons";
-import { SettingsModal, MindMapModal } from "@/components/session/StudyModals";
+import { SettingsModal } from "@/components/session/StudyModals";
 
 // Client-side wrapper component that doesn't receive params directly
 export default function DeckStudyPage() {
@@ -33,7 +33,6 @@ export default function DeckStudyPage() {
     isLoadingCards,
     error,
     showSettings,
-    showMindMap,
     lastEarnedPoints,
     calculateProgress,
     getCardsReviewed,
@@ -48,7 +47,6 @@ export default function DeckStudyPage() {
     restartDeck,
     endSession,
     toggleSettings,
-    toggleMindMap
   } = useStudySessionStore();
 
   // Set deck ID and initialize session when the component mounts
@@ -74,45 +72,74 @@ export default function DeckStudyPage() {
     };
   }, [endSession]);
 
-  // Add polling for deck updates during processing
+  // Add polling for deck updates during processing with client-side timeout
   useEffect(() => {
+    let pollInterval: NodeJS.Timeout | null = null;
+    let processingStartTime: Date | null = null;
+
     if (deck?.isProcessing) {
-      const pollInterval = setInterval(async () => {
+      processingStartTime = deck.processingStartTime ? new Date(deck.processingStartTime) : new Date(); // Use existing start time or now
+
+      pollInterval = setInterval(async () => {
         try {
-          const response = await fetch(`/api/deck-processing/${deckId}`);
-          const updatedDeck = await response.json();
-          
-          // Only trigger full reload if processing is complete
-          if (!updatedDeck.isProcessing) {
-            setDeckId(deckId);
-            initSession();
-          } else {
-            // Just update the deck processing status without reinitializing
+          // Client-side timeout check (2 minutes)
+          if (processingStartTime && (new Date().getTime() - processingStartTime.getTime()) > 120000) {
+            console.warn(`Client-side timeout: Deck ${deckId} still processing after 3 minutes. Forcing study session.`);
+            if (pollInterval) clearInterval(pollInterval);
+            // Force stop processing state and attempt to load cards
             useStudySessionStore.setState(state => ({
               ...state,
-              deck: {
-                ...state.deck!,  // Assert deck exists
-                name: state.deck?.name || '',  // Ensure required fields have defaults
-                id: state.deck?.id || '',
+              deck: state.deck ? { ...state.deck, isProcessing: false, processingStage: 'CLIENT_TIMEOUT' } : undefined,
+              isLoading: false, // Ensure loading state is off
+            }));
+            // Optionally, try re-initializing to fetch any available cards
+            initSession(); // Uncomment if you want to force a card fetch after timeout
+            return;
+          }
+
+          // Regular polling
+          const response = await fetch(`/api/deck-processing/${deckId}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch deck status: ${response.statusText}`);
+          }
+          const updatedDeck = await response.json();
+
+          // If processing finished on the server
+          if (!updatedDeck.isProcessing) {
+            if (pollInterval) clearInterval(pollInterval);
+            setDeckId(deckId);
+            initSession(); // Reload cards and session data
+          } else {
+            // Update processing progress
+            useStudySessionStore.setState(state => ({
+              ...state,
+              deck: state.deck ? {
+                ...state.deck,
                 processingProgress: updatedDeck.processingProgress,
                 processingStage: updatedDeck.processingStage,
                 processedChunks: updatedDeck.processedChunks,
                 totalChunks: updatedDeck.totalChunks,
-                mindMap: updatedDeck.mindMap, // Make sure this is included
-                isProcessing: true
-              }
+                isProcessing: true,
+                // Update start time if it wasn't set before
+                processingStartTime: state.deck.processingStartTime || updatedDeck.processingStartTime || processingStartTime?.toISOString(),
+              } : undefined
             }));
-
-
           }
         } catch (error) {
           console.error('Error polling deck status:', error);
+          // Consider stopping polling on error or implementing backoff
+          // if (pollInterval) clearInterval(pollInterval);
         }
-      }, 2000);
-
-      return () => clearInterval(pollInterval);
+      }, 5000); // Poll every 5 seconds
     }
-  }, [deck?.isProcessing, deckId, setDeckId, initSession]);
+
+    // Cleanup function
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [deck?.isProcessing, deck?.processingStartTime, deckId, setDeckId, initSession]);
 
   // Handle different states
   if (isLoading) {
@@ -203,8 +230,6 @@ export default function DeckStudyPage() {
 {/* Floating Action Buttons */}
 <StudyActionButtons
   onShowSettings={() => toggleSettings(true)}
-  onToggleMindMap={() => toggleMindMap(true)}
-  mindMapAvailable={true} // You may need to implement logic to determine when mind map is available
 />
 
       </main>
@@ -218,12 +243,6 @@ export default function DeckStudyPage() {
         deckId={deckId}
       />
 
-    <MindMapModal
-      isVisible={showMindMap}
-      onClose={() => toggleMindMap(false)}
-      nodes={deck?.mindMap?.nodes || []}
-      connections={deck?.mindMap?.connections || []}
-    />
     </div>
   );
 } 
