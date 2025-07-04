@@ -1,1 +1,0 @@
-export type Difficulty = "low" | "moderate" | "high"; 
